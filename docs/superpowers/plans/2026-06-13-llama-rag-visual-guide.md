@@ -32,7 +32,7 @@
 
 | File | Responsibility |
 |---|---|
-| `src/i18n.py` | Bilingual content model: `L(zh, en)`, `render(node, lang=None)`, inline `t(zh,en)`; emits paired `data-lang` blocks. Holds `LANG_CSS` + `LANG_TOGGLE_JS` assets. |
+| `src/i18n.py` | Bilingual content model: `L(zh, en)`, `render(node, block=True)`, inline `t(zh,en)`; emits paired `data-lang` blocks. Holds `LANG_CSS` + `LANG_TOGGLE_JS` assets. |
 | `src/components.py` | DRY bilingual lesson blocks: `lead`, `analogy`, `section`, `compare_table`, `source_ref`, `accordion`, `code`, `key_points`, `design_highlight`, `pipeline(stage)`. All accept `L`/str and return HTML. |
 | `src/shell.py` | CSS design system (`CSS`), `PAGES` list, `head_meta`, `page()`, `index_page()`, top-bar with progress + **language toggle button**, footer nav. Ported & adapted from reference. |
 | `src/quizzes.py` | `QUIZZES` data (bilingual via `L`) keyed by filename + `render(fname)` → quiz HTML; holds quiz reveal JS. |
