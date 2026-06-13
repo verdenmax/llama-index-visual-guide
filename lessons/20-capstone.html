@@ -286,7 +286,51 @@ html[data-uilang="en"] [data-lang="en"]{display:revert}
     <div class="part"><span data-lang="zh">第五部分 · 实战</span><span data-lang="en">Part 5 · Capstone</span></div>
     <h1><span data-lang="zh">端到端 Capstone</span><span data-lang="en">End-to-End Capstone</span></h1>
   </div>
-  <div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p>
+  <div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">把前面每一站拼成一个<strong>可运行的本地 RAG 应用</strong>：加载 → 摄取/切块 → 建索引 → 持久化 → 检索 → 后处理 → 合成 → 问答/多轮 → 评估。这一课就是“总装车间”。</span><span data-lang="en">Assemble every stop into a <strong>runnable local RAG app</strong>: load → ingest/split → index → persist → retrieve → post-process → synthesize → Q&amp;A/chat → evaluate. This lesson is the final assembly line.</span></p><div class="card analogy"><div class="tag"><span data-lang="zh">🧩 生活类比</span><span data-lang="en">🧩 Analogy</span></div><div data-lang="zh">前面学的每个零件，现在装成一台完整的<strong>“知识问答机”</strong>——拧上电源就能跑。</div><div data-lang="en">Every part you've learned now snaps together into a complete <strong>“knowledge answering machine”</strong> — plug it in and it runs.</div></div><h2><span data-lang="zh">总装清单（每步回指对应课）</span><span data-lang="en">Assembly checklist (each step links back to a lesson)</span></h2><table class="t"><tr><th><span data-lang="zh">步骤</span><span data-lang="en">Step</span></th><th><span data-lang="zh">对应课</span><span data-lang="en">Lesson</span></th></tr><tr><td><span data-lang="zh">加载 + 切块 + 抽取</span><span data-lang="en">load + split + extract</span></td><td><span data-lang="zh">第 5 / 6 / 7 课</span><span data-lang="en">Lessons 5 / 6 / 7</span></td></tr><tr><td><span data-lang="zh">Embedding + 建索引 + 持久化</span><span data-lang="en">embed + index + persist</span></td><td><span data-lang="zh">第 8 / 10 / 11 课</span><span data-lang="en">Lessons 8 / 10 / 11</span></td></tr><tr><td><span data-lang="zh">检索 + 后处理 + 合成</span><span data-lang="en">retrieve + post-process + synthesize</span></td><td><span data-lang="zh">第 12 / 13 / 14 课</span><span data-lang="en">Lessons 12 / 13 / 14</span></td></tr><tr><td><span data-lang="zh">查询 / 多轮 / 评估</span><span data-lang="en">query / chat / evaluate</span></td><td><span data-lang="zh">第 15 / 16 / 19 课</span><span data-lang="en">Lessons 15 / 16 / 19</span></td></tr></table><div class="card codefile"><div class="tag"><span data-lang="zh">🔬 源码对应</span><span data-lang="en">🔬 In the source</span></div><code>(综合 / integrates)</code> · <code>VectorStoreIndex · IngestionPipeline · RetrieverQueryEngine · FaithfulnessEvaluator</code> — <span data-lang="zh">把全书组件拼到一起</span><span data-lang="en">wires the whole guide's components together</span></div><div class="codewrap"><div class="cf-head"><span data-lang="zh">一个文件跑通完整 RAG（含持久化、后处理、评估、多轮）</span><span data-lang="en">one file, full RAG: persistence, post-processing, eval, chat</span></div><pre class="code">from llama_index.core import (
+    SimpleDirectoryReader, VectorStoreIndex, StorageContext,
+    load_index_from_storage, Settings, get_response_synthesizer,
+)
+from llama_index.core.node_parser import SentenceSplitter
+from llama_index.core.ingestion import IngestionPipeline
+from llama_index.core.postprocessor import SimilarityPostprocessor
+from llama_index.core.query_engine import RetrieverQueryEngine
+from llama_index.core.evaluation import FaithfulnessEvaluator
+from llama_index.llms.openai import OpenAI
+from llama_index.embeddings.openai import OpenAIEmbedding
+import os
+
+Settings.llm = OpenAI(model='gpt-4o-mini')
+Settings.embed_model = OpenAIEmbedding(model='text-embedding-3-small')
+
+PERSIST = './storage'
+if os.path.exists(PERSIST):                      # 已建过就秒加载
+    index = load_index_from_storage(StorageContext.from_defaults(persist_dir=PERSIST))
+else:                                            # 首次：摄取 -> 建索引 -> 落盘
+    docs = SimpleDirectoryReader('./data').load_data()
+    nodes = IngestionPipeline(transformations=[SentenceSplitter(chunk_size=512, chunk_overlap=50)]).run(documents=docs)
+    index = VectorStoreIndex(nodes)
+    index.storage_context.persist(persist_dir=PERSIST)
+
+engine = RetrieverQueryEngine.from_args(
+    retriever=index.as_retriever(similarity_top_k=4),
+    node_postprocessors=[SimilarityPostprocessor(similarity_cutoff=0.7)],
+    response_synthesizer=get_response_synthesizer(response_mode='compact'),
+)
+resp = engine.query('退款政策是什么？')
+print('答案:', resp)
+print('忠实度:', FaithfulnessEvaluator().evaluate_response(response=resp).passing)
+
+chat = index.as_chat_engine(chat_mode='condense_plus_context')
+print(chat.chat('那国际订单也一样吗？'))</pre></div><div class="card keypts"><div class="tag"><span data-lang="zh">✅ 本课要点</span><span data-lang="en">✅ Key points</span></div><ul><li><span data-lang="zh">完整 RAG = 写入路径（建一次、落盘）+ 查询路径（反复问）。</span><span data-lang="en">A full RAG = write path (build once, persist) + query path (ask repeatedly).</span></li><li><span data-lang="zh">每一站都是<strong>可替换</strong>组件：换库、换检索、换合成都不动主结构。</span><span data-lang="en">Every stop is a <strong>swappable</strong> component: change store/retrieval/synthesis without touching the skeleton.</span></li><li><span data-lang="zh">持久化 + 评估让它从 demo 走向<strong>可维护、可回归</strong>。</span><span data-lang="en">Persistence + evaluation take it from demo to <strong>maintainable and regression-safe</strong>.</span></li></ul></div><div class="card highlight"><div class="tag"><span data-lang="zh">💡 设计亮点</span><span data-lang="en">💡 Design insight</span></div><div data-lang="zh">整条管道每一站都能独立替换，却共享统一接口——这正是 LlamaIndex 的核心思想：<strong>用可组合的标准件搭出你自己的 RAG</strong>。</div><div data-lang="en">Every stop swaps independently yet shares one interface — that's LlamaIndex's core idea: <strong>compose your own RAG from standard, interchangeable parts</strong>.</div></div><div class="selftest">
+<h2><span data-lang="zh">🧪 自测 · 想一想为什么这么设计</span><span data-lang="en">🧪 Self-check · think about the design</span></h2>
+<div class="card spark">
+  <div class="tag"><span data-lang="zh">💭 发散思考（没有标准答案）</span><span data-lang="en">💭 Open questions (no single right answer)</span></div>
+  <ul>
+    <li><span data-lang="zh">把这套 capstone 改造成“带引用脚注的客服机器人”，你会替换或新增哪些组件？</span><span data-lang="en">To turn this capstone into a “support bot with cited footnotes”, which components would you swap or add?</span></li>
+    <li><span data-lang="zh">如果知识库有上百万文档，写入路径与查询路径各自最先遇到的瓶颈是什么？</span><span data-lang="en">With millions of documents, what's the first bottleneck on the write path vs the query path?</span></li>
+  </ul>
+</div>
+</div>
   <div class="footnav"><a class="prev" href="19-evaluation.html"><div class="dir"><span data-lang="zh">← 上一课</span><span data-lang="en">← Prev</span></div><div class="ttl"><span data-lang="zh">评估 Evaluation</span><span data-lang="en">Evaluation</span></div></a><a class="next" href="21-glossary.html"><div class="dir"><span data-lang="zh">下一课 →</span><span data-lang="en">Next →</span></div><div class="ttl"><span data-lang="zh">术语表 · 概念索引</span><span data-lang="en">Glossary & Concept Index</span></div></a></div>
 </div>
 <script>

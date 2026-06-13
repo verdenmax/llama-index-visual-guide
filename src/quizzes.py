@@ -411,6 +411,14 @@ QUIZZES = {
               "How would you build a minimal regression eval set to keep changes from degrading the RAG?"),
         ],
     },
+    "20-capstone.html": {
+        "open": [
+            L("把这套 capstone 改造成“带引用脚注的客服机器人”，你会替换或新增哪些组件？",
+              "To turn this capstone into a “support bot with cited footnotes”, which components would you swap or add?"),
+            L("如果知识库有上百万文档，写入路径与查询路径各自最先遇到的瓶颈是什么？",
+              "With millions of documents, what's the first bottleneck on the write path vs the query path?"),
+        ],
+    },
 }
 
 
