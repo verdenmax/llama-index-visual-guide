@@ -159,6 +159,26 @@ QUIZZES = {
             },
         ],
     },
+    "06-node-parsers.html": {
+        "mcq": [
+            {
+                "q": L("<code>chunk_overlap</code> 的主要作用是？", "What is the main purpose of <code>chunk_overlap</code>?"),
+                "opts": [
+                    L("让每个块更大", "Make each chunk bigger"),
+                    L("相邻块重叠几句，避免语义在边界被切断", "Overlap adjacent chunks by a few sentences so meaning isn't cut at the boundary"),
+                    L("加快向量化", "Speed up embedding"),
+                    L("对块去重", "Deduplicate chunks"),
+                ],
+                "answer": 1,
+                "why": L("重叠让跨越块边界的句子/语义不丢失，提升检索召回。",
+                         "Overlap keeps sentences/meaning that straddle a boundary from being lost, improving recall."),
+            },
+        ],
+        "open": [
+            L("你的文档是 API 手册 vs 小说，chunk_size 该偏大还是偏小？为什么？",
+              "For an API manual vs a novel, should chunk_size lean larger or smaller? Why?"),
+        ],
+    },
 }
 
 

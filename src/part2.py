@@ -115,7 +115,60 @@ LESSON_05 = (
         "source never disturbs any later stage.",
     ))
 )
-LESSON_06 = _stub()
+LESSON_06 = (
+    c.pipeline("split")
+    + c.lead(L(
+        "切块（chunking）把 Document 拆成大小合适的 Node。为什么要切？因为 embedding 与 LLM 上下文都<strong>有限</strong>，"
+        "且检索希望命中<strong>精准的小片段</strong>。<code>chunk_size</code> 与 <code>chunk_overlap</code> 是核心旋钮。",
+        "Chunking splits a Document into right-sized Nodes. Why split? Because embeddings and LLM context are "
+        "<strong>limited</strong>, and retrieval wants to hit a <strong>precise small piece</strong>. "
+        "<code>chunk_size</code> and <code>chunk_overlap</code> are the key knobs.",
+    ))
+    + c.analogy(L(
+        "把长文拆成便利贴：太大塞不下又检索不准，太小丢上下文。<strong>overlap</strong> 让相邻便利贴重叠几句，"
+        "避免把一句话从中间切断。",
+        "Cut long text into sticky notes: too big won't fit and retrieves imprecisely; too small loses context. "
+        "<strong>overlap</strong> lets adjacent notes share a few sentences so a thought isn't cut mid-way.",
+    ))
+    + c.section(
+        L("四种常用切块器", "Four common splitters"),
+        c.compare_table(
+            [L("切块器", "Splitter"), L("切法", "How it splits"), L("适合", "Good for")],
+            [
+                [L("SentenceSplitter", "SentenceSplitter"), L("按句子凑到 chunk_size", "sentences up to chunk_size"), L("通用默认", "general default")],
+                [L("TokenTextSplitter", "TokenTextSplitter"), L("按 token 数硬切", "by token count"), L("严格控长", "strict length control")],
+                [L("SemanticSplitterNodeParser", "SemanticSplitterNodeParser"), L("按语义相似度断点", "at semantic breakpoints"), L("主题清晰的长文", "topically varied text")],
+                [L("SentenceWindowNodeParser", "SentenceWindowNodeParser"), L("单句为节点+窗口上下文", "one sentence + window"), L("精检索后补上下文", "precise hit, fuller context")],
+            ],
+        ),
+    )
+    + c.source_ref("node_parser/text/sentence.py", "SentenceSplitter", L("默认切块器", "the default splitter"))
+    + c.source_ref("node_parser/text/sentence_window.py", "SentenceWindowNodeParser.from_defaults", L("句窗切块", "sentence-window parsing"))
+    + c.code(
+        "from llama_index.core.node_parser import SentenceSplitter, SentenceWindowNodeParser\n\n"
+        "splitter = SentenceSplitter(chunk_size=512, chunk_overlap=50)\n"
+        "nodes = splitter.get_nodes_from_documents(docs)\n"
+        "print(len(nodes), nodes[0].text[:60])\n\n"
+        "# 句窗：节点是单句，metadata['window'] 保留前后句作为上下文\n"
+        "window = SentenceWindowNodeParser.from_defaults(window_size=3)\n"
+        "wnodes = window.get_nodes_from_documents(docs)",
+        caption=L("chunk_size / overlap 是 RAG 调优第一旋钮", "chunk_size / overlap: RAG's first tuning knob"),
+    )
+    + c.key_points([
+        L("切块决定“检索能命中多准”——RAG 质量的第一旋钮。",
+          "Chunking decides how precisely retrieval can hit — RAG quality's first knob."),
+        L("<code>chunk_overlap</code> 防止把完整语义从中间切断。",
+          "<code>chunk_overlap</code> keeps a complete thought from being cut in half."),
+        L("句窗切块：用<strong>单句</strong>精准检索，再用<strong>窗口</strong>补回上下文。",
+          "Sentence-window: retrieve precisely on a <strong>single sentence</strong>, then restore context via the <strong>window</strong>."),
+    ])
+    + c.design_highlight(L(
+        "切块器都实现同一个 <code>get_nodes_from_documents</code> 接口，所以换切块策略<strong>零成本</strong>——"
+        "这正是“先标准化接口，再谈策略”的威力。",
+        "Every splitter implements the same <code>get_nodes_from_documents</code> interface, so swapping strategies "
+        "is <strong>free</strong> — the payoff of “standardize the interface first, then vary the strategy”.",
+    ))
+)
 LESSON_07 = _stub()
 LESSON_08 = _stub()
 LESSON_09 = _stub()
