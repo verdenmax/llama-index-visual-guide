@@ -373,6 +373,23 @@ QUIZZES = {
             },
         ],
     },
+    "18-advanced-retrieval.html": {
+        "mcq": [
+            {
+                "q": L("为什么进阶检索器能直接替换基础检索器、塞进原来的 QueryEngine？",
+                       "Why can advanced retrievers drop into an existing QueryEngine in place of the basic one?"),
+                "opts": [
+                    L("因为它们更快", "Because they're faster"),
+                    L("因为它们都实现同一个 BaseRetriever 接口", "Because they all implement the same BaseRetriever interface"),
+                    L("因为它们不用 embedding", "Because they skip embeddings"),
+                    L("因为它们是 core 内置的", "Because they're built into core"),
+                ],
+                "answer": 1,
+                "why": L("统一的 BaseRetriever 接口让检索策略可插拔，QueryEngine 不感知具体实现。",
+                         "The uniform BaseRetriever interface makes retrieval strategies pluggable; the QueryEngine doesn't care which one."),
+            },
+        ],
+    },
 }
 
 

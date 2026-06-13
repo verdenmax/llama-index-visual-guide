@@ -64,5 +64,61 @@ LESSON_17 = (
         "prompt an explicit template keeps RAG's “last-mile tone and constraints” controllable and auditable.",
     ))
 )
-LESSON_18 = _stub()
+LESSON_18 = (
+    c.pipeline("retrieve")
+    + c.lead(L(
+        "基础 top-k 不够用时，进阶检索登场：<strong>融合多查询</strong>（QueryFusionRetriever）、"
+        "<strong>自动合并相邻块</strong>（AutoMergingRetriever）、<strong>递归</strong>（RecursiveRetriever）、"
+        "<strong>按问题路由到不同库</strong>（RouterRetriever）。它们都实现同一个 BaseRetriever 接口。",
+        "When plain top-k isn't enough, advanced retrieval steps in: <strong>fuse multiple queries</strong> "
+        "(QueryFusionRetriever), <strong>merge adjacent chunks</strong> (AutoMergingRetriever), <strong>recurse</strong> "
+        "(RecursiveRetriever), and <strong>route by question</strong> (RouterRetriever). All implement the same "
+        "BaseRetriever interface.",
+    ))
+    + c.analogy(L(
+        "不只问一次、不只取一处：<strong>多角度改写再合并</strong>、把碎片<strong>拼回完整段落</strong>、"
+        "按问题<strong>选对资料库</strong>。",
+        "Don't ask once or look in one place: <strong>rephrase from several angles and merge</strong>, <strong>stitch "
+        "fragments back into a passage</strong>, and <strong>pick the right corpus</strong> per question.",
+    ))
+    + c.section(
+        L("四种进阶检索器", "Four advanced retrievers"),
+        c.compare_table(
+            [L("检索器", "Retriever"), L("解决的问题", "What it solves")],
+            [
+                [L("QueryFusionRetriever", "QueryFusionRetriever"), L("一问改写多版、结果融合排序", "multi-rephrase + fused ranking")],
+                [L("AutoMergingRetriever", "AutoMergingRetriever"), L("命中多个小块时合并成父块", "merge small hits into a parent block")],
+                [L("RecursiveRetriever", "RecursiveRetriever"), L("从摘要/引用跳转到原文", "hop from summaries/refs to source")],
+                [L("RouterRetriever", "RouterRetriever"), L("按问题选择不同索引/工具", "route to different indexes/tools")],
+            ],
+        ),
+    )
+    + c.source_ref("retrievers/fusion_retriever.py", "QueryFusionRetriever", L("多查询融合（含 reciprocal rerank）", "multi-query fusion (with reciprocal rerank)"))
+    + c.source_ref("retrievers/auto_merging_retriever.py", "AutoMergingRetriever", L("相邻块自动合并", "auto-merging adjacent chunks"))
+    + c.code(
+        "from llama_index.core.retrievers import QueryFusionRetriever\n\n"
+        "# 把一个问题改写成多版、分别检索，再用 reciprocal rerank 融合\n"
+        "fusion = QueryFusionRetriever(\n"
+        "    retrievers=[index.as_retriever(similarity_top_k=5)],\n"
+        "    num_queries=4,\n"
+        "    mode='reciprocal_rerank',\n"
+        ")\n"
+        "nodes = fusion.retrieve('退款和换货政策有何不同？')\n"
+        "print(len(nodes))",
+        caption=L("进阶检索器仍是 BaseRetriever，可直接塞进 QueryEngine", "still a BaseRetriever — drops into any QueryEngine"),
+    )
+    + c.key_points([
+        L("进阶检索针对“召回不全/碎片化/多库”等基础 top-k 的短板。",
+          "Advanced retrieval targets top-k's weak spots: missed recall, fragmentation, multiple corpora."),
+        L("它们都实现 <code>BaseRetriever</code>，可<strong>无缝</strong>接入现有 QueryEngine。",
+          "All implement <code>BaseRetriever</code>, so they <strong>drop into</strong> an existing QueryEngine."),
+        L("Fusion 用改写+融合提升召回；AutoMerging 用关系合并提升上下文完整度。",
+          "Fusion lifts recall via rephrase+merge; AutoMerging lifts context completeness via relationships."),
+    ])
+    + c.design_highlight(L(
+        "因为“检索”早就被抽象成统一接口，这些聪明策略才能像<strong>乐高</strong>一样替换基础检索器，而 QueryEngine 完全无感。",
+        "Because “retrieval” was abstracted to one interface early, these clever strategies swap in like <strong>Lego</strong> "
+        "for the basic retriever — the QueryEngine never notices.",
+    ))
+)
 LESSON_19 = _stub()
