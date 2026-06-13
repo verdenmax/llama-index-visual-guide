@@ -212,6 +212,23 @@ QUIZZES = {
             },
         ],
     },
+    "09-vector-stores.html": {
+        "mcq": [
+            {
+                "q": L("从内存版 SimpleVectorStore 换成 Chroma，主要需要改什么？",
+                       "To switch from the in-memory SimpleVectorStore to Chroma, what mainly changes?"),
+                "opts": [
+                    L("重写切块与检索逻辑", "Rewrite the chunking and retrieval logic"),
+                    L("只需通过 StorageContext 注入新的向量库", "Just inject the new store via StorageContext"),
+                    L("必须更换 embedding 模型", "You must change the embedding model"),
+                    L("重新训练模型", "Retrain the model"),
+                ],
+                "answer": 1,
+                "why": L("VectorStore 接口统一，换实现只改注入这一步，主链路不动。",
+                         "The VectorStore interface is uniform; swapping implementations only changes the injection — the pipeline stays."),
+            },
+        ],
+    },
 }
 
 

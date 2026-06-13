@@ -272,6 +272,59 @@ LESSON_08 = (
         "<strong>upgrade for free</strong> as models improve.",
     ))
 )
-LESSON_09 = _stub()
+LESSON_09 = (
+    c.pipeline("store")
+    + c.lead(L(
+        "向量存哪儿？<strong>VectorStore</strong> 负责存 Node 的向量+元数据，并支持<strong>最近邻查询</strong>。"
+        "默认是内存版 <code>SimpleVectorStore</code>，生产可换 Chroma / FAISS / PG 等，接口一致。",
+        "Where do the vectors live? A <strong>VectorStore</strong> stores Node vectors + metadata and supports "
+        "<strong>nearest-neighbor queries</strong>. The default is in-memory <code>SimpleVectorStore</code>; in "
+        "production swap in Chroma / FAISS / PG — same interface.",
+    ))
+    + c.analogy(L(
+        "向量库是语义地图的<strong>GPS 索引</strong>：给一个坐标，瞬间找出附近的点，而不必逐个比对全图。",
+        "A vector store is the <strong>GPS index</strong> of the semantic map: given a coordinate it finds nearby points "
+        "instantly, instead of scanning the whole map.",
+    ))
+    + c.section(
+        L("默认 vs 生产", "Default vs production"),
+        c.compare_table(
+            [L("场景", "Scenario"), L("选择", "Choice")],
+            [
+                [L("学习 / 小数据 / 原型", "learning / small / prototype"), L("<code>SimpleVectorStore</code>（内存，零依赖）", "<code>SimpleVectorStore</code> (in-memory)")],
+                [L("规模化 / 持久化 / 过滤", "scale / persistence / filters"), L("Chroma · FAISS · pgvector · Qdrant…", "Chroma · FAISS · pgvector · Qdrant…")],
+            ],
+        ),
+    )
+    + c.source_ref("vector_stores/simple.py", "SimpleVectorStore", L("默认内存向量库", "the default in-memory store"))
+    + c.source_ref("vector_stores/types.py", "VectorStoreQuery", L("统一的相似度查询契约", "the unified similarity-query contract"))
+    + c.code(
+        "from llama_index.core import VectorStoreIndex, StorageContext\n\n"
+        "# 默认：内存 SimpleVectorStore\n"
+        "index = VectorStoreIndex.from_documents(docs)\n\n"
+        "# 换生产向量库（接口一致，只改这几行）\n"
+        "# pip install llama-index-vector-stores-chroma chromadb\n"
+        "import chromadb\n"
+        "from llama_index.vector_stores.chroma import ChromaVectorStore\n"
+        "store = ChromaVectorStore(chroma_collection=chromadb.Client().create_collection('rag'))\n"
+        "sc = StorageContext.from_defaults(vector_store=store)\n"
+        "index = VectorStoreIndex.from_documents(docs, storage_context=sc)",
+        caption=L("从内存到生产库，主链路不变", "in-memory → production, pipeline unchanged"),
+    )
+    + c.key_points([
+        L("VectorStore = 存向量 + 元数据 + 近邻查询。",
+          "A VectorStore = stores vectors + metadata + nearest-neighbor search."),
+        L("默认内存库适合学习；生产换集成库，<strong>接口一致</strong>。",
+          "The in-memory default suits learning; production swaps integrations with the <strong>same interface</strong>."),
+        L("通过 <code>StorageContext</code> 注入向量库。",
+          "Inject the store via <code>StorageContext</code>."),
+    ])
+    + c.design_highlight(L(
+        "把“近邻搜索”抽象成 <code>VectorStoreQuery</code>，让笔记本内存版和生产级向量库对上层<strong>完全一样</strong>——"
+        "上线只是换实现，不是重写。",
+        "Abstracting nearest-neighbor search as <code>VectorStoreQuery</code> makes the laptop store and a production "
+        "engine look <strong>identical</strong> upstream — going live is a swap, not a rewrite.",
+    ))
+)
 LESSON_10 = _stub()
 LESSON_11 = _stub()
