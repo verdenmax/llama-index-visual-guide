@@ -313,7 +313,7 @@ else:                                            # 首次：摄取 -> 建索引 
 
 engine = RetrieverQueryEngine.from_args(
     retriever=index.as_retriever(similarity_top_k=4),
-    node_postprocessors=[SimilarityPostprocessor(similarity_cutoff=0.7)],
+    node_postprocessors=[SimilarityPostprocessor(similarity_cutoff=0.4)],  # 阈值随数据而定
     response_synthesizer=get_response_synthesizer(response_mode='compact'),
 )
 resp = engine.query('退款政策是什么？')
