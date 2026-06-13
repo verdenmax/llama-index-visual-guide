@@ -33,7 +33,7 @@ LESSON_12 = (
         ),
     )
     + c.source_ref("indices/vector_store/retrievers/retriever.py", "VectorIndexRetriever", L("向量索引的检索器", "the vector-index retriever"))
-    + c.source_ref("base/base_retriever.py", "BaseRetriever.retrieve", L("所有检索器的统一入口", "the entry point every retriever implements"))
+    + c.source_ref("base/base_retriever.py", "BaseRetriever.retrieve", L("所有检索器的统一入口", "the unified entry point every retriever shares"))
     + c.code(
         "retriever = index.as_retriever(similarity_top_k=3)\n"
         "nodes = retriever.retrieve('退款政策是什么？')   # List[NodeWithScore]\n"
