@@ -86,6 +86,23 @@ QUIZZES = {
               "If your documents change daily, how would you design an incremental re-indexing strategy?"),
         ],
     },
+    "02-architecture.html": {
+        "mcq": [
+            {
+                "q": L("看到 <code>from llama_index.vector_stores.chroma import ...</code>，你能立刻判断什么？",
+                       "Seeing <code>from llama_index.vector_stores.chroma import ...</code>, what do you instantly know?"),
+                "opts": [
+                    L("这是 core 的稳定抽象", "It's a stable core abstraction"),
+                    L("这是一个第三方集成实现（路径不含 core）", "It's a third-party integration (path has no core)"),
+                    L("Chroma 是 LlamaIndex 官方维护的", "Chroma is maintained by LlamaIndex itself"),
+                    L("必须先 import core 才能用它", "You must import core before it works"),
+                ],
+                "answer": 1,
+                "why": L("命名约定：路径不含 <code>core</code> 即为具体集成实现；core 只定义接口。",
+                         "By convention, a path without <code>core</code> is a concrete integration; core only defines interfaces."),
+            },
+        ],
+    },
 }
 
 

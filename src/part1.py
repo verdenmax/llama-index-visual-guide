@@ -71,5 +71,67 @@ LESSON_01 = (
         "refresh anytime — update knowledge by rebuilding the index, never touching the model.",
     ))
 )
-LESSON_02 = _stub()
+LESSON_02 = (
+    c.pipeline(None)
+    + c.lead(L(
+        "LlamaIndex 分两层：<strong>core</strong>（稳定的抽象与编排）+ <strong>300+ 集成包</strong>"
+        "（具体的 LLM / Embedding / 向量库实现）。命名约定一眼区分：导入路径带 <code>core</code> 的是核心抽象，"
+        "不带的是某个第三方集成。",
+        "LlamaIndex has two layers: <strong>core</strong> (stable abstractions + orchestration) and "
+        "<strong>300+ integration packages</strong> (concrete LLM / embedding / vector-store implementations). "
+        "The import path tells them apart: paths with <code>core</code> are core abstractions; those without are a "
+        "specific third-party integration.",
+    ))
+    + c.analogy(L(
+        "core 像主板上的<strong>标准插槽</strong>，集成包像各品牌的内存条/显卡：只要符合插槽规范，"
+        "插上即用，换品牌不用换主板。",
+        "core is the <strong>standard slots</strong> on a motherboard; integrations are branded RAM/GPUs: anything "
+        "that fits the slot just works, and swapping brands never means swapping the board.",
+    ))
+    + c.section(
+        L("命名约定：一眼看出是核心还是集成", "Naming: spot core vs integration at a glance"),
+        c.compare_table(
+            [L("导入", "Import"), L("含义", "Meaning")],
+            [
+                [L("<code>from llama_index.core import VectorStoreIndex</code>", "<code>from llama_index.core import VectorStoreIndex</code>"),
+                 L("核心抽象（稳定接口）", "core abstraction (stable interface)")],
+                [L("<code>from llama_index.llms.openai import OpenAI</code>", "<code>from llama_index.llms.openai import OpenAI</code>"),
+                 L("OpenAI LLM 集成实现", "the OpenAI LLM integration")],
+                [L("<code>from llama_index.embeddings.huggingface import ...</code>", "<code>from llama_index.embeddings.huggingface import ...</code>"),
+                 L("HuggingFace Embedding 集成", "the HuggingFace embedding integration")],
+                [L("<code>from llama_index.vector_stores.chroma import ...</code>", "<code>from llama_index.vector_stores.chroma import ...</code>"),
+                 L("Chroma 向量库集成", "the Chroma vector-store integration")],
+            ],
+        ),
+    )
+    + c.source_ref(
+        "llama_index/core/__init__.py", "(package root)",
+        L("core 导出所有稳定抽象；集成包各自独立发版", "core exports the stable abstractions; integrations ship as separate packages"),
+    )
+    + c.code(
+        "# 核心 + 按需安装集成（每个集成是独立的 pip 包）\n"
+        "pip install llama-index-core\n"
+        "pip install llama-index-llms-openai llama-index-embeddings-openai\n\n"
+        "from llama_index.core import Settings           # 核心：全局配置\n"
+        "from llama_index.llms.openai import OpenAI       # 集成：换成别家只改这一行\n"
+        "from llama_index.embeddings.openai import OpenAIEmbedding\n\n"
+        "Settings.llm = OpenAI(model='gpt-4o-mini')\n"
+        "Settings.embed_model = OpenAIEmbedding(model='text-embedding-3-small')",
+        caption=L("core 定接口，集成填实现", "core defines interfaces, integrations fill them in"),
+    )
+    + c.key_points([
+        L("导入路径带 <code>core</code> = 核心抽象；不带 = 第三方集成实现。",
+          "Import path with <code>core</code> = core abstraction; without = a third-party integration."),
+        L("集成是<strong>独立 pip 包</strong>，按需安装，互不绑定版本。",
+          "Integrations are <strong>separate pip packages</strong>, installed à la carte."),
+        L("换 LLM / Embedding / 向量库只改导入与一行配置，主链路不动。",
+          "Swapping the LLM / embedding / vector store is an import + one config line; the pipeline stays."),
+    ])
+    + c.design_highlight(L(
+        "“接口在 core、实现在 integration”的分层，让生态可以<strong>独立演进</strong>："
+        "新增一个向量库只需发一个集成包，core 不必改动也不必发版。",
+        "Putting “interfaces in core, implementations in integrations” lets the ecosystem <strong>evolve "
+        "independently</strong>: adding a vector store is just a new integration package — core never changes.",
+    ))
+)
 LESSON_03 = _stub()
