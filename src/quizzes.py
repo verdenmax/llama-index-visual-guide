@@ -267,6 +267,23 @@ QUIZZES = {
             },
         ],
     },
+    "12-retrievers.html": {
+        "mcq": [
+            {
+                "q": L("调用 <code>retriever.retrieve(q)</code> 之后，得到的是？",
+                       "After calling <code>retriever.retrieve(q)</code>, what do you get?"),
+                "opts": [
+                    L("最终的自然语言答案", "the final natural-language answer"),
+                    L("top-k 个带相似度分数的 Node（NodeWithScore）", "the top-k scored Nodes (NodeWithScore)"),
+                    L("一个新的索引", "a new index"),
+                    L("向量的维度", "the vector dimension"),
+                ],
+                "answer": 1,
+                "why": L("检索阶段只取回相关 Node（NodeWithScore）；生成答案是后面响应合成器的事。",
+                         "Retrieval only fetches relevant Nodes (NodeWithScore); producing the answer is the synthesizer's job later."),
+            },
+        ],
+    },
 }
 
 
