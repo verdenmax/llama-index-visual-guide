@@ -2176,7 +2176,7 @@ LESSON_07 = (
         c.compare_table(
             [L("抽取器", "Extractor"), L("产出的元数据", "Metadata it adds")],
             [
-                [L("TitleExtractor", "TitleExtractor"), L("文档/片段标题", "a document/section title")],
+                [L("TitleExtractor", "TitleExtractor"), L("文档标题（document_title）", "a document-level title (document_title)")],
                 [L("KeywordExtractor", "KeywordExtractor"), L("关键词", "keywords")],
                 [L("QuestionsAnsweredExtractor", "QuestionsAnsweredExtractor"), L("该片段能回答的问题", "questions this chunk answers")],
                 [L("SummaryExtractor", "SummaryExtractor"), L("片段摘要", "a chunk summary")],
@@ -2195,7 +2195,7 @@ LESSON_07 = (
         "    QuestionsAnsweredExtractor(questions=3) # 该块能回答的 3 个问题\n"
         "])\n"
         "nodes = pipeline.run(documents=docs)\n"
-        "print(nodes[0].metadata)   # 多了 title / questions_this_excerpt_can_answer",
+        "print(nodes[0].metadata)   # 多了 document_title / questions_this_excerpt_can_answer",
         caption=L("抽取器即“管道里的一道工序”", "extractors are just steps in the pipeline"),
     )
     + c.key_points([
