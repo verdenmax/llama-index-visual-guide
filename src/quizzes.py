@@ -195,6 +195,23 @@ QUIZZES = {
             },
         ],
     },
+    "08-embeddings.html": {
+        "mcq": [
+            {
+                "q": L("为什么向量检索能匹配“同义不同词”的内容？",
+                       "Why can vector search match content that's synonymous but uses different words?"),
+                "opts": [
+                    L("因为做了关键词扩展", "Because it does keyword expansion"),
+                    L("因为 embedding 把语义相近映射成向量距离近", "Because embeddings map semantic closeness to vector closeness"),
+                    L("因为用了更大的模型", "Because it uses a bigger model"),
+                    L("因为大小写不敏感", "Because it's case-insensitive"),
+                ],
+                "answer": 1,
+                "why": L("语义相近的文本向量距离也近，所以即使用词不同也能被召回。",
+                         "Semantically similar text has nearby vectors, so it's recalled even with different wording."),
+            },
+        ],
+    },
 }
 
 

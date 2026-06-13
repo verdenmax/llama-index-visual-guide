@@ -223,7 +223,55 @@ LESSON_07 = (
         "becomes a pluggable link in the pipeline.",
     ))
 )
-LESSON_08 = _stub()
+LESSON_08 = (
+    c.pipeline("embed")
+    + c.lead(L(
+        "Embedding 把文本变成<strong>向量</strong>，让“语义相近”变成“向量距离近”。检索时把问题也向量化，"
+        "再找最近的若干 Node。模型由 <code>Settings.embed_model</code> 统一配置。",
+        "Embeddings turn text into <strong>vectors</strong> so “semantically similar” becomes “close in vector space”. "
+        "At query time the question is embedded too, then the nearest Nodes are found. The model is configured globally "
+        "via <code>Settings.embed_model</code>.",
+    ))
+    + c.analogy(L(
+        "把每段话放到一张<strong>语义地图</strong>上的坐标；提问就是在地图上落一个点，找<strong>最近的几个点</strong>。",
+        "Place every passage at a coordinate on a <strong>semantic map</strong>; asking a question drops a point on it "
+        "and grabs the <strong>nearest few</strong>.",
+    ))
+    + c.section(
+        L("检索为什么靠向量", "Why retrieval rides on vectors"),
+        c.compare_table(
+            [L("做法", "Approach"), L("匹配方式", "Match by"), L("能否懂“同义不同词”", "Catches paraphrases?")],
+            [
+                [L("关键词匹配", "Keyword match"), L("字面相同", "literal overlap"), L("不能", "no")],
+                [L("向量检索", "Vector search"), L("语义相近（余弦距离）", "semantic closeness (cosine)"), L("能", "yes")],
+            ],
+        ),
+    )
+    + c.source_ref("base/embeddings/base.py", "BaseEmbedding · similarity · SimilarityMode",
+                   L("统一接口 + 相似度计算", "the unified interface + similarity"))
+    + c.code(
+        "from llama_index.core import Settings\n"
+        "from llama_index.embeddings.openai import OpenAIEmbedding\n\n"
+        "Settings.embed_model = OpenAIEmbedding(model='text-embedding-3-small')\n"
+        "v = Settings.embed_model.get_text_embedding('退款政策是什么？')\n"
+        "print(len(v))   # 向量维度，如 1536\n\n"
+        "# 语义越近，余弦相似度越高（检索就按它排序取 top-k）",
+        caption=L("一次向量化，多次检索复用", "embed once, reuse across many queries"),
+    )
+    + c.key_points([
+        L("Embedding 把<strong>语义相似</strong>变成<strong>向量距离</strong>，是语义检索的地基。",
+          "Embeddings turn <strong>semantic similarity</strong> into <strong>vector distance</strong> — the bedrock of semantic search."),
+        L("查询与文档必须用<strong>同一个</strong> embedding 模型。",
+          "Query and documents must use the <strong>same</strong> embedding model."),
+        L("统一 <code>BaseEmbedding</code> 接口让你随时换模型而不改主链路。",
+          "The unified <code>BaseEmbedding</code> interface lets you swap models without touching the pipeline."),
+    ])
+    + c.design_highlight(L(
+        "检索质量很大程度由 embedding 模型决定；把它抽象成可替换组件，意味着 RAG 可以随模型进步而<strong>免费升级</strong>。",
+        "Retrieval quality largely rides on the embedding model; abstracting it as a swappable component means RAG can "
+        "<strong>upgrade for free</strong> as models improve.",
+    ))
+)
 LESSON_09 = _stub()
 LESSON_10 = _stub()
 LESSON_11 = _stub()
