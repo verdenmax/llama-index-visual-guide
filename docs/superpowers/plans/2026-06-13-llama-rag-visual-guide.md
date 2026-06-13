@@ -1524,6 +1524,12 @@ def test_unbalanced_div_is_an_error():
     html = GOOD + "<div>oops"
     issues = check_html.check_lesson("02-architecture.html", html)
     assert any(i[0] == "ERR" and "div" in i[2] for i in issues)
+
+
+def test_stray_ampersand_is_an_error():
+    html = GOOD.replace("<h1>t</h1>", "<h1>t</h1><p>Q&A text</p>")
+    issues = check_html.check_lesson("02-architecture.html", html)
+    assert any(i[0] == "ERR" and "&amp;" in i[2] for i in issues)
 ```
 
 - [ ] **Step 3: Run test to verify it fails**
@@ -1574,6 +1580,14 @@ def check_lesson(fname, html):
         if re.search(r"<(?!/)", cleaned):
             add("ERR", "unescaped '<' in <pre> code block")
             break
+    # stray '&' in body content (must be &amp;) — ignore <style>/<script>/data: URIs
+    body = re.sub(
+        r"<style[^>]*>.*?</style>|<script[^>]*>.*?</script>|data:[^\"')\s]+", "", html, flags=re.S
+    )
+    body = re.sub(r"&(?:amp|lt|gt|quot|apos|nbsp|#\d+|#x[0-9a-fA-F]+);", "", body)
+    if "&" in body:
+        m = re.search(r".{0,15}&.{0,15}", body)
+        add("ERR", f"unescaped '&' (use &amp;): {m.group(0)!r}")
     # nav chain matches PAGES order
     if fname in ORDER:
         idx = ORDER.index(fname)
