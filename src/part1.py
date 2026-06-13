@@ -167,8 +167,9 @@ LESSON_03 = (
         ),
     )
     + c.source_ref(
-        "indices/vector_store/base.py", "VectorStoreIndex.from_documents",
-        L("写入路径的“快捷方式”，内部串起 split→embed→store", "the write-path shortcut; chains split→embed→store inside"),
+        "indices/base.py", "BaseIndex.from_documents",
+        L("写入路径的“快捷方式”（VectorStoreIndex 继承自 BaseIndex），内部串起 split→embed→store",
+          "the write-path shortcut (VectorStoreIndex inherits it from BaseIndex); chains split→embed→store inside"),
     )
     + c.source_ref(
         "base/base_query_engine.py", "BaseQueryEngine.query",
