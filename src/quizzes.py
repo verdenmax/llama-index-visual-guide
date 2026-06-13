@@ -339,6 +339,23 @@ QUIZZES = {
             },
         ],
     },
+    "16-chat-engine.html": {
+        "mcq": [
+            {
+                "q": L("多轮对话里用户问“那它呢？”，<code>condense_question</code> 模式怎么处理？",
+                       "In a multi-turn chat the user asks “and what about it?” — how does <code>condense_question</code> mode handle it?"),
+                "opts": [
+                    L("直接拿“那它呢”去检索", "Retrieve directly with “and what about it?”"),
+                    L("先把对话历史+新问压成一个独立完整问题，再检索", "First condense history + new question into one standalone question, then retrieve"),
+                    L("忽略对话历史", "Ignore the chat history"),
+                    L("只用关键词匹配", "Use keyword matching only"),
+                ],
+                "answer": 1,
+                "why": L("condense 模式先把指代消解成一个独立问题，确保检索到正确片段。",
+                         "Condense mode resolves the reference into a standalone question first, so retrieval finds the right chunks."),
+            },
+        ],
+    },
 }
 
 

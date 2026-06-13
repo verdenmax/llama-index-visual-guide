@@ -216,4 +216,52 @@ LESSON_15 = (
         "components. Grasp it and you can reshape “default Q&A” into any RAG variant.",
     ))
 )
-LESSON_16 = _stub()
+LESSON_16 = (
+    c.pipeline("answer")
+    + c.lead(L(
+        "<strong>ChatEngine</strong> 在 QueryEngine 之上加<strong>多轮记忆</strong>。两种范式：<code>condense_question</code>"
+        "（把对话历史压成一个独立问题再检索）和 <code>context</code>（每轮都检索并把片段注入上下文）。",
+        "A <strong>ChatEngine</strong> adds <strong>multi-turn memory</strong> on top of a QueryEngine. Two paradigms: "
+        "<code>condense_question</code> (condense the history into one standalone question, then retrieve) and "
+        "<code>context</code> (retrieve every turn and inject the snippets into context).",
+    ))
+    + c.analogy(L(
+        "QueryEngine 像<strong>一次性问答台</strong>；ChatEngine 像<strong>记得前文的客服</strong>，能听懂“那它的退款呢？”里的“它”。",
+        "A QueryEngine is a <strong>one-shot help desk</strong>; a ChatEngine is a <strong>support agent who remembers "
+        "the thread</strong> and understands what “it” refers to in “and its refund?”.",
+    ))
+    + c.section(
+        L("三种聊天模式", "Three chat modes"),
+        c.compare_table(
+            [L("ChatMode", "ChatMode"), L("怎么处理多轮", "How it handles turns")],
+            [
+                [L("condense_question", "condense_question"), L("历史+新问 → 独立问题 → 检索", "history+new → standalone question → retrieve")],
+                [L("context", "context"), L("每轮检索，片段注入系统上下文", "retrieve each turn, inject as context")],
+                [L("condense_plus_context", "condense_plus_context"), L("先压缩问题，再检索注入（两者结合）", "condense then retrieve+inject (both)")],
+            ],
+        ),
+    )
+    + c.source_ref("chat_engine/condense_question.py", "CondenseQuestionChatEngine", L("压缩式多轮", "condense-style chat"))
+    + c.source_ref("chat_engine/context.py", "ContextChatEngine", L("上下文注入式多轮", "context-injection chat"))
+    + c.source_ref("chat_engine/types.py", "ChatMode", L("聊天模式枚举", "the chat-mode enum"))
+    + c.code(
+        "chat = index.as_chat_engine(chat_mode='condense_plus_context')\n"
+        "print(chat.chat('你们的退款政策是什么？'))\n"
+        "print(chat.chat('那国际订单也一样吗？'))   # ‘那/也’ 依赖上一轮，引擎会消解指代\n\n"
+        "chat.reset()   # 清空多轮记忆",
+        caption=L("多轮 RAG = 指代消解 + 每轮检索", "multi-turn RAG = coreference + retrieval each turn"),
+    )
+    + c.key_points([
+        L("ChatEngine = QueryEngine + <strong>记忆</strong>，支持指代消解的多轮问答。",
+          "ChatEngine = QueryEngine + <strong>memory</strong>, enabling coreference-aware multi-turn Q&amp;A."),
+        L("<code>condense_question</code> 重写问题；<code>context</code> 每轮注入检索片段。",
+          "<code>condense_question</code> rewrites the question; <code>context</code> injects retrieved snippets each turn."),
+        L("<code>condense_plus_context</code> 兼顾两者，通用性最好。",
+          "<code>condense_plus_context</code> combines both and is the most general."),
+    ])
+    + c.design_highlight(L(
+        "多轮 RAG 的真正难点是“<strong>指代消解 + 何时检索</strong>”。两种 mode 是两种解法——这也是为什么聊天不只是“给 QueryEngine 套个循环”。",
+        "The real challenge of multi-turn RAG is “<strong>coreference + when to retrieve</strong>.” The two modes are two "
+        "answers — which is why chat is more than “wrap a loop around a QueryEngine.”",
+    ))
+)
