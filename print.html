@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-uilang="zh"><head>
+<meta charset="utf-8">
+<title>LlamaIndex RAG 图解教程</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f6f7f9; --panel: #ffffff; --panel-2: #f0f2f5; --ink: #1d2129;
+  --muted: #5b6470; --faint: #8a939f; --line: #e1e5ea;
+  --accent: #1a7f64; --accent-soft: #e4f3ee; --accent-ink: #0f5c48;
+  --blue: #2563eb; --blue-soft: #e7efff; --amber: #b4690e; --amber-soft: #fdf1dd;
+  --purple: #7c3aed; --purple-soft: #f0e9ff; --red: #d23f3f; --red-soft: #fbe6e6;
+  --code-bg: #0f172a; --code-ink: #e2e8f0; --code-line: #1e293b;
+  --shadow: 0 1px 2px rgba(16,24,40,.06), 0 8px 24px rgba(16,24,40,.06);
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1116; --panel: #161b22; --panel-2: #1c232c; --ink: #e6edf3;
+    --muted: #9aa6b2; --faint: #6e7a86; --line: #2a323c;
+    --accent: #3fb892; --accent-soft: #14302a; --accent-ink: #8ee0c6;
+    --blue: #6ea8fe; --blue-soft: #16243f; --amber: #e0a44a; --amber-soft: #33270f;
+    --purple: #b794f6; --purple-soft: #271a40; --red: #f08080; --red-soft: #3a1a1a;
+    --code-bg: #0a0f1a; --code-ink: #d8e2f0; --code-line: #14202f;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  }
+}
+html { scroll-behavior: smooth; overflow-x: hidden; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC",
+    "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  background: var(--bg); color: var(--ink); line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; }
+code, .mono { font-family: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, Menlo, Consolas, monospace; overflow-wrap: break-word; }
+
+/* ---- top progress bar ---- */
+.topbar {
+  position: sticky; top: 0; z-index: 50; background: var(--panel);
+  border-bottom: 1px solid var(--line); backdrop-filter: blur(8px);
+}
+.topbar-inner {
+  max-width: 960px; margin: 0 auto; padding: .7rem 1.25rem;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+}
+.topbar .home { font-size: .82rem; color: var(--muted); font-weight: 600; display:flex; gap:.5rem; align-items:center; }
+.topbar .home b { color: var(--accent); }
+.topbar .pill { font-size: .72rem; color: var(--muted); background: var(--panel-2);
+  padding: .2rem .6rem; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
+.progress { height: 3px; background: var(--panel-2); }
+.progress > span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--blue)); }
+
+.wrap { max-width: 820px; margin: 0 auto; padding: 2.4rem 1.25rem 5rem; }
+
+/* ---- hero ---- */
+.hero { margin-bottom: 2rem; }
+.hero .part { font-size: .76rem; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--accent); font-weight: 700; margin-bottom: .55rem; }
+.hero h1 { font-size: 2.05rem; line-height: 1.2; letter-spacing: -.01em; font-weight: 750; }
+.hero .lead { margin-top: .9rem; font-size: 1.06rem; color: var(--muted); }
+
+h2 { font-size: 1.32rem; margin: 2.4rem 0 .9rem; letter-spacing: -.01em;
+  display: flex; align-items: center; gap: .55rem; }
+h2::before { content: ""; width: 4px; height: 1.05em; background: var(--accent); border-radius: 3px; display: inline-block; }
+h3 { font-size: 1.05rem; margin: 1.4rem 0 .5rem; }
+p { margin: .7rem 0; }
+ul, ol { margin: .6rem 0 .6rem 1.3rem; }
+li { margin: .3rem 0; }
+strong { color: var(--ink); font-weight: 680; }
+.inline { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px;
+  padding: .08em .4em; font-size: .9em; color: var(--accent-ink); }
+
+/* ---- callout cards ---- */
+.card { border-radius: var(--radius); padding: 1.05rem 1.2rem; margin: 1.2rem 0;
+  border: 1px solid var(--line); background: var(--panel); box-shadow: var(--shadow); }
+.card .tag { font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: .4rem; margin-bottom: .5rem; }
+.card.macro { border-left: 4px solid var(--blue); }
+.card.macro .tag { color: var(--blue); }
+.card.detail { border-left: 4px solid var(--purple); }
+.card.detail .tag { color: var(--purple); }
+.card.analogy { border-left: 4px solid var(--amber); background: var(--amber-soft); }
+.card.analogy .tag { color: var(--amber); }
+.card.key { border-left: 4px solid var(--accent); background: var(--accent-soft); }
+.card.key .tag { color: var(--accent-ink); }
+.card.warn { border-left: 4px solid var(--red); background: var(--red-soft); }
+.card.warn .tag { color: var(--red); }
+.card.spark { border-left: 4px solid #e0a000;
+  background: linear-gradient(100deg, rgba(224,160,0,.12), transparent 70%); }
+.card.spark .tag { color: #c98a00; }
+@media (prefers-color-scheme: dark) { .card.spark .tag { color: #f0c050; } }
+
+/* ---- code file callout ---- */
+.codefile { margin: 1.2rem 0; border-radius: 12px; overflow: hidden; border: 1px solid var(--line);
+  box-shadow: var(--shadow); }
+.codefile .cf-head { display: flex; align-items: center; gap: .55rem; padding: .5rem .85rem;
+  background: var(--panel-2); border-bottom: 1px solid var(--line); font-size: .8rem; }
+.codefile .cf-head .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex-shrink:0; }
+.codefile .cf-head .path { font-family: ui-monospace, monospace; color: var(--ink); font-weight: 600; }
+.codefile .cf-head .ln { margin-left: auto; color: var(--faint); font-size: .72rem; }
+.codefile pre { background: var(--code-bg); color: var(--code-ink); padding: .9rem 1rem;
+  overflow-x: auto; font-size: .82rem; line-height: 1.6; }
+.codefile pre .cm { color: #7d8aa3; }
+.codefile pre .kw { color: #c792ea; }
+.codefile pre .fn { color: #82aaff; }
+.codefile pre .st { color: #c3e88d; }
+.codefile pre .nb { color: #f78c6c; }
+
+pre.code { background: var(--code-bg); color: var(--code-ink); padding: .9rem 1rem; border-radius: 12px;
+  overflow-x: auto; font-size: .83rem; line-height: 1.6; margin: 1.1rem 0; box-shadow: var(--shadow); }
+pre.code .cm { color: #7d8aa3; } pre.code .kw { color: #c792ea; }
+pre.code .fn { color: #82aaff; } pre.code .st { color: #c3e88d; } pre.code .nb { color: #f78c6c; }
+
+/* ---- collapsible accordion (details/summary) ---- */
+.accordion { border: 1px solid var(--line); border-radius: 12px; background: var(--panel);
+  margin: .7rem 0; box-shadow: var(--shadow); overflow: hidden; }
+.accordion > summary { cursor: pointer; padding: .85rem 1.1rem; font-weight: 650; font-size: .96rem;
+  list-style: none; display: flex; align-items: center; gap: .6rem; user-select: none; }
+.accordion > summary::-webkit-details-marker { display: none; }
+.accordion > summary::after { content: "▶"; font-size: .68rem; color: var(--accent);
+  margin-left: auto; transition: transform .15s ease; }
+.accordion[open] > summary::after { transform: rotate(90deg); }
+.accordion > summary:hover { background: var(--panel-2); }
+.accordion[open] > summary { border-bottom: 1px solid var(--line); }
+.accordion .badge-num { background: var(--accent-soft); color: var(--accent-ink);
+  width: 1.6rem; height: 1.6rem; border-radius: 7px; display: inline-flex; align-items: center;
+  justify-content: center; font-size: .82rem; font-weight: 700; flex-shrink: 0; }
+.accordion .hint { font-size: .72rem; color: var(--faint); font-weight: 400; }
+.acc-body { padding: .9rem 1.1rem 1.1rem; }
+.acc-intro { color: var(--muted); font-size: .9rem; margin: .2rem 0 .4rem; }
+.qa { margin: 1rem 0; }
+.qa:first-child { margin-top: .3rem; }
+.qa .q { font-weight: 680; font-size: .9rem; display: flex; gap: .45rem; align-items: center; margin-bottom: .3rem; }
+.qa .a { color: var(--muted); font-size: .9rem; }
+.qa .a strong { color: var(--ink); }
+.qa pre.code { margin: .5rem 0 0; font-size: .78rem; }
+
+/* ---- flow diagram ---- */
+.flow { display: flex; align-items: stretch; gap: 0; flex-wrap: wrap; margin: 1.3rem 0;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 1.2rem 1rem; box-shadow: var(--shadow); }
+.flow .node { flex: 1 1 0; min-width: 110px; text-align: center; padding: .7rem .5rem;
+  border-radius: 10px; background: var(--panel-2); border: 1px solid var(--line); }
+.flow .node .nt { font-weight: 700; font-size: .92rem; }
+.flow .node .nd { font-size: .76rem; color: var(--muted); margin-top: .2rem; }
+.flow .node.hl { background: var(--accent-soft); border-color: var(--accent); }
+.flow .arrow { align-self: center; color: var(--faint); font-size: 1.3rem; padding: 0 .35rem; }
+
+/* vertical flow */
+.vflow { margin: 1.3rem 0; }
+.vflow .step { display: flex; gap: .9rem; position: relative; padding-bottom: 1.1rem; }
+.vflow .step:not(:last-child)::before { content:""; position:absolute; left: 15px; top: 34px; bottom: -2px;
+  width: 2px; background: var(--line); }
+.vflow .num { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fff;
+  display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; flex-shrink: 0; z-index:1; }
+.vflow .sc h4 { margin: .25rem 0 .2rem; font-size: 1rem; }
+.vflow .sc p { margin: .15rem 0; font-size: .92rem; color: var(--muted); }
+.vflow .sc .mono { font-size: .8rem; color: var(--accent-ink); }
+
+/* layered architecture */
+.layers { margin: 1.3rem 0; display: flex; flex-direction: column; gap: .55rem; }
+.layer { border-radius: 12px; padding: .85rem 1.1rem; border: 1px solid var(--line); background: var(--panel);
+  box-shadow: var(--shadow); }
+.layer .lh { display: flex; align-items: center; gap: .6rem; }
+.layer .lh .badge { font-size: .7rem; font-weight: 700; padding: .12rem .5rem; border-radius: 999px; }
+.layer .lh .name { font-weight: 700; font-family: ui-monospace, monospace; }
+.layer .ld { font-size: .85rem; color: var(--muted); margin-top: .35rem; }
+.layer.l-core { border-left: 4px solid var(--accent); } .layer.l-core .badge { background: var(--accent-soft); color: var(--accent-ink); }
+.layer.l-main { border-left: 4px solid var(--blue); } .layer.l-main .badge { background: var(--blue-soft); color: var(--blue); }
+.layer.l-part { border-left: 4px solid var(--purple); } .layer.l-part .badge { background: var(--purple-soft); color: var(--purple); }
+.layer.l-app { border-left: 4px solid var(--amber); } .layer.l-app .badge { background: var(--amber-soft); color: var(--amber); }
+
+/* two-column compare */
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.2rem 0; }
+@media (max-width: 640px) { .cols { grid-template-columns: 1fr; } }
+.col { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 1rem 1.1rem; box-shadow: var(--shadow); min-width: 0; }
+.col h4 { margin: 0 0 .4rem; font-size: .95rem; }
+
+table.t { width: 100%; border-collapse: collapse; margin: 1.1rem 0; font-size: .9rem;
+  background: var(--panel); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+table.t th, table.t td { padding: .6rem .8rem; text-align: left; border-bottom: 1px solid var(--line); }
+table.t th { background: var(--panel-2); font-size: .8rem; letter-spacing: .02em; }
+table.t tr:last-child td { border-bottom: none; }
+table.t td.mono, table.t td .mono { font-family: ui-monospace, monospace; font-size: .82rem; color: var(--accent-ink); }
+@media (max-width: 640px) {
+  /* Wide multi-column tables: scroll within their own box instead of
+     forcing page-level horizontal overflow (which clipped right columns). */
+  table.t { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.t th, table.t td { padding: .5rem .6rem; }
+}
+.selftest { margin: 2.2rem 0 0; border-top: 2px dashed var(--line); padding-top: 1.2rem; }
+.selftest > h2 { margin-top: .2rem; }
+.quiz { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--blue);
+  border-radius: 12px; padding: .9rem 1.1rem; margin: 1rem 0; box-shadow: var(--shadow); }
+.quiz .qn { font-weight: 650; }
+.quiz ol.opts { list-style: upper-alpha; margin: .55rem 0 .6rem 1.5rem; padding: 0; }
+.quiz ol.opts li { margin: .3rem 0; padding-left: .15rem; }
+.quiz details.accordion { margin: .5rem 0 0; }
+.selftest code { font-family: ui-monospace, monospace; font-size: .9em; color: var(--accent-ink);
+  background: var(--accent-soft); padding: 0 .28em; border-radius: 4px; }
+
+/* footer nav */
+.footnav { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3rem;
+  padding-top: 1.4rem; border-top: 1px solid var(--line); }
+.footnav a { flex: 1; padding: .85rem 1.1rem; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--panel); box-shadow: var(--shadow); transition: .15s; }
+.footnav a:hover { border-color: var(--accent); transform: translateY(-1px); }
+.footnav a.next { text-align: right; }
+.footnav .dir { font-size: .72rem; color: var(--faint); text-transform: uppercase; letter-spacing: .05em; }
+.footnav .ttl { font-weight: 700; color: var(--ink); margin-top: .15rem; }
+.footnav a.disabled { opacity: .35; pointer-events: none; }
+
+/* index page */
+.toc { display: grid; gap: .7rem; margin-top: 1.6rem; }
+.toc-part { font-size: .78rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--accent); margin: 1.4rem 0 .2rem; }
+.toc a { display: flex; align-items: center; gap: .9rem; padding: .85rem 1.05rem; border-radius: 12px;
+  background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); transition: .15s; }
+.toc a:hover { border-color: var(--accent); transform: translateX(3px); }
+.toc .n { width: 30px; height: 30px; border-radius: 8px; background: var(--accent-soft); color: var(--accent-ink);
+  display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; flex-shrink: 0; }
+.toc .tt { font-weight: 650; color: var(--ink); }
+.toc .ts { font-size: .8rem; color: var(--muted); margin-left: auto; text-align: right; }
+.toc-search { position: relative; margin: 1.6rem 0 -.4rem; }
+.toc-search input { width: 100%; box-sizing: border-box; padding: .75rem 2.8rem .75rem 1rem;
+  border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+  font-size: .98rem; box-shadow: var(--shadow); }
+.toc-search input:focus { outline: none; border-color: var(--accent); }
+.toc-search .qcount { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);
+  color: var(--faint); font-size: .8rem; pointer-events: none; }
+.toc a.hide, .toc .toc-part.hide { display: none; }
+.toc-empty { display: none; color: var(--muted); padding: 1rem; text-align: center; }
+.toc-empty.show { display: block; }
+.hero.index h1 { font-size: 2.3rem; }
+.legend { display:flex; gap:1.2rem; flex-wrap:wrap; margin-top:1rem; font-size:.8rem; color:var(--muted); }
+.legend span { display:flex; align-items:center; gap:.4rem; }
+.legend i { width:12px; height:12px; border-radius:3px; display:inline-block; }
+.pdf-btn { display:inline-flex; align-items:center; gap:.4rem; padding:.55rem 1.1rem;
+  background:var(--accent); color:#fff; border-radius:10px; font-size:.9rem; font-weight:650;
+  box-shadow:var(--shadow); transition:.15s; }
+.pdf-btn:hover { background:var(--accent-ink); transform:translateY(-1px); }
+
+/* ---- language toggle button ---- */
+.langbtn{font:600 .72rem/1 inherit;color:var(--accent);background:var(--accent-soft);
+  border:1px solid var(--accent);border-radius:999px;padding:.28rem .6rem;cursor:pointer;}
+.langbtn:hover{background:var(--accent);color:#fff;}
+/* ---- RAG pipeline strip ---- */
+.pipeline{display:flex;flex-direction:column;gap:.4rem;margin:.2rem 0 1.4rem;
+  padding:.8rem .9rem;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius);}
+.flowrow{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;}
+.flowlabel{font-size:.72rem;font-weight:700;color:var(--muted);min-width:5.2em;}
+.stage{font-size:.74rem;padding:.2rem .55rem;border-radius:999px;background:var(--panel);
+  border:1px solid var(--line);color:var(--faint);white-space:nowrap;}
+.stage.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;}
+/* ---- code caption + key-points / highlight cards ---- */
+.codewrap{margin:1rem 0;}
+.cf-head{font-size:.78rem;color:var(--muted);margin-bottom:.3rem;}
+.card.keypts{border-left:3px solid var(--accent);}
+.card.highlight{border-left:3px solid var(--amber);background:var(--amber-soft);}
+[data-lang]{display:none}
+html[data-uilang="zh"] [data-lang="zh"]{display:revert}
+html[data-uilang="en"] [data-lang="en"]{display:revert}
+
+@page { size: A4; margin: 15mm 14mm 16mm; }
+html, body { height: auto !important; overflow: visible !important; background: #fff; }
+.wrap { max-width: 100%; padding: 0; }
+.hint { display: none !important; }
+.accordion > summary { cursor: default; }
+.accordion > summary::after { display: none; }
+.card, .codefile, pre.code, table.t, .pipeline, .accordion, .qa, .selftest, .quiz { break-inside: avoid; }
+h2, h3, h4 { break-after: avoid; }
+.print-cover { break-after: page; min-height: 90vh; display: flex; flex-direction: column;
+  justify-content: center; text-align: center; }
+.print-cover .emoji { font-size: 3.2rem; }
+.print-cover h1 { font-size: 2.4rem; margin: 1rem 0 .4rem; border: none; }
+.print-cover .sub { color: var(--muted); font-size: 1.05rem; }
+.print-cover .meta { margin-top: 2rem; color: var(--faint); font-size: .9rem; }
+.print-toc { break-after: page; }
+.print-toc .tp { font-size: .82rem; font-weight: 700; color: var(--accent); margin: 1.1rem 0 .3rem; }
+.print-lesson { break-before: page; padding-top: .2rem; }
+.lesson-head { border-bottom: 2px solid var(--accent); padding-bottom: .5rem; margin-bottom: 1.2rem; }
+.lesson-head .lp { font-size: .72rem; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+.lesson-head h1 { font-size: 1.7rem; margin: .25rem 0 0; border: none; }
+.lesson-head .ln { color: var(--faint); font-weight: 600; }
+</style>
+</head><body>
+<section class="print-cover">
+  <div class="emoji">🦙</div>
+  <h1>LlamaIndex RAG 图解教程</h1>
+  <div class="sub">跟着写入路径与查询路径，一步步理解 LlamaIndex 的 RAG</div>
+  <div class="meta">共 21 课 · 6 个部分 · 对照 llama-index-core 0.14.22<br>
+    生成日期 2026-06-13 · MIT License</div>
+</section>
+<section class="print-toc"><div class="wrap"><h2>目录 · Contents</h2>
+<div class="tp">第一部分 · 宏观全景</div><ol>
+<li value="1">LlamaIndex 与 RAG 是什么</li>
+<li value="2">架构全景</li>
+<li value="3">一次 RAG 的生命周期</li>
+</ol>
+<div class="tp">第二部分 · 写入路径</div><ol>
+<li value="4">Document 与 Node 数据模型</li>
+<li value="5">数据加载 Readers</li>
+<li value="6">切块 Node Parsers</li>
+<li value="7">元数据与抽取器</li>
+<li value="8">Embedding 向量化</li>
+<li value="9">向量存储 Vector Stores</li>
+<li value="10">索引 Index 抽象</li>
+<li value="11">Ingestion 管道与持久化</li>
+</ol>
+<div class="tp">第三部分 · 查询路径</div><ol>
+<li value="12">检索器 Retrievers</li>
+<li value="13">节点后处理 Postprocessors</li>
+<li value="14">响应合成 Response Synthesizers</li>
+<li value="15">查询引擎 Query Engine</li>
+<li value="16">聊天引擎 Chat Engine</li>
+</ol>
+<div class="tp">第四部分 · 进阶</div><ol>
+<li value="17">全局配置 Settings 与 Prompt</li>
+<li value="18">进阶检索</li>
+<li value="19">评估 Evaluation</li>
+</ol>
+<div class="tp">第五部分 · 实战</div><ol>
+<li value="20">端到端 Capstone</li>
+</ol>
+<div class="tp">第六部分 · 速查</div><ol>
+<li value="21">术语表 · 概念索引</li>
+</ol></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第一部分 · 宏观全景</div><h1><span class="ln">01 ·</span> LlamaIndex 与 RAG 是什么</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p><div class="selftest">
+<h2><span data-lang="zh">🧪 自测 · 想一想为什么这么设计</span><span data-lang="en">🧪 Self-check · think about the design</span></h2>
+<div class="quiz">
+  <div class="qn">1. <span data-lang="zh">RAG（检索增强生成）的核心思想是？</span><span data-lang="en">What is the core idea of RAG?</span></div>
+  <ol class="opts">
+    <li><span data-lang="zh">换一个更大的模型</span><span data-lang="en">Switch to a bigger model</span></li>
+    <li><span data-lang="zh">回答前先检索相关外部片段、塞进上下文再生成</span><span data-lang="en">Retrieve relevant external snippets first, put them in context, then generate</span></li>
+    <li><span data-lang="zh">把全部数据塞进一个超大提示词</span><span data-lang="en">Stuff all data into one giant prompt</span></li>
+    <li><span data-lang="zh">重新训练模型以记住新知识</span><span data-lang="en">Retrain the model to memorize new knowledge</span></li>
+  </ol>
+  <details class="accordion" open>
+    <summary><span data-lang="zh">看答案与解析</span><span data-lang="en">Show answer & explanation</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><strong><span data-lang="zh">答案：B</span><span data-lang="en">Answer: B</span></strong> <span data-lang="zh">RAG = 先检索后生成：用检索到的相关片段作为上下文，让模型据此回答，避免重训成本与知识幻觉。</span><span data-lang="en">RAG retrieves first, then generates: relevant snippets become context so the model answers from them, avoiding retraining cost and hallucination.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz">
+  <div class="qn">2. <span data-lang="zh">LlamaIndex 在 RAG 里主要负责什么？</span><span data-lang="en">What does LlamaIndex mainly provide for RAG?</span></div>
+  <ol class="opts">
+    <li><span data-lang="zh">把加载→切块→索引→检索→合成这条管道标准化、可编排</span><span data-lang="en">Standardizing and orchestrating the load→split→index→retrieve→synthesize pipeline</span></li>
+    <li><span data-lang="zh">提供 GPU 推理</span><span data-lang="en">Providing GPU inference</span></li>
+    <li><span data-lang="zh">训练 embedding 模型</span><span data-lang="en">Training embedding models</span></li>
+    <li><span data-lang="zh">托管一个向量数据库服务</span><span data-lang="en">Hosting a vector database service</span></li>
+  </ol>
+  <details class="accordion" open>
+    <summary><span data-lang="zh">看答案与解析</span><span data-lang="en">Show answer & explanation</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><strong><span data-lang="zh">答案：A</span><span data-lang="en">Answer: A</span></strong> <span data-lang="zh">LlamaIndex 是 RAG 的“数据与编排框架”：统一各阶段接口，底层换 LLM / 向量库 / embedding 都不改主链路。</span><span data-lang="en">LlamaIndex is the data + orchestration framework for RAG: it unifies each stage so swapping the LLM / vector store / embedding doesn't change the main pipeline.</span></div></div></div>
+  </details>
+</div>
+<div class="card spark">
+  <div class="tag"><span data-lang="zh">💭 发散思考（没有标准答案）</span><span data-lang="en">💭 Open questions (no single right answer)</span></div>
+  <ul>
+    <li><span data-lang="zh">如果你的文档每天都在更新，你会如何设计“增量重新索引”的策略？</span><span data-lang="en">If your documents change daily, how would you design an incremental re-indexing strategy?</span></li>
+  </ul>
+</div>
+</div></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第一部分 · 宏观全景</div><h1><span class="ln">02 ·</span> 架构全景</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第一部分 · 宏观全景</div><h1><span class="ln">03 ·</span> 一次 RAG 的生命周期</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第二部分 · 写入路径</div><h1><span class="ln">04 ·</span> Document 与 Node 数据模型</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第二部分 · 写入路径</div><h1><span class="ln">05 ·</span> 数据加载 Readers</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第二部分 · 写入路径</div><h1><span class="ln">06 ·</span> 切块 Node Parsers</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第二部分 · 写入路径</div><h1><span class="ln">07 ·</span> 元数据与抽取器</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第二部分 · 写入路径</div><h1><span class="ln">08 ·</span> Embedding 向量化</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第二部分 · 写入路径</div><h1><span class="ln">09 ·</span> 向量存储 Vector Stores</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第二部分 · 写入路径</div><h1><span class="ln">10 ·</span> 索引 Index 抽象</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第二部分 · 写入路径</div><h1><span class="ln">11 ·</span> Ingestion 管道与持久化</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第三部分 · 查询路径</div><h1><span class="ln">12 ·</span> 检索器 Retrievers</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第三部分 · 查询路径</div><h1><span class="ln">13 ·</span> 节点后处理 Postprocessors</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第三部分 · 查询路径</div><h1><span class="ln">14 ·</span> 响应合成 Response Synthesizers</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第三部分 · 查询路径</div><h1><span class="ln">15 ·</span> 查询引擎 Query Engine</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第三部分 · 查询路径</div><h1><span class="ln">16 ·</span> 聊天引擎 Chat Engine</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第四部分 · 进阶</div><h1><span class="ln">17 ·</span> 全局配置 Settings 与 Prompt</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第四部分 · 进阶</div><h1><span class="ln">18 ·</span> 进阶检索</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第四部分 · 进阶</div><h1><span class="ln">19 ·</span> 评估 Evaluation</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第五部分 · 实战</div><h1><span class="ln">20 ·</span> 端到端 Capstone</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+<section class="print-lesson"><div class="wrap"><div class="lesson-head"><div class="lp">第六部分 · 速查</div><h1><span class="ln">21 ·</span> 术语表 · 概念索引</h1></div><div class="pipeline"><div class="flowrow"><span class="flowlabel"><span data-lang="zh">写入路径</span><span data-lang="en">Write path</span></span><span class="stage"><span data-lang="zh">加载</span><span data-lang="en">Load</span></span><span class="stage"><span data-lang="zh">切块</span><span data-lang="en">Split</span></span><span class="stage"><span data-lang="zh">Embed</span><span data-lang="en">Embed</span></span><span class="stage"><span data-lang="zh">存储</span><span data-lang="en">Store</span></span><span class="stage"><span data-lang="zh">索引</span><span data-lang="en">Index</span></span></div><div class="flowrow"><span class="flowlabel"><span data-lang="zh">查询路径</span><span data-lang="en">Query path</span></span><span class="stage"><span data-lang="zh">检索</span><span data-lang="en">Retrieve</span></span><span class="stage"><span data-lang="zh">后处理</span><span data-lang="en">Post-process</span></span><span class="stage"><span data-lang="zh">合成</span><span data-lang="en">Synthesize</span></span><span class="stage"><span data-lang="zh">回答</span><span data-lang="en">Answer</span></span></div></div><p class="lead"><span data-lang="zh">（本课内容建设中）</span><span data-lang="en">(Lesson content coming soon)</span></p></div></section>
+</body></html>
