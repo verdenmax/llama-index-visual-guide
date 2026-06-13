@@ -56,7 +56,59 @@ LESSON_12 = (
         "right content?” — without ever touching the LLM.",
     ))
 )
-LESSON_13 = _stub()
+LESSON_13 = (
+    c.pipeline("postprocess")
+    + c.lead(L(
+        "检索回来的 Node 在喂给 LLM <strong>之前</strong>还能再加工：<strong>过滤</strong>低分、<strong>重排（rerank）</strong>"
+        "把最相关的提前、或<strong>替换</strong>为句窗上下文。这一步便宜却常常显著提升答案质量。",
+        "Before the Nodes reach the LLM they can be reworked: <strong>filter</strong> low scores, <strong>rerank</strong> "
+        "the most relevant to the top, or <strong>replace</strong> them with sentence-window context. It's cheap yet "
+        "often a big quality win.",
+    ))
+    + c.analogy(L(
+        "取回的资料先<strong>筛掉跑题的</strong>、把<strong>最相关的排到最前</strong>，再交给写手——写手只读精选过的几页。",
+        "Sift out the off-topic pages, move the <strong>most relevant to the front</strong>, then hand them to the "
+        "writer — who only reads the curated few.",
+    ))
+    + c.section(
+        L("常用后处理器", "Common postprocessors"),
+        c.compare_table(
+            [L("后处理器", "Postprocessor"), L("做什么", "What it does")],
+            [
+                [L("SimilarityPostprocessor", "SimilarityPostprocessor"), L("按 <code>similarity_cutoff</code> 丢掉低分", "drop nodes below <code>similarity_cutoff</code>")],
+                [L("Rerank（LLM / Cohere…）", "Rerank (LLM / Cohere…)"), L("用更强模型重排相关性", "re-score relevance with a stronger model")],
+                [L("MetadataReplacementPostProcessor", "MetadataReplacementPostProcessor"), L("把句窗节点换成 window 上下文", "swap window-node text for its window")],
+            ],
+        ),
+    )
+    + c.source_ref("postprocessor/node.py", "SimilarityPostprocessor", L("相似度阈值过滤", "similarity-threshold filtering"))
+    + c.source_ref("postprocessor/metadata_replacement.py", "MetadataReplacementPostProcessor", L("配合句窗切块还原上下文", "restores context for sentence-window chunks"))
+    + c.code(
+        "from llama_index.core.postprocessor import SimilarityPostprocessor\n\n"
+        "nodes = index.as_retriever(similarity_top_k=5).retrieve('退款政策？')\n"
+        "pp = SimilarityPostprocessor(similarity_cutoff=0.7)\n"
+        "kept = pp.postprocess_nodes(nodes)   # 丢掉分数低于 0.7 的\n"
+        "print(len(nodes), '->', len(kept))\n\n"
+        "# 句窗专用：把单句节点替换为其上下文窗口\n"
+        "from llama_index.core.postprocessor import MetadataReplacementPostProcessor\n"
+        "mr = MetadataReplacementPostProcessor(target_metadata_key='window')",
+        caption=L("检索与生成之间的“质检站”", "a QC station between retrieval and generation"),
+    )
+    + c.key_points([
+        L("后处理在<strong>检索之后、生成之前</strong>，调整喂给 LLM 的 Node。",
+          "Postprocessing sits <strong>after retrieval, before generation</strong>, shaping the Nodes the LLM sees."),
+        L("<code>similarity_cutoff</code> 滤噪；rerank 提相关性；窗口替换补上下文。",
+          "<code>similarity_cutoff</code> denoises; rerank lifts relevance; window replacement restores context."),
+        L("它便宜（多为非 LLM 或一次轻量调用）却常带来明显提升。",
+          "It's cheap (often non-LLM or one light call) yet frequently a clear win."),
+    ])
+    + c.design_highlight(L(
+        "把“检索后、生成前”抽象成一串可插拔 postprocessor，让你<strong>在不重训、不换模型</strong>的情况下，"
+        "用最低成本提升答案质量——RAG 调优性价比最高的一环。",
+        "Modeling “after retrieval, before generation” as pluggable postprocessors lets you raise answer quality at the "
+        "lowest cost — <strong>no retraining, no model swap</strong>. The best bang-for-buck in RAG tuning.",
+    ))
+)
 LESSON_14 = _stub()
 LESSON_15 = _stub()
 LESSON_16 = _stub()

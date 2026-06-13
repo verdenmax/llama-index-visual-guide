@@ -284,6 +284,23 @@ QUIZZES = {
             },
         ],
     },
+    "13-postprocessors.html": {
+        "mcq": [
+            {
+                "q": L("<code>SimilarityPostprocessor(similarity_cutoff=0.7)</code> 的作用是？",
+                       "What does <code>SimilarityPostprocessor(similarity_cutoff=0.7)</code> do?"),
+                "opts": [
+                    L("把所有分数提高到 0.7", "Raise every score to 0.7"),
+                    L("丢弃相似度低于 0.7 的 Node", "Drop Nodes with similarity below 0.7"),
+                    L("只取前 0.7 个 Node", "Keep only the first 0.7 Nodes"),
+                    L("重新向量化", "Re-embed everything"),
+                ],
+                "answer": 1,
+                "why": L("它按阈值过滤掉低相关 Node，减少噪声进入生成阶段。",
+                         "It filters out low-relevance Nodes by threshold, reducing noise before generation."),
+            },
+        ],
+    },
 }
 
 
