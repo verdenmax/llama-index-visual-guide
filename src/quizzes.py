@@ -390,6 +390,27 @@ QUIZZES = {
             },
         ],
     },
+    "19-evaluation.html": {
+        "mcq": [
+            {
+                "q": L("<code>FaithfulnessEvaluator</code> 主要检查什么？",
+                       "What does <code>FaithfulnessEvaluator</code> mainly check?"),
+                "opts": [
+                    L("答案的语法是否正确", "Whether the answer's grammar is correct"),
+                    L("答案是否被检索到的上下文支撑（防幻觉）", "Whether the answer is supported by the retrieved context (anti-hallucination)"),
+                    L("检索速度", "Retrieval speed"),
+                    L("向量维度", "Vector dimension"),
+                ],
+                "answer": 1,
+                "why": L("忠实度衡量答案是否有据可依，是 RAG 防幻觉的核心指标。",
+                         "Faithfulness measures whether the answer is grounded in the context — the core anti-hallucination metric."),
+            },
+        ],
+        "open": [
+            L("你会如何搭一个最小的回归评估集，防止改动让 RAG 变差？",
+              "How would you build a minimal regression eval set to keep changes from degrading the RAG?"),
+        ],
+    },
 }
 
 

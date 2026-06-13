@@ -121,4 +121,52 @@ LESSON_18 = (
         "for the basic retriever — the QueryEngine never notices.",
     ))
 )
-LESSON_19 = _stub()
+LESSON_19 = (
+    c.pipeline(None)
+    + c.lead(L(
+        "RAG 到底好不好？用<strong>评估器</strong>量化：<strong>忠实度</strong>（Faithfulness：答案有没有被检索内容支撑）、"
+        "<strong>相关性</strong>（Relevancy：检索与答案是否切题）、<strong>正确性</strong>（Correctness：对照参考答案打分）。",
+        "Is the RAG any good? Quantify it with <strong>evaluators</strong>: <strong>Faithfulness</strong> (is the answer "
+        "grounded in retrieved content?), <strong>Relevancy</strong> (are retrieval and answer on-topic?), and "
+        "<strong>Correctness</strong> (score against a reference answer).",
+    ))
+    + c.analogy(L(
+        "给答案打分的<strong>三把尺子</strong>：有没有瞎编（忠实）、答没答到点（相关）、对不对（正确）。",
+        "Three rulers for grading an answer: did it make things up (faithful), did it stay on point (relevant), and is "
+        "it right (correct).",
+    ))
+    + c.section(
+        L("三类评估器", "Three evaluators"),
+        c.compare_table(
+            [L("评估器", "Evaluator"), L("回答的问题", "Question it answers")],
+            [
+                [L("FaithfulnessEvaluator", "FaithfulnessEvaluator"), L("答案是否被检索到的上下文支撑？", "is the answer supported by retrieved context?")],
+                [L("RelevancyEvaluator", "RelevancyEvaluator"), L("检索 + 答案是否切题？", "are retrieval + answer relevant?")],
+                [L("CorrectnessEvaluator", "CorrectnessEvaluator"), L("对照参考答案对不对？", "is it correct vs a reference?")],
+            ],
+        ),
+    )
+    + c.source_ref("evaluation/faithfulness.py", "FaithfulnessEvaluator", L("忠实度评估（防幻觉）", "faithfulness (anti-hallucination)"))
+    + c.source_ref("evaluation/base.py", "BaseEvaluator.evaluate_response", L("统一评估入口", "the unified evaluation entry"))
+    + c.code(
+        "from llama_index.core.evaluation import FaithfulnessEvaluator\n\n"
+        "resp = index.as_query_engine().query('退款政策是什么？')\n"
+        "ev = FaithfulnessEvaluator()\n"
+        "result = ev.evaluate_response(response=resp)\n"
+        "print(result.passing, result.score)   # 答案是否有据可依",
+        caption=L("把“感觉还行”变成“可度量”", "turn “feels fine” into “measurable”"),
+    )
+    + c.key_points([
+        L("三类评估：<strong>忠实</strong>（防幻觉）、<strong>相关</strong>（切题）、<strong>正确</strong>（对参考）。",
+          "Three checks: <strong>faithful</strong> (anti-hallucination), <strong>relevant</strong> (on-topic), <strong>correct</strong> (vs reference)."),
+        L("<code>evaluate_response</code> 直接吃 QueryEngine 的返回（含 source_nodes）。",
+          "<code>evaluate_response</code> consumes the QueryEngine's response directly (with source_nodes)."),
+        L("评估通常由一个 LLM 充当“裁判”。",
+          "Evaluation is usually done by an LLM acting as judge."),
+    ])
+    + c.design_highlight(L(
+        "评估把 RAG 调优从“凭感觉”变成“<strong>可度量的闭环</strong>”：改切块、换检索、调 Prompt 后，用同一套指标对比，才知道是真变好了。",
+        "Evaluation turns RAG tuning from gut feeling into a <strong>measurable loop</strong>: after changing chunking, "
+        "retrieval or prompts, compare on the same metrics to know it actually improved.",
+    ))
+)
