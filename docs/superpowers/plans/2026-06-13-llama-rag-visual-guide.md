@@ -674,27 +674,27 @@ P5 = L("第五部分 · 实战", "Part 5 · Capstone")
 P6 = L("第六部分 · 速查", "Part 6 · Reference")
 
 PAGES = [
-    ("01-what-is-llamaindex.html", L("LlamaIndex 与 RAG 是什么", "What is LlamaIndex & RAG"), P1),
+    ("01-what-is-llamaindex.html", L("LlamaIndex 与 RAG 是什么", "What is LlamaIndex &amp; RAG"), P1),
     ("02-architecture.html", L("架构全景", "Architecture Overview"), P1),
     ("03-rag-lifecycle.html", L("一次 RAG 的生命周期", "Lifecycle of a RAG Query"), P1),
-    ("04-documents-nodes.html", L("Document 与 Node 数据模型", "Documents & Nodes"), P2),
+    ("04-documents-nodes.html", L("Document 与 Node 数据模型", "Documents &amp; Nodes"), P2),
     ("05-readers.html", L("数据加载 Readers", "Loading Data: Readers"), P2),
     ("06-node-parsers.html", L("切块 Node Parsers", "Chunking: Node Parsers"), P2),
-    ("07-metadata-extractors.html", L("元数据与抽取器", "Metadata & Extractors"), P2),
+    ("07-metadata-extractors.html", L("元数据与抽取器", "Metadata &amp; Extractors"), P2),
     ("08-embeddings.html", L("Embedding 向量化", "Embeddings"), P2),
     ("09-vector-stores.html", L("向量存储 Vector Stores", "Vector Stores"), P2),
     ("10-index-abstraction.html", L("索引 Index 抽象", "The Index Abstraction"), P2),
-    ("11-ingestion-storage.html", L("Ingestion 管道与持久化", "Ingestion & Storage"), P2),
+    ("11-ingestion-storage.html", L("Ingestion 管道与持久化", "Ingestion &amp; Storage"), P2),
     ("12-retrievers.html", L("检索器 Retrievers", "Retrievers"), P3),
     ("13-postprocessors.html", L("节点后处理 Postprocessors", "Node Postprocessors"), P3),
     ("14-response-synthesizers.html", L("响应合成 Response Synthesizers", "Response Synthesizers"), P3),
     ("15-query-engine.html", L("查询引擎 Query Engine", "Query Engines"), P3),
     ("16-chat-engine.html", L("聊天引擎 Chat Engine", "Chat Engines"), P3),
-    ("17-settings-prompts.html", L("全局配置 Settings 与 Prompt", "Settings & Prompts"), P4),
+    ("17-settings-prompts.html", L("全局配置 Settings 与 Prompt", "Settings &amp; Prompts"), P4),
     ("18-advanced-retrieval.html", L("进阶检索", "Advanced Retrieval"), P4),
     ("19-evaluation.html", L("评估 Evaluation", "Evaluation"), P4),
     ("20-capstone.html", L("端到端 Capstone", "End-to-End Capstone"), P5),
-    ("21-glossary.html", L("术语表 · 概念索引", "Glossary & Concept Index"), P6),
+    ("21-glossary.html", L("术语表 · 概念索引", "Glossary &amp; Concept Index"), P6),
 ]
 
 INDEX_FILE = "index.html"
@@ -1024,7 +1024,7 @@ def render(fname):
         shuffled, ans = _shuffle(item["opts"], item["answer"], f"{fname}:{i}")
         opts = "\n".join(f"    <li>{i18n.render(o, block=False)}</li>" for o in shuffled)
         letter = chr(65 + ans)
-        reveal = i18n.t("看答案与解析", "Show answer & explanation")
+        reveal = i18n.t("看答案与解析", "Show answer &amp; explanation")
         hint = i18n.t("点击展开", "expand")
         ans_label = i18n.t(f"答案：{letter}", f"Answer: {letter}")
         out.append(
@@ -2357,7 +2357,7 @@ LESSON_10 = (
         "Index 不只是“向量库”——它是<strong>为某种检索方式组织 Node 的数据结构</strong>。不同 Index 对应不同问题："
         "相似问答用 VectorStoreIndex，整库总结用 SummaryIndex，实体关系用 PropertyGraphIndex。",
         "An Index isn't just a vector store — it's a <strong>data structure that organizes Nodes for a particular way "
-        "of retrieving</strong>. Different Indexes fit different questions: VectorStoreIndex for similarity Q&A, "
+        "of retrieving</strong>. Different Indexes fit different questions: VectorStoreIndex for similarity Q&amp;A, "
         "SummaryIndex for whole-corpus summaries, PropertyGraphIndex for entity relations.",
     ))
     + c.analogy(L(
@@ -2370,7 +2370,7 @@ LESSON_10 = (
         c.compare_table(
             [L("Index", "Index"), L("检索范式", "Retrieval style"), L("适合", "Best for")],
             [
-                [L("VectorStoreIndex", "VectorStoreIndex"), L("向量近邻 top-k", "vector top-k"), L("相似问答（最常用）", "similarity Q&A (most common)")],
+                [L("VectorStoreIndex", "VectorStoreIndex"), L("向量近邻 top-k", "vector top-k"), L("相似问答（最常用）", "similarity Q&amp;A (most common)")],
                 [L("SummaryIndex", "SummaryIndex"), L("遍历所有 Node", "iterate all Nodes"), L("整库总结", "summarize a corpus")],
                 [L("DocumentSummaryIndex", "DocumentSummaryIndex"), L("先按文档摘要召回", "recall via doc summaries"), L("多文档路由", "routing across docs")],
                 [L("PropertyGraphIndex", "PropertyGraphIndex"), L("图谱遍历", "graph traversal"), L("实体关系/多跳", "entities / multi-hop")],
@@ -2391,7 +2391,7 @@ LESSON_10 = (
         L("Index = <strong>组织方式 + 检索范式</strong>，不等于向量库本身。",
           "An Index = <strong>organization + retrieval style</strong>, not the vector store itself."),
         L("相似问答选 VectorStoreIndex；整库总结选 SummaryIndex。",
-          "VectorStoreIndex for similarity Q&A; SummaryIndex for whole-corpus summaries."),
+          "VectorStoreIndex for similarity Q&amp;A; SummaryIndex for whole-corpus summaries."),
         L("所有 Index 都用 <code>from_documents</code> / <code>as_query_engine</code> 同款入口。",
           "Every Index shares the <code>from_documents</code> / <code>as_query_engine</code> entry points."),
     ])
@@ -2664,7 +2664,7 @@ LESSON_14 = (
     + c.design_highlight(L(
         "把“拼接片段”这件容易写死的事抽象成可切换的 ResponseMode，让同一套检索结果能服务“精确问答”到“全局总结”不同需求。",
         "Abstracting “stitch the chunks” into switchable ResponseModes lets one set of retrieved results serve "
-        "everything from precise Q&A to global summarization.",
+        "everything from precise Q&amp;A to global summarization.",
     ))
 )
 ```
@@ -2690,7 +2690,7 @@ LESSON_15 = (
     ))
     + c.analogy(L(
         "把“图书管理员（检索）+ 质检（后处理）+ 写手（合成）”组装成一个<strong>一键问答窗口</strong>。",
-        "Bundle “librarian (retrieve) + QC (postprocess) + writer (synthesize)” into a single <strong>one-click Q&A "
+        "Bundle “librarian (retrieve) + QC (postprocess) + writer (synthesize)” into a single <strong>one-click Q&amp;A "
         "window</strong>.",
     ))
     + c.section(
@@ -2730,7 +2730,7 @@ LESSON_15 = (
     + c.design_highlight(L(
         "QueryEngine 是查询路径的<strong>组合根</strong>：把三个正交组件组装起来。理解它，你就能把“默认问答”改造成任意 RAG 变体。",
         "The QueryEngine is the query path's <strong>composition root</strong>: it assembles three orthogonal "
-        "components. Grasp it and you can reshape “default Q&A” into any RAG variant.",
+        "components. Grasp it and you can reshape “default Q&amp;A” into any RAG variant.",
     ))
 )
 ```

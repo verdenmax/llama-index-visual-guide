@@ -159,7 +159,7 @@ LESSON_14 = (
     + c.design_highlight(L(
         "把“拼接片段”这件容易写死的事抽象成可切换的 ResponseMode，让同一套检索结果能服务“精确问答”到“全局总结”不同需求。",
         "Abstracting “stitch the chunks” into switchable ResponseModes lets one set of retrieved results serve "
-        "everything from precise Q&A to global summarization.",
+        "everything from precise Q&amp;A to global summarization.",
     ))
 )
 LESSON_15 = (
@@ -173,7 +173,7 @@ LESSON_15 = (
     ))
     + c.analogy(L(
         "把“图书管理员（检索）+ 质检（后处理）+ 写手（合成）”组装成一个<strong>一键问答窗口</strong>。",
-        "Bundle “librarian (retrieve) + QC (postprocess) + writer (synthesize)” into a single <strong>one-click Q&A "
+        "Bundle “librarian (retrieve) + QC (postprocess) + writer (synthesize)” into a single <strong>one-click Q&amp;A "
         "window</strong>.",
     ))
     + c.section(
@@ -213,7 +213,7 @@ LESSON_15 = (
     + c.design_highlight(L(
         "QueryEngine 是查询路径的<strong>组合根</strong>：把三个正交组件组装起来。理解它，你就能把“默认问答”改造成任意 RAG 变体。",
         "The QueryEngine is the query path's <strong>composition root</strong>: it assembles three orthogonal "
-        "components. Grasp it and you can reshape “default Q&A” into any RAG variant.",
+        "components. Grasp it and you can reshape “default Q&amp;A” into any RAG variant.",
     ))
 )
 LESSON_16 = (

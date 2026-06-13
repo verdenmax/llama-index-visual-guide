@@ -43,27 +43,27 @@ P5 = L("第五部分 · 实战", "Part 5 · Capstone")
 P6 = L("第六部分 · 速查", "Part 6 · Reference")
 
 PAGES = [
-    ("01-what-is-llamaindex.html", L("LlamaIndex 与 RAG 是什么", "What is LlamaIndex & RAG"), P1),
+    ("01-what-is-llamaindex.html", L("LlamaIndex 与 RAG 是什么", "What is LlamaIndex &amp; RAG"), P1),
     ("02-architecture.html", L("架构全景", "Architecture Overview"), P1),
     ("03-rag-lifecycle.html", L("一次 RAG 的生命周期", "Lifecycle of a RAG Query"), P1),
-    ("04-documents-nodes.html", L("Document 与 Node 数据模型", "Documents & Nodes"), P2),
+    ("04-documents-nodes.html", L("Document 与 Node 数据模型", "Documents &amp; Nodes"), P2),
     ("05-readers.html", L("数据加载 Readers", "Loading Data: Readers"), P2),
     ("06-node-parsers.html", L("切块 Node Parsers", "Chunking: Node Parsers"), P2),
-    ("07-metadata-extractors.html", L("元数据与抽取器", "Metadata & Extractors"), P2),
+    ("07-metadata-extractors.html", L("元数据与抽取器", "Metadata &amp; Extractors"), P2),
     ("08-embeddings.html", L("Embedding 向量化", "Embeddings"), P2),
     ("09-vector-stores.html", L("向量存储 Vector Stores", "Vector Stores"), P2),
     ("10-index-abstraction.html", L("索引 Index 抽象", "The Index Abstraction"), P2),
-    ("11-ingestion-storage.html", L("Ingestion 管道与持久化", "Ingestion & Storage"), P2),
+    ("11-ingestion-storage.html", L("Ingestion 管道与持久化", "Ingestion &amp; Storage"), P2),
     ("12-retrievers.html", L("检索器 Retrievers", "Retrievers"), P3),
     ("13-postprocessors.html", L("节点后处理 Postprocessors", "Node Postprocessors"), P3),
     ("14-response-synthesizers.html", L("响应合成 Response Synthesizers", "Response Synthesizers"), P3),
     ("15-query-engine.html", L("查询引擎 Query Engine", "Query Engines"), P3),
     ("16-chat-engine.html", L("聊天引擎 Chat Engine", "Chat Engines"), P3),
-    ("17-settings-prompts.html", L("全局配置 Settings 与 Prompt", "Settings & Prompts"), P4),
+    ("17-settings-prompts.html", L("全局配置 Settings 与 Prompt", "Settings &amp; Prompts"), P4),
     ("18-advanced-retrieval.html", L("进阶检索", "Advanced Retrieval"), P4),
     ("19-evaluation.html", L("评估 Evaluation", "Evaluation"), P4),
     ("20-capstone.html", L("端到端 Capstone", "End-to-End Capstone"), P5),
-    ("21-glossary.html", L("术语表 · 概念索引", "Glossary & Concept Index"), P6),
+    ("21-glossary.html", L("术语表 · 概念索引", "Glossary &amp; Concept Index"), P6),
 ]
 
 INDEX_FILE = "index.html"

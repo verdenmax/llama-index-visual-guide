@@ -185,7 +185,7 @@ QUIZZES = {
                 "q": L("给 Node 加 metadata 的主要价值是？", "What's the main value of adding metadata to Nodes?"),
                 "opts": [
                     L("减少存储占用", "Reduce storage"),
-                    L("增强检索与过滤（向量相似之外的第二通道）", "Strengthen retrieval & filtering (a second channel beyond vector similarity)"),
+                    L("增强检索与过滤（向量相似之外的第二通道）", "Strengthen retrieval &amp; filtering (a second channel beyond vector similarity)"),
                     L("加快 LLM 生成", "Speed up the LLM"),
                     L("替代 embedding", "Replace embeddings"),
                 ],
@@ -247,7 +247,7 @@ QUIZZES = {
         ],
         "open": [
             L("FAQ 问答 vs 合同全文摘要，分别该选哪种 Index？为什么？",
-              "FAQ Q&A vs summarizing a full contract — which index would you pick for each, and why?"),
+              "FAQ Q&amp;A vs summarizing a full contract — which index would you pick for each, and why?"),
         ],
     },
     "11-ingestion-storage.html": {
@@ -432,7 +432,7 @@ def render(fname):
         shuffled, ans = _shuffle(item["opts"], item["answer"], f"{fname}:{i}")
         opts = "\n".join(f"    <li>{i18n.render(o, block=False)}</li>" for o in shuffled)
         letter = chr(65 + ans)
-        reveal = i18n.t("看答案与解析", "Show answer & explanation")
+        reveal = i18n.t("看答案与解析", "Show answer &amp; explanation")
         hint = i18n.t("点击展开", "expand")
         ans_label = i18n.t(f"答案：{letter}", f"Answer: {letter}")
         out.append(

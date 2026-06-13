@@ -332,7 +332,7 @@ LESSON_10 = (
         "Index 不只是“向量库”——它是<strong>为某种检索方式组织 Node 的数据结构</strong>。不同 Index 对应不同问题："
         "相似问答用 VectorStoreIndex，整库总结用 SummaryIndex，实体关系用 PropertyGraphIndex。",
         "An Index isn't just a vector store — it's a <strong>data structure that organizes Nodes for a particular way "
-        "of retrieving</strong>. Different Indexes fit different questions: VectorStoreIndex for similarity Q&A, "
+        "of retrieving</strong>. Different Indexes fit different questions: VectorStoreIndex for similarity Q&amp;A, "
         "SummaryIndex for whole-corpus summaries, PropertyGraphIndex for entity relations.",
     ))
     + c.analogy(L(
@@ -345,7 +345,7 @@ LESSON_10 = (
         c.compare_table(
             [L("Index", "Index"), L("检索范式", "Retrieval style"), L("适合", "Best for")],
             [
-                [L("VectorStoreIndex", "VectorStoreIndex"), L("向量近邻 top-k", "vector top-k"), L("相似问答（最常用）", "similarity Q&A (most common)")],
+                [L("VectorStoreIndex", "VectorStoreIndex"), L("向量近邻 top-k", "vector top-k"), L("相似问答（最常用）", "similarity Q&amp;A (most common)")],
                 [L("SummaryIndex", "SummaryIndex"), L("遍历所有 Node", "iterate all Nodes"), L("整库总结", "summarize a corpus")],
                 [L("DocumentSummaryIndex", "DocumentSummaryIndex"), L("先按文档摘要召回", "recall via doc summaries"), L("多文档路由", "routing across docs")],
                 [L("PropertyGraphIndex", "PropertyGraphIndex"), L("图谱遍历", "graph traversal"), L("实体关系/多跳", "entities / multi-hop")],
@@ -366,7 +366,7 @@ LESSON_10 = (
         L("Index = <strong>组织方式 + 检索范式</strong>，不等于向量库本身。",
           "An Index = <strong>organization + retrieval style</strong>, not the vector store itself."),
         L("相似问答选 VectorStoreIndex；整库总结选 SummaryIndex。",
-          "VectorStoreIndex for similarity Q&A; SummaryIndex for whole-corpus summaries."),
+          "VectorStoreIndex for similarity Q&amp;A; SummaryIndex for whole-corpus summaries."),
         L("所有 Index 都用 <code>from_documents</code> / <code>as_query_engine</code> 同款入口。",
           "Every Index shares the <code>from_documents</code> / <code>as_query_engine</code> entry points."),
     ])
