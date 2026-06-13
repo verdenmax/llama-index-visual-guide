@@ -250,6 +250,23 @@ QUIZZES = {
               "FAQ Q&A vs summarizing a full contract — which index would you pick for each, and why?"),
         ],
     },
+    "11-ingestion-storage.html": {
+        "mcq": [
+            {
+                "q": L("文档每天小幅更新，如何避免每次全量重建索引？",
+                       "Documents change a little every day — how do you avoid fully rebuilding the index each time?"),
+                "opts": [
+                    L("换更快的机器", "Use a faster machine"),
+                    L("用 IngestionPipeline 的缓存 + docstore 去重做增量", "Use IngestionPipeline's cache + docstore dedup for incremental updates"),
+                    L("关掉切块", "Turn off chunking"),
+                    L("改用关键词检索", "Switch to keyword search"),
+                ],
+                "answer": 1,
+                "why": L("缓存让相同输入不重复计算，docstore 去重让只处理新增/变化的文档。",
+                         "The cache skips recomputing identical inputs, and docstore dedup processes only new/changed documents."),
+            },
+        ],
+    },
 }
 
 

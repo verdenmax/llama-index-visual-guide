@@ -377,4 +377,61 @@ LESSON_10 = (
         "<strong>switch paradigms with the same code</strong> — even auto-route across indexes with a Router.",
     ))
 )
-LESSON_11 = _stub()
+LESSON_11 = (
+    c.pipeline("store")
+    + c.lead(L(
+        "<strong>IngestionPipeline</strong> 把切块、抽取、向量化串成一条<strong>可缓存、可去重</strong>的管道；"
+        "<strong>StorageContext</strong> + <code>persist</code> / <code>load_index_from_storage</code> 让建好的索引落盘、下次秒开。",
+        "<strong>IngestionPipeline</strong> chains splitting, extraction and embedding into a "
+        "<strong>cacheable, dedup-aware</strong> pipeline; <strong>StorageContext</strong> + <code>persist</code> / "
+        "<code>load_index_from_storage</code> let a built index hit disk and reload instantly next time.",
+    ))
+    + c.analogy(L(
+        "Ingestion 像<strong>自动化装配线</strong>（切块→抽取→向量化），缓存让“已加工的零件”不重做；"
+        "persist 像把建好的图书馆<strong>整体存档</strong>，下次直接开门营业。",
+        "Ingestion is an <strong>assembly line</strong> (split→extract→embed); the cache skips “parts already made”; "
+        "persist <strong>archives the finished library</strong> so next time you just open the doors.",
+    ))
+    + c.section(
+        L("管道 + 存储解决什么", "What pipeline + storage solve"),
+        c.compare_table(
+            [L("能力", "Capability"), L("带来的好处", "Benefit")],
+            [
+                [L("transformations 串联", "chained transformations"), L("一处定义、可复用", "define once, reuse")],
+                [L("cache", "cache"), L("相同输入不重复算", "skip recompute on same input")],
+                [L("docstore 去重", "docstore dedup"), L("增量更新只处理变化的文档", "incremental: only changed docs")],
+                [L("persist / load", "persist / load"), L("索引落盘，重启免重建", "index on disk, no rebuild on restart")],
+            ],
+        ),
+    )
+    + c.source_ref("ingestion/pipeline.py", "IngestionPipeline.run", L("可缓存/去重的摄取管道", "the cacheable, dedup-aware pipeline"))
+    + c.source_ref("storage/storage_context.py", "StorageContext.persist", L("把 docstore/index/vector 一起落盘", "persists docstore/index/vector together"))
+    + c.source_ref("indices/loading.py", "load_index_from_storage", L("从磁盘恢复索引", "reload an index from disk"))
+    + c.code(
+        "from llama_index.core import VectorStoreIndex, StorageContext, load_index_from_storage\n"
+        "from llama_index.core.ingestion import IngestionPipeline\n"
+        "from llama_index.core.node_parser import SentenceSplitter\n\n"
+        "# 可缓存的摄取管道：相同文档不重复切块/向量化\n"
+        "pipeline = IngestionPipeline(transformations=[SentenceSplitter(chunk_size=512)])\n"
+        "nodes = pipeline.run(documents=docs)\n"
+        "index = VectorStoreIndex(nodes)\n\n"
+        "# 落盘，下次秒开\n"
+        "index.storage_context.persist(persist_dir='./storage')\n"
+        "index2 = load_index_from_storage(StorageContext.from_defaults(persist_dir='./storage'))",
+        caption=L("建一次、存起来、反复用", "build once, persist, reuse"),
+    )
+    + c.key_points([
+        L("IngestionPipeline 让“建索引”变成<strong>幂等、可缓存</strong>的管道。",
+          "IngestionPipeline makes “building the index” an <strong>idempotent, cacheable</strong> process."),
+        L("docstore 去重支持<strong>增量更新</strong>：只处理变化的文档。",
+          "docstore dedup enables <strong>incremental updates</strong>: only changed docs are processed."),
+        L("<code>persist</code> / <code>load_index_from_storage</code> 避免每次启动都重建。",
+          "<code>persist</code> / <code>load_index_from_storage</code> avoid rebuilding on every startup."),
+    ])
+    + c.design_highlight(L(
+        "把摄取做成<strong>幂等可缓存</strong>的管道，是 RAG 从“demo 跑通”走向“生产可维护”的关键一步——"
+        "数据天天变，但只重算变化的部分。",
+        "Making ingestion an <strong>idempotent, cacheable</strong> pipeline is the step that takes RAG from “demo "
+        "works” to “maintainable in production” — data changes daily, but only the deltas are recomputed.",
+    ))
+)
