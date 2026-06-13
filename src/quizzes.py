@@ -356,6 +356,23 @@ QUIZZES = {
             },
         ],
     },
+    "17-settings-prompts.html": {
+        "mcq": [
+            {
+                "q": L("新版 LlamaIndex 中，<code>Settings</code> 取代了什么？",
+                       "In recent LlamaIndex, what did <code>Settings</code> replace?"),
+                "opts": [
+                    L("VectorStore", "the VectorStore"),
+                    L("ServiceContext（旧的全局配置）", "ServiceContext (the old global config)"),
+                    L("Retriever", "the Retriever"),
+                    L("Document", "the Document"),
+                ],
+                "answer": 1,
+                "why": L("Settings 是全局默认配置单例，取代了过去到处传递的 ServiceContext。",
+                         "Settings is the global default-config singleton that replaced the old, widely-passed ServiceContext."),
+            },
+        ],
+    },
 }
 
 
