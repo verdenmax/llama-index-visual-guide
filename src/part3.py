@@ -162,5 +162,58 @@ LESSON_14 = (
         "everything from precise Q&A to global summarization.",
     ))
 )
-LESSON_15 = _stub()
+LESSON_15 = (
+    c.pipeline("answer")
+    + c.lead(L(
+        "<strong>QueryEngine</strong> 把<strong>检索器 + 后处理 + 响应合成器</strong>装配成一个 <code>.query()</code> 入口。"
+        "<code>index.as_query_engine()</code> 是快捷方式；<code>RetrieverQueryEngine.from_args(...)</code> 让你自由拼装。",
+        "A <strong>QueryEngine</strong> assembles <strong>retriever + postprocessors + synthesizer</strong> behind one "
+        "<code>.query()</code> call. <code>index.as_query_engine()</code> is the shortcut; "
+        "<code>RetrieverQueryEngine.from_args(...)</code> lets you wire it by hand.",
+    ))
+    + c.analogy(L(
+        "把“图书管理员（检索）+ 质检（后处理）+ 写手（合成）”组装成一个<strong>一键问答窗口</strong>。",
+        "Bundle “librarian (retrieve) + QC (postprocess) + writer (synthesize)” into a single <strong>one-click Q&A "
+        "window</strong>.",
+    ))
+    + c.section(
+        L("两种装配方式", "Two ways to assemble"),
+        c.compare_table(
+            [L("方式", "Way"), L("适合", "Good for")],
+            [
+                [L("<code>index.as_query_engine(...)</code>", "<code>index.as_query_engine(...)</code>"), L("快速、默认装配", "fast, default wiring")],
+                [L("<code>RetrieverQueryEngine.from_args(...)</code>", "<code>RetrieverQueryEngine.from_args(...)</code>"), L("自定义检索器/后处理/合成器", "custom retriever/postproc/synth")],
+            ],
+        ),
+    )
+    + c.source_ref("query_engine/retriever_query_engine.py", "RetrieverQueryEngine.from_args", L("可定制的查询引擎装配", "customizable query-engine assembly"))
+    + c.source_ref("base/base_query_engine.py", "BaseQueryEngine.query", L("查询路径的统一入口", "the unified query entry point"))
+    + c.code(
+        "from llama_index.core.query_engine import RetrieverQueryEngine\n"
+        "from llama_index.core.postprocessor import SimilarityPostprocessor\n"
+        "from llama_index.core import get_response_synthesizer\n\n"
+        "# 手动拼装：检索器 + 后处理 + 合成器\n"
+        "engine = RetrieverQueryEngine.from_args(\n"
+        "    retriever=index.as_retriever(similarity_top_k=5),\n"
+        "    node_postprocessors=[SimilarityPostprocessor(similarity_cutoff=0.7)],\n"
+        "    response_synthesizer=get_response_synthesizer(response_mode='compact'),\n"
+        ")\n"
+        "resp = engine.query('退款政策是什么？')\n"
+        "print(resp, '\\n依据:', [n.node_id for n in resp.source_nodes])",
+        caption=L("QueryEngine = 查询路径的“组合根”", "the QueryEngine is the query path's composition root"),
+    )
+    + c.key_points([
+        L("QueryEngine 串起<strong>检索→后处理→合成</strong>，对外只暴露 <code>.query()</code>。",
+          "A QueryEngine chains <strong>retrieve→postprocess→synthesize</strong>, exposing only <code>.query()</code>."),
+        L("三件套可<strong>独立替换</strong>，组合出不同行为。",
+          "Each of the three parts is <strong>independently swappable</strong>."),
+        L("<code>response.source_nodes</code> 保留可溯源的依据。",
+          "<code>response.source_nodes</code> keeps the traceable evidence."),
+    ])
+    + c.design_highlight(L(
+        "QueryEngine 是查询路径的<strong>组合根</strong>：把三个正交组件组装起来。理解它，你就能把“默认问答”改造成任意 RAG 变体。",
+        "The QueryEngine is the query path's <strong>composition root</strong>: it assembles three orthogonal "
+        "components. Grasp it and you can reshape “default Q&A” into any RAG variant.",
+    ))
+)
 LESSON_16 = _stub()

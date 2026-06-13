@@ -322,6 +322,23 @@ QUIZZES = {
               "With a small context window but many chunks, what are the costs of refine vs compact?"),
         ],
     },
+    "15-query-engine.html": {
+        "mcq": [
+            {
+                "q": L("RetrieverQueryEngine 把哪三件套组合在一起？",
+                       "Which three pieces does RetrieverQueryEngine assemble?"),
+                "opts": [
+                    L("加载器 / 切块器 / 向量化", "loader / splitter / embedding"),
+                    L("检索器 / 节点后处理 / 响应合成器", "retriever / node postprocessors / response synthesizer"),
+                    L("LLM / Embedding / 向量库", "LLM / embedding / vector store"),
+                    L("三种不同的 Index", "three kinds of Index"),
+                ],
+                "answer": 1,
+                "why": L("QueryEngine 是查询路径的组合根：把 retriever + node_postprocessors + response_synthesizer 串成一个 .query()。",
+                         "The QueryEngine is the query path's composition root: it chains retriever + node_postprocessors + response_synthesizer behind one .query()."),
+            },
+        ],
+    },
 }
 
 
