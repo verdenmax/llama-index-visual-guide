@@ -2244,7 +2244,7 @@ LESSON_08 = (
             [L("做法", "Approach"), L("匹配方式", "Match by"), L("能否懂“同义不同词”", "Catches paraphrases?")],
             [
                 [L("关键词匹配", "Keyword match"), L("字面相同", "literal overlap"), L("不能", "no")],
-                [L("向量检索", "Vector search"), L("语义相近（余弦距离）", "semantic closeness (cosine)"), L("能", "yes")],
+                [L("向量检索", "Vector search"), L("语义相近（余弦相似度）", "semantic closeness (cosine similarity)"), L("能", "yes")],
             ],
         ),
     )
