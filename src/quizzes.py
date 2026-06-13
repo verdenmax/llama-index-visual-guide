@@ -125,6 +125,23 @@ QUIZZES = {
               "If one index serves thousands of queries, which step's output would you cache or persist, and why?"),
         ],
     },
+    "04-documents-nodes.html": {
+        "mcq": [
+            {
+                "q": L("RAG 中真正被检索、并喂给 LLM 的最小单位是？",
+                       "In RAG, what is the smallest unit that actually gets retrieved and fed to the LLM?"),
+                "opts": [
+                    L("整篇 Document", "the whole Document"),
+                    L("Node（切块后带元数据的片段）", "a Node (a chunked, metadata-bearing piece)"),
+                    L("原始文件", "the raw file"),
+                    L("向量本身", "the vector itself"),
+                ],
+                "answer": 1,
+                "why": L("Document 会被切成 Node；检索、返回的 source_nodes、以及响应合成都以 Node 为单位。",
+                         "A Document is split into Nodes; retrieval, the returned source_nodes, and synthesis all operate on Nodes."),
+            },
+        ],
+    },
 }
 
 
