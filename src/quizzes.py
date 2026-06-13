@@ -5,6 +5,26 @@ Content lives here as data (``L`` for bilingual text) keyed by filename;
 ``render(fname)`` turns it into HTML appended to each lesson by build.py /
 build_print.py. Options are deterministically shuffled so the correct answer
 isn't always first. No third-party dependencies.
+
+Schema per lesson (used by every content task that extends ``QUIZZES``)::
+
+    "NN-file.html": {
+        "mcq": [
+            {
+                "q": L("问题", "question"),
+                "opts": [L("选项A", "option A"), L("选项B", "option B"), ...],
+                "answer": 1,            # 0-based index into ``opts`` AS WRITTEN
+                "why": L("解析", "explanation"),
+            },
+            ...
+        ],
+        "open": [L("发散题", "open prompt"), ...],   # optional
+    }
+
+``answer`` is the 0-based index of the correct option *as listed above*, before
+``_shuffle`` reorders them at render time. ``mcq``, ``open`` and ``why`` are all
+optional. Wrap inline code in ``<code>…</code>`` and escape any literal ``<`` /
+``&`` inside ``L`` strings (the text is emitted as raw HTML).
 """
 
 import hashlib
@@ -14,6 +34,10 @@ from i18n import L
 
 
 def _shuffle(opts, answer, seed):
+    """Deterministically permute ``opts`` (stable across builds) and return
+    ``(new_opts, new_answer_index)`` so the correct option lands in a varied
+    position instead of always first. ``answer`` is the index into ``opts`` as
+    passed in; the returned index points at the same option after shuffling."""
     order = sorted(
         range(len(opts)),
         key=lambda i: hashlib.md5(f"{seed}:{i}".encode("utf-8")).hexdigest(),
