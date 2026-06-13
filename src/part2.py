@@ -64,7 +64,57 @@ LESSON_04 = (
         "is a PDF or a database, everything downstream only deals with metadata-and-relationship-bearing Nodes.",
     ))
 )
-LESSON_05 = _stub()
+LESSON_05 = (
+    c.pipeline("load")
+    + c.lead(L(
+        "Reader 把任意来源（文件夹、PDF、网页、数据库……）统一变成 <strong>Document</strong> 列表。"
+        "<code>SimpleDirectoryReader</code> 是最常用的入口，按扩展名自动选解析器。",
+        "A Reader turns any source (a folder, PDF, web page, database…) into a list of <strong>Documents</strong>. "
+        "<code>SimpleDirectoryReader</code> is the go-to entry point, picking a parser per file extension.",
+    ))
+    + c.analogy(L(
+        "Reader 像一排<strong>不同接口的扫描仪</strong>：无论纸张、幻灯片还是网页，扫出来都是同一种标准的 Document。",
+        "Readers are like a row of <strong>scanners with different ports</strong>: paper, slides or web pages all "
+        "come out as the same standard Document.",
+    ))
+    + c.section(
+        L("SimpleDirectoryReader 常用能力", "What SimpleDirectoryReader gives you"),
+        c.compare_table(
+            [L("参数", "Argument"), L("作用", "Effect")],
+            [
+                [L("<code>input_dir</code> / <code>input_files</code>", "<code>input_dir</code> / <code>input_files</code>"),
+                 L("读整个目录或指定文件", "read a folder or specific files")],
+                [L("<code>recursive=True</code>", "<code>recursive=True</code>"), L("递归子目录", "recurse subfolders")],
+                [L("<code>required_exts=['.pdf']</code>", "<code>required_exts=['.pdf']</code>"), L("只读特定扩展名", "limit to extensions")],
+            ],
+        ),
+    )
+    + c.source_ref("readers/file/base.py", "SimpleDirectoryReader", L("内置目录读取器", "the built-in directory reader"))
+    + c.source_ref("readers/base.py", "BaseReader.load_data", L("所有 Reader 的统一接口", "the interface every Reader implements"))
+    + c.code(
+        "from llama_index.core import SimpleDirectoryReader\n\n"
+        "docs = SimpleDirectoryReader(\n"
+        "    input_dir='./data', recursive=True, required_exts=['.md', '.pdf'],\n"
+        ").load_data()\n"
+        "print(len(docs), docs[0].metadata)   # 每个文件 -&gt; 一个或多个 Document\n\n"
+        "# 更多来源见 LlamaHub：pip install llama-index-readers-web 等\n"
+        "# from llama_index.readers.web import SimpleWebPageReader",
+        caption=L("一行加载整个目录", "load a whole directory in one line"),
+    )
+    + c.key_points([
+        L("Reader 的统一产出是 <strong>Document</strong>，让管道与数据来源解耦。",
+          "Readers all output <strong>Documents</strong>, decoupling the pipeline from data sources."),
+        L("<code>SimpleDirectoryReader</code> 按扩展名自动选解析器。",
+          "<code>SimpleDirectoryReader</code> auto-selects a parser by extension."),
+        L("更多来源在 <strong>LlamaHub</strong>（独立集成包，按需安装）。",
+          "More sources live on <strong>LlamaHub</strong> (separate integration packages)."),
+    ])
+    + c.design_highlight(L(
+        "把“千奇百怪的来源”收敛到“一种 Document”，是 RAG 可组合性的起点——换数据源不影响后续任何一站。",
+        "Collapsing wildly different sources into one Document type is where RAG composability begins — changing the "
+        "source never disturbs any later stage.",
+    ))
+)
 LESSON_06 = _stub()
 LESSON_07 = _stub()
 LESSON_08 = _stub()

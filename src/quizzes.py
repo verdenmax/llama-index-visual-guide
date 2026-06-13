@@ -142,6 +142,23 @@ QUIZZES = {
             },
         ],
     },
+    "05-readers.html": {
+        "mcq": [
+            {
+                "q": L("<code>SimpleDirectoryReader(...).load_data()</code> 的产出是什么？",
+                       "What does <code>SimpleDirectoryReader(...).load_data()</code> produce?"),
+                "opts": [
+                    L("直接的向量", "vectors directly"),
+                    L("Document 列表", "a list of Documents"),
+                    L("已切好的 Node", "ready-made Nodes"),
+                    L("一个索引", "an index"),
+                ],
+                "answer": 1,
+                "why": L("Reader 只负责把来源加载成 Document；切块、向量化、建索引都是后续阶段。",
+                         "A Reader only loads sources into Documents; chunking, embedding and indexing are later stages."),
+            },
+        ],
+    },
 }
 
 
