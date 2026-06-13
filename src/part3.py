@@ -109,6 +109,58 @@ LESSON_13 = (
         "lowest cost — <strong>no retraining, no model swap</strong>. The best bang-for-buck in RAG tuning.",
     ))
 )
-LESSON_14 = _stub()
+LESSON_14 = (
+    c.pipeline("synthesize")
+    + c.lead(L(
+        "拿到（过滤/重排后的）top-k Node，怎么揉成<strong>一个答案</strong>？<strong>Response Synthesizer</strong> 决定"
+        "“多个片段→单个回答”的策略，核心是应对<strong>上下文窗口</strong>与<strong>片段数量</strong>的权衡。",
+        "Given the (filtered/reranked) top-k Nodes, how do you fuse them into <strong>one answer</strong>? The "
+        "<strong>Response Synthesizer</strong> sets the “many chunks → one answer” strategy — chiefly trading off "
+        "<strong>context window</strong> against <strong>number of chunks</strong>.",
+    ))
+    + c.analogy(L(
+        "写手拿到几页资料的几种写法：<strong>逐页精炼</strong>（refine）、<strong>塞满一次写</strong>（compact）、"
+        "<strong>分组总结再合并</strong>（tree_summarize）、<strong>每页各答再汇总</strong>（accumulate）。",
+        "Different ways a writer drafts from several pages: <strong>refine page by page</strong>, <strong>pack as many "
+        "as fit and write once</strong> (compact), <strong>summarize in groups then merge</strong> (tree_summarize), or "
+        "<strong>answer each page then collect</strong> (accumulate).",
+    ))
+    + c.section(
+        L("常用 ResponseMode", "Common ResponseModes"),
+        c.compare_table(
+            [L("模式", "Mode"), L("怎么合成", "How it synthesizes"), L("适合", "Good for")],
+            [
+                [L("compact（默认）", "compact (default)"), L("尽量塞满上下文再生成", "pack context, then generate"), L("通用、省调用", "general, fewer calls")],
+                [L("refine", "refine"), L("逐个片段迭代精炼答案", "iteratively refine over chunks"), L("片段多、需细读", "many chunks, careful reading")],
+                [L("tree_summarize", "tree_summarize"), L("两两/分组总结向上合并", "summarize in a tree"), L("总结类问题", "summary questions")],
+                [L("accumulate", "accumulate"), L("每片段各自作答再汇总", "answer per chunk, then collect"), L("逐条抽取", "per-chunk extraction")],
+            ],
+        ),
+    )
+    + c.source_ref("response_synthesizers/factory.py", "get_response_synthesizer", L("按 ResponseMode 造合成器", "builds a synthesizer for a ResponseMode"))
+    + c.source_ref("response_synthesizers/type.py", "ResponseMode", L("所有合成策略的枚举", "the enum of synthesis strategies"))
+    + c.code(
+        "from llama_index.core import get_response_synthesizer\n\n"
+        "# 方式一：直接在 query engine 上选模式\n"
+        "engine = index.as_query_engine(response_mode='tree_summarize')\n"
+        "print(engine.query('把这些文档总结成 3 点'))\n\n"
+        "# 方式二：显式造一个合成器（便于自定义装配，见下一课）\n"
+        "synth = get_response_synthesizer(response_mode='compact')",
+        caption=L("选 mode = 选“多片段→单答案”的策略", "choosing a mode = choosing the many→one strategy"),
+    )
+    + c.key_points([
+        L("Synthesizer 解决“<strong>多个 Node 如何合成一个答案</strong>”。",
+          "The synthesizer solves “<strong>how many Nodes become one answer</strong>”."),
+        L("<code>compact</code> 省调用，<code>tree_summarize</code> 擅总结，<code>refine</code> 重细读。",
+          "<code>compact</code> saves calls, <code>tree_summarize</code> summarizes, <code>refine</code> reads carefully."),
+        L("模式选择本质是<strong>上下文窗口 vs 片段数量</strong>的权衡。",
+          "Mode choice is fundamentally <strong>context window vs number of chunks</strong>."),
+    ])
+    + c.design_highlight(L(
+        "把“拼接片段”这件容易写死的事抽象成可切换的 ResponseMode，让同一套检索结果能服务“精确问答”到“全局总结”不同需求。",
+        "Abstracting “stitch the chunks” into switchable ResponseModes lets one set of retrieved results serve "
+        "everything from precise Q&A to global summarization.",
+    ))
+)
 LESSON_15 = _stub()
 LESSON_16 = _stub()

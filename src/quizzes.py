@@ -301,6 +301,27 @@ QUIZZES = {
             },
         ],
     },
+    "14-response-synthesizers.html": {
+        "mcq": [
+            {
+                "q": L("片段很多、又想要一个全局总结，最贴合的 ResponseMode 是？",
+                       "Many chunks, and you want one global summary — which ResponseMode fits best?"),
+                "opts": [
+                    L("compact", "compact"),
+                    L("tree_summarize", "tree_summarize"),
+                    L("generation", "generation"),
+                    L("accumulate", "accumulate"),
+                ],
+                "answer": 1,
+                "why": L("tree_summarize 分组逐层总结再合并，天然适合覆盖大量片段的总结型问题。",
+                         "tree_summarize summarizes in groups and merges upward — ideal for summary questions over many chunks."),
+            },
+        ],
+        "open": [
+            L("上下文窗口很小但片段很多时，refine 和 compact 各有什么代价？",
+              "With a small context window but many chunks, what are the costs of refine vs compact?"),
+        ],
+    },
 }
 
 
