@@ -2007,8 +2007,8 @@ LESSON_04 = (
           "<strong>The Node is the unit of retrieval</strong>; the Document is just its source."),
         L("metadata 随 Node 流动，可用于<strong>过滤</strong>与<strong>溯源</strong>。",
           "metadata flows with the Node, enabling <strong>filtering</strong> and <strong>provenance</strong>."),
-        L("relationships（SOURCE/PREVIOUS/NEXT）是进阶检索（如自动合并）的基础。",
-          "relationships (SOURCE/PREVIOUS/NEXT) underpin advanced retrieval (e.g. auto-merging)."),
+        L("relationships（SOURCE/PREVIOUS/NEXT）是进阶检索（如前后文扩展、溯源）的基础。",
+          "relationships (SOURCE/PREVIOUS/NEXT) underpin advanced retrieval (e.g. prev/next context expansion, provenance)."),
     ])
     + c.design_highlight(L(
         "统一的 <strong>Node</strong> 抽象让整条管道“说同一种语言”：无论来源是 PDF 还是数据库，"
