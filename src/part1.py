@@ -134,4 +134,70 @@ LESSON_02 = (
         "independently</strong>: adding a vector store is just a new integration package — core never changes.",
     ))
 )
-LESSON_03 = _stub()
+LESSON_03 = (
+    c.pipeline(None)
+    + c.lead(L(
+        "那 5 行代码背后是<strong>两个阶段</strong>：<strong>写入路径</strong>（建索引，做一次）和"
+        "<strong>查询路径</strong>（问答，做很多次）。高层 API 把每个阶段的细节藏了起来——本课先看全景，后面逐站拆解。",
+        "Those 5 lines hide <strong>two phases</strong>: the <strong>write path</strong> (build the index, once) and "
+        "the <strong>query path</strong> (ask, many times). The high-level API hides each stage's detail — this "
+        "lesson is the map; later lessons visit each stop.",
+    ))
+    + c.analogy(L(
+        "写入路径像<strong>建图书馆</strong>：收书、拆章节、编索书号、上架。查询路径像<strong>借阅问答</strong>："
+        "按主题找到相关几页，读完再用自己的话回答你。",
+        "The write path is like <strong>building a library</strong>: collect books, split chapters, assign call "
+        "numbers, shelve. The query path is like <strong>asking the librarian</strong>: find the few relevant "
+        "pages, read them, answer in their own words.",
+    ))
+    + c.section(
+        L("把 5 行代码映射到流水线", "Mapping the 5 lines onto the pipeline"),
+        c.compare_table(
+            [L("代码", "Code"), L("阶段", "Stage"), L("幕后发生了什么", "What happens under the hood")],
+            [
+                [L("<code>SimpleDirectoryReader(...).load_data()</code>", "<code>SimpleDirectoryReader(...).load_data()</code>"),
+                 L("加载", "Load"), L("文件 → <code>Document</code> 列表", "files → list of <code>Document</code>")],
+                [L("<code>VectorStoreIndex.from_documents(docs)</code>", "<code>VectorStoreIndex.from_documents(docs)</code>"),
+                 L("切块+向量化+索引", "Split + embed + index"), L("Document → Node → 向量 → 存入索引", "Document → Node → vectors → stored in the index")],
+                [L("<code>index.as_query_engine()</code>", "<code>index.as_query_engine()</code>"),
+                 L("装配查询", "Assemble query"), L("检索器 + 后处理 + 响应合成器 组装好", "wires retriever + postprocessors + synthesizer")],
+                [L("<code>engine.query('...')</code>", "<code>engine.query('...')</code>"),
+                 L("检索→合成→回答", "Retrieve→synthesize→answer"), L("取相关 Node，交 LLM 生成有依据回答", "fetch relevant Nodes, LLM answers from them")],
+            ],
+        ),
+    )
+    + c.source_ref(
+        "indices/vector_store/base.py", "VectorStoreIndex.from_documents",
+        L("写入路径的“快捷方式”，内部串起 split→embed→store", "the write-path shortcut; chains split→embed→store inside"),
+    )
+    + c.source_ref(
+        "base/base_query_engine.py", "BaseQueryEngine.query",
+        L("查询路径的统一入口", "the unified entry point of the query path"),
+    )
+    + c.code(
+        "from llama_index.core import VectorStoreIndex, SimpleDirectoryReader\n\n"
+        "# —— 写入路径（建一次索引）——\n"
+        "docs = SimpleDirectoryReader('./data').load_data()   # 加载\n"
+        "index = VectorStoreIndex.from_documents(docs)        # 切块+向量化+索引\n\n"
+        "# —— 查询路径（可反复问）——\n"
+        "engine = index.as_query_engine(similarity_top_k=3)   # 装配\n"
+        "resp = engine.query('退款政策是什么？')              # 检索→合成→回答\n"
+        "print(resp)                  # 答案\n"
+        "print(resp.source_nodes)     # 依据：检索到的片段",
+        caption=L("同一个 index，写一次、问多次", "one index: write once, query many times"),
+    )
+    + c.key_points([
+        L("写入路径做一次、查询路径做多次；二者共享同一个 <code>index</code>。",
+          "Write path runs once, query path many times; both share one <code>index</code>."),
+        L("<code>from_documents</code> 隐藏了 split→embed→store；<code>as_query_engine</code> 隐藏了 retrieve→synthesize。",
+          "<code>from_documents</code> hides split→embed→store; <code>as_query_engine</code> hides retrieve→synthesize."),
+        L("<code>response.source_nodes</code> 让答案<strong>可溯源</strong>。",
+          "<code>response.source_nodes</code> makes every answer <strong>traceable</strong>."),
+    ])
+    + c.design_highlight(L(
+        "高层 API 是低层管道的“快捷方式”：新手用一行跑通，进阶者拆开每一站替换组件——"
+        "<strong>同一套抽象，两种使用深度</strong>。",
+        "The high-level API is a shortcut over the low-level pipeline: beginners get it running in one line; "
+        "experts open each stop to swap components — <strong>one set of abstractions, two depths of use</strong>.",
+    ))
+)

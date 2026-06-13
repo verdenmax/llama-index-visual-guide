@@ -103,6 +103,28 @@ QUIZZES = {
             },
         ],
     },
+    "03-rag-lifecycle.html": {
+        "mcq": [
+            {
+                "q": L("<code>VectorStoreIndex.from_documents(docs)</code> 一行其实做了哪些事？",
+                       "What does the single line <code>VectorStoreIndex.from_documents(docs)</code> actually do?"),
+                "opts": [
+                    L("只是把文档存成文件", "Just saves the documents to disk"),
+                    L("切块 → 向量化 → 存入索引（写入路径三步合一）",
+                      "Split → embed → store (three write-path steps in one)"),
+                    L("立刻向 LLM 提问", "Immediately queries the LLM"),
+                    L("训练一个新的 embedding 模型", "Trains a new embedding model"),
+                ],
+                "answer": 1,
+                "why": L("它是写入路径的快捷方式：内部依次切块、调用 embed_model 向量化、写入向量索引。",
+                         "It's the write-path shortcut: internally it chunks, embeds via embed_model, and writes vectors into the index."),
+            },
+        ],
+        "open": [
+            L("如果同一个索引要服务上千次提问，你会把哪一步的结果缓存或持久化？为什么？",
+              "If one index serves thousands of queries, which step's output would you cache or persist, and why?"),
+        ],
+    },
 }
 
 
