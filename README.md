@@ -60,7 +60,11 @@ python build_print.py    # 生成 print.html（用于打 PDF）
 
 ### 本地导出 PDF
 
+`print.html` 由 `build_print.py` 生成在**仓库根目录**，因此以下命令请在**仓库根目录**运行
+（`chromium` 在部分系统上叫 `chromium-browser` 或 `google-chrome`）：
+
 ```bash
+cd "$(git rev-parse --show-toplevel)"   # 回到仓库根目录
 chromium --headless=new --no-pdf-header-footer \
   --print-to-pdf=llama-index-visual-guide.pdf \
   --virtual-time-budget=20000 "file://$PWD/print.html"
