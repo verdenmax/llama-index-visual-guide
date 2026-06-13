@@ -1566,9 +1566,15 @@ def check_lesson(fname, html):
         add("ERR", "missing <title>")
     if 'name="description"' not in html:
         add("ERR", "missing meta description")
-    # bilingual: every lesson must carry English content
+    # bilingual: every lesson must carry English content, balanced zh/en blocks,
+    # and the language-toggle button (per design spec §6.2).
     if 'data-lang="en"' not in html:
         add("ERR", "no English content (data-lang=\"en\") — page is not bilingual")
+    if html.count('data-lang="zh"') != html.count('data-lang="en"'):
+        nz, ne = html.count('data-lang="zh"'), html.count('data-lang="en"')
+        add("ERR", f"unbalanced bilingual blocks: {nz} zh / {ne} en")
+    if "data-lang-toggle" not in html:
+        add("ERR", "missing language toggle button (data-lang-toggle)")
     if fname not in SOFT_EXEMPT:
         if "本课要点" not in html:
             add("WARN", "no 本课要点 / key-points card")
@@ -3185,15 +3191,17 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Rebuild site from src
+      - name: Rebuild site + print from src
         working-directory: src
-        run: python build.py
+        run: |
+          python build.py
+          python build_print.py
 
       - name: Fail if committed HTML is stale vs src
         run: |
-          if ! git diff --quiet -- index.html lessons/; then
-            echo "::error::Generated HTML is out of date. Run 'cd src && python build.py' and commit the result."
-            git --no-pager diff --stat -- index.html lessons/
+          if ! git diff --quiet -- index.html lessons/ print.html; then
+            echo "::error::Generated HTML/PDF source is out of date. Run 'cd src && python build.py && python build_print.py' and commit the result."
+            git --no-pager diff --stat -- index.html lessons/ print.html
             exit 1
           fi
           echo "Committed HTML matches src ✓"
