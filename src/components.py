@@ -5,12 +5,11 @@ an HTML string. Block-level text is rendered as paired ``data-lang`` ``<div>``;
 inline text (titles, labels, table cells, list items) as paired ``<span>``.
 """
 
-import i18n
 from i18n import render, t
 
 
 def lead(text):
-    return f'<p class="lead">{render(text)}</p>'
+    return f'<p class="lead">{render(text, block=False)}</p>'
 
 
 def analogy(text):

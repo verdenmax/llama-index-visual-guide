@@ -4,7 +4,7 @@ from i18n import L
 
 def test_lead_wraps_paragraph_with_both_languages():
     html = c.lead(L("一段话", "a sentence"))
-    assert html.startswith('<p class="lead">')
+    assert html.startswith('<p class="lead"><span')   # inline, not <div> in <p>
     assert 'data-lang="zh">一段话' in html
     assert 'data-lang="en">a sentence' in html
 
