@@ -179,6 +179,22 @@ QUIZZES = {
               "For an API manual vs a novel, should chunk_size lean larger or smaller? Why?"),
         ],
     },
+    "07-metadata-extractors.html": {
+        "mcq": [
+            {
+                "q": L("给 Node 加 metadata 的主要价值是？", "What's the main value of adding metadata to Nodes?"),
+                "opts": [
+                    L("减少存储占用", "Reduce storage"),
+                    L("增强检索与过滤（向量相似之外的第二通道）", "Strengthen retrieval & filtering (a second channel beyond vector similarity)"),
+                    L("加快 LLM 生成", "Speed up the LLM"),
+                    L("替代 embedding", "Replace embeddings"),
+                ],
+                "answer": 1,
+                "why": L("元数据支持按来源/标签过滤，并让问题与片段更易匹配，与向量相似互补。",
+                         "Metadata enables filtering by source/tag and better question-to-chunk matching, complementing vector similarity."),
+            },
+        ],
+    },
 }
 
 

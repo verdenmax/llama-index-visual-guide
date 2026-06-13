@@ -169,7 +169,60 @@ LESSON_06 = (
         "is <strong>free</strong> — the payoff of “standardize the interface first, then vary the strategy”.",
     ))
 )
-LESSON_07 = _stub()
+LESSON_07 = (
+    c.pipeline("split")
+    + c.lead(L(
+        "给 Node 补<strong>元数据</strong>（标题、关键词、它能回答的问题、摘要）能显著提升检索与过滤。"
+        "Extractor 用 LLM 自动为每个 Node 生成这些元数据。",
+        "Enriching Nodes with <strong>metadata</strong> (title, keywords, the questions it answers, a summary) boosts "
+        "retrieval and filtering. Extractors use an LLM to generate that metadata per Node automatically.",
+    ))
+    + c.analogy(L(
+        "给每张便利贴贴上<strong>标签和一句摘要</strong>：日后既能按主题筛，也能让“问题↔片段”更容易对上。",
+        "Put a <strong>label and one-line summary</strong> on every sticky note: later you can filter by topic and "
+        "match “question ↔ snippet” far more easily.",
+    ))
+    + c.section(
+        L("常用抽取器", "Common extractors"),
+        c.compare_table(
+            [L("抽取器", "Extractor"), L("产出的元数据", "Metadata it adds")],
+            [
+                [L("TitleExtractor", "TitleExtractor"), L("文档/片段标题", "a document/section title")],
+                [L("KeywordExtractor", "KeywordExtractor"), L("关键词", "keywords")],
+                [L("QuestionsAnsweredExtractor", "QuestionsAnsweredExtractor"), L("该片段能回答的问题", "questions this chunk answers")],
+                [L("SummaryExtractor", "SummaryExtractor"), L("片段摘要", "a chunk summary")],
+            ],
+        ),
+    )
+    + c.source_ref("extractors/metadata_extractors.py", "TitleExtractor · QuestionsAnsweredExtractor · KeywordExtractor · SummaryExtractor",
+                   L("都作为 transformation 接入管道", "all plug in as pipeline transformations"))
+    + c.code(
+        "from llama_index.core.extractors import TitleExtractor, QuestionsAnsweredExtractor\n"
+        "from llama_index.core.node_parser import SentenceSplitter\n"
+        "from llama_index.core.ingestion import IngestionPipeline\n\n"
+        "pipeline = IngestionPipeline(transformations=[\n"
+        "    SentenceSplitter(chunk_size=512),\n"
+        "    TitleExtractor(nodes=5),               # 用 LLM 推断标题\n"
+        "    QuestionsAnsweredExtractor(questions=3) # 该块能回答的 3 个问题\n"
+        "])\n"
+        "nodes = pipeline.run(documents=docs)\n"
+        "print(nodes[0].metadata)   # 多了 title / questions_this_excerpt_can_answer",
+        caption=L("抽取器即“管道里的一道工序”", "extractors are just steps in the pipeline"),
+    )
+    + c.key_points([
+        L("元数据是<strong>检索的第二通道</strong>：不止向量相似，还能按标签/来源过滤。",
+          "Metadata is retrieval's <strong>second channel</strong>: beyond vector similarity, filter by tag/source."),
+        L("<code>QuestionsAnsweredExtractor</code> 让“问题↔片段”更易对齐。",
+          "<code>QuestionsAnsweredExtractor</code> aligns “question ↔ chunk” better."),
+        L("抽取器是 LLM 调用，有<strong>成本</strong>——按需启用。",
+          "Extractors call the LLM, so they cost tokens — enable selectively."),
+    ])
+    + c.design_highlight(L(
+        "Extractor 与 Splitter 都是 <strong>transformation</strong>，可任意串联——元数据增强变成管道里可插拔的一环。",
+        "Extractors and splitters are both <strong>transformations</strong> you can chain freely — metadata enrichment "
+        "becomes a pluggable link in the pipeline.",
+    ))
+)
 LESSON_08 = _stub()
 LESSON_09 = _stub()
 LESSON_10 = _stub()
