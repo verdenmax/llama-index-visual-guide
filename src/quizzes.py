@@ -229,6 +229,27 @@ QUIZZES = {
             },
         ],
     },
+    "10-index-abstraction.html": {
+        "mcq": [
+            {
+                "q": L("要对整个语料做一次全面总结，最贴合的索引是？",
+                       "To produce one comprehensive summary of a whole corpus, which index fits best?"),
+                "opts": [
+                    L("VectorStoreIndex（top-k 近邻）", "VectorStoreIndex (top-k nearest neighbors)"),
+                    L("SummaryIndex（遍历所有 Node）", "SummaryIndex (iterates over all Nodes)"),
+                    L("关键词匹配", "Keyword matching"),
+                    L("换一个更大的模型", "Switch to a bigger model"),
+                ],
+                "answer": 1,
+                "why": L("总结需要覆盖全部内容，SummaryIndex 遍历所有 Node，而 VectorStoreIndex 只取 top-k。",
+                         "Summarizing must cover everything; SummaryIndex iterates all Nodes, whereas VectorStoreIndex only takes top-k."),
+            },
+        ],
+        "open": [
+            L("FAQ 问答 vs 合同全文摘要，分别该选哪种 Index？为什么？",
+              "FAQ Q&A vs summarizing a full contract — which index would you pick for each, and why?"),
+        ],
+    },
 }
 
 

@@ -326,5 +326,55 @@ LESSON_09 = (
         "engine look <strong>identical</strong> upstream — going live is a swap, not a rewrite.",
     ))
 )
-LESSON_10 = _stub()
+LESSON_10 = (
+    c.pipeline("index")
+    + c.lead(L(
+        "Index 不只是“向量库”——它是<strong>为某种检索方式组织 Node 的数据结构</strong>。不同 Index 对应不同问题："
+        "相似问答用 VectorStoreIndex，整库总结用 SummaryIndex，实体关系用 PropertyGraphIndex。",
+        "An Index isn't just a vector store — it's a <strong>data structure that organizes Nodes for a particular way "
+        "of retrieving</strong>. Different Indexes fit different questions: VectorStoreIndex for similarity Q&A, "
+        "SummaryIndex for whole-corpus summaries, PropertyGraphIndex for entity relations.",
+    ))
+    + c.analogy(L(
+        "同一堆资料的不同<strong>组织法</strong>：词典（按相似度近邻）、章节大纲（逐条遍历总结）、知识图谱（按实体关系跳转）。",
+        "Different <strong>organizations</strong> of the same pile: a dictionary (nearest-neighbor), a chapter outline "
+        "(walk every entry to summarize), a knowledge graph (hop by entity relations).",
+    ))
+    + c.section(
+        L("常见 Index 与适用场景", "Common indexes and when to use them"),
+        c.compare_table(
+            [L("Index", "Index"), L("检索范式", "Retrieval style"), L("适合", "Best for")],
+            [
+                [L("VectorStoreIndex", "VectorStoreIndex"), L("向量近邻 top-k", "vector top-k"), L("相似问答（最常用）", "similarity Q&A (most common)")],
+                [L("SummaryIndex", "SummaryIndex"), L("遍历所有 Node", "iterate all Nodes"), L("整库总结", "summarize a corpus")],
+                [L("DocumentSummaryIndex", "DocumentSummaryIndex"), L("先按文档摘要召回", "recall via doc summaries"), L("多文档路由", "routing across docs")],
+                [L("PropertyGraphIndex", "PropertyGraphIndex"), L("图谱遍历", "graph traversal"), L("实体关系/多跳", "entities / multi-hop")],
+            ],
+        ),
+    )
+    + c.source_ref("indices/vector_store/base.py", "VectorStoreIndex", L("最常用的相似检索索引", "the common similarity index"))
+    + c.source_ref("indices/list/base.py", "SummaryIndex", L("遍历式索引（原 ListIndex）", "the iterate-all index (formerly ListIndex)"))
+    + c.code(
+        "from llama_index.core import VectorStoreIndex, SummaryIndex\n\n"
+        "vindex = VectorStoreIndex.from_documents(docs)   # 相似问答\n"
+        "print(vindex.as_query_engine().query('退款政策？'))\n\n"
+        "sindex = SummaryIndex.from_documents(docs)        # 整库总结\n"
+        "print(sindex.as_query_engine(response_mode='tree_summarize').query('全文讲了什么？'))",
+        caption=L("选 Index 就是选检索范式", "choosing an Index = choosing a retrieval style"),
+    )
+    + c.key_points([
+        L("Index = <strong>组织方式 + 检索范式</strong>，不等于向量库本身。",
+          "An Index = <strong>organization + retrieval style</strong>, not the vector store itself."),
+        L("相似问答选 VectorStoreIndex；整库总结选 SummaryIndex。",
+          "VectorStoreIndex for similarity Q&A; SummaryIndex for whole-corpus summaries."),
+        L("所有 Index 都用 <code>from_documents</code> / <code>as_query_engine</code> 同款入口。",
+          "Every Index shares the <code>from_documents</code> / <code>as_query_engine</code> entry points."),
+    ])
+    + c.design_highlight(L(
+        "“选 Index”本质是“选检索策略”。统一的 Index→QueryEngine 入口让你<strong>用同一套代码切换范式</strong>，"
+        "甚至用 Router 在多个 Index 间自动路由。",
+        "“Choosing an Index” is really “choosing a retrieval strategy.” The uniform Index→QueryEngine entry lets you "
+        "<strong>switch paradigms with the same code</strong> — even auto-route across indexes with a Router.",
+    ))
+)
 LESSON_11 = _stub()
