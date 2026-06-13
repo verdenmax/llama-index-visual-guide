@@ -360,7 +360,7 @@ from i18n import L
 
 def test_lead_wraps_paragraph_with_both_languages():
     html = c.lead(L("一段话", "a sentence"))
-    assert html.startswith('<p class="lead">')
+    assert html.startswith('<p class="lead"><span')   # inline, not <div> in <p>
     assert 'data-lang="zh">一段话' in html
     assert 'data-lang="en">a sentence' in html
 
@@ -443,12 +443,11 @@ an HTML string. Block-level text is rendered as paired ``data-lang`` ``<div>``;
 inline text (titles, labels, table cells, list items) as paired ``<span>``.
 """
 
-import i18n
 from i18n import render, t
 
 
 def lead(text):
-    return f'<p class="lead">{render(text)}</p>'
+    return f'<p class="lead">{render(text, block=False)}</p>'
 
 
 def analogy(text):
