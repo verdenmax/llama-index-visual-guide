@@ -3,10 +3,6 @@ import components as c
 from i18n import L
 
 
-def _stub():
-    return c.pipeline(None) + c.lead(L("（本课内容建设中）", "(Lesson content coming soon)"))
-
-
 def _term(zh, en):
     return L(zh, en)
 
