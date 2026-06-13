@@ -4,7 +4,6 @@ Output: ``print.html`` at the project root. Render to PDF with headless
 Chromium. The root carries ``data-uilang="zh"`` so the PDF is Chinese-only.
 No third-party dependencies.
 """
-import datetime
 import os
 import sys
 
@@ -60,7 +59,6 @@ def _toc_html():
 
 
 def build_print():
-    today = datetime.date.today().isoformat()
     lessons = []
     for idx, (fname, title, part) in enumerate(shell.PAGES):
         content = (CONTENT[fname] + quizzes.render(fname)).replace(
@@ -85,7 +83,7 @@ def build_print():
   <h1>{shell.SITE}</h1>
   <div class="sub">跟着写入路径与查询路径，一步步理解 LlamaIndex 的 RAG</div>
   <div class="meta">共 {len(shell.PAGES)} 课 · {nparts} 个部分 · 对照 llama-index-core 0.14.22<br>
-    生成日期 {today} · MIT License</div>
+    最后核验 2026-06 · MIT License</div>
 </section>
 <section class="print-toc"><div class="wrap">{_toc_html()}</div></section>
 {body}
