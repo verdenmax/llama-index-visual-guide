@@ -382,6 +382,35 @@ print(engine.query('退款政策是什么？'))</pre></div><div class="card keyp
     <div class="acc-body"><div class="qa"><div class="a"><strong><span data-lang="zh">答案：C</span><span data-lang="en">Answer: C</span></strong> <span data-lang="zh">QueryEngine 是查询路径的组合根：把 retriever + node_postprocessors + response_synthesizer 串成一个 .query()。</span><span data-lang="en">The QueryEngine is the query path's composition root: it chains retriever + node_postprocessors + response_synthesizer behind one .query().</span></div></div></div>
   </details>
 </div>
+<h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
+<div class="quiz interview">
+  <div class="qn">🎯 1. <span data-lang="zh">为什么把 QueryEngine 叫“组合根”？它把哪三件正交的组件装在一起？</span><span data-lang="en">Why call the QueryEngine a 'composition root'? Which three orthogonal components does it assemble?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">检索器、后处理器、合成器——三者正交（换检索器不影响合成、加后处理不影响检索）。QueryEngine 只负责把它们装配起来、对外暴露一个 <code>.query()</code>。理解这个组合根，就能把“默认问答”改造成任意 RAG 变体。</span><span data-lang="en">The retriever, postprocessors and synthesizer — orthogonal (swapping the retriever doesn't touch synthesis; adding postprocessing doesn't touch retrieval). The QueryEngine just wires them behind one <code>.query()</code>. Grasp this root and you can reshape default Q&amp;A into any variant.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 2. <span data-lang="zh"><code>as_query_engine()</code> 和 <code>RetrieverQueryEngine.from_args()</code> 有何区别？什么时候用后者？</span><span data-lang="en">How do <code>as_query_engine()</code> and <code>RetrieverQueryEngine.from_args()</code> differ, and when do you use the latter?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">两者产出<strong>同一种 QueryEngine</strong>，只是装配深度不同：前者用默认装配、一行起步；后者让你逐件指定检索器/后处理/合成器。需要自定义任一组件（自建 retriever、加 cutoff/rerank、换合成策略）时用 from_args。</span><span data-lang="en">Both yield the <strong>same kind of QueryEngine</strong>, differing only in wiring depth: the former is one-line default wiring; the latter lets you specify each of retriever/postprocessors/synthesizer. Use from_args when customizing any component (custom retriever, add cutoff/rerank, change synthesis).</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 3. <span data-lang="zh">要把“默认问答”改造成“只引用、不编造”的客服引擎，你会替换或新增哪几件组件？</span><span data-lang="en">To turn default Q&amp;A into a 'cite-only, never invent' support engine, which components would you change or add?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">① 合成器换更严的 <code>text_qa_template</code>（“只依据资料、未提及就说不知道、给出处”）；② 加后处理 SimilarityPostprocessor/rerank 提纯依据；③ 在响应里渲染 <code>source_nodes</code> 做脚注；④ 挂 Faithfulness 评估当上线前质量闸。骨架（QueryEngine）不变。</span><span data-lang="en">(1) a stricter <code>text_qa_template</code> in the synthesizer ('answer only from sources, say unknown otherwise, cite'); (2) a SimilarityPostprocessor/rerank to purify evidence; (3) render <code>source_nodes</code> as footnotes; (4) attach a Faithfulness evaluator as a pre-launch gate. The QueryEngine skeleton stays.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 4. <span data-lang="zh">一次 <code>.query()</code> 内部依次发生了什么？</span><span data-lang="en">What happens, in order, inside a single <code>.query()</code> call?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh"><code>retrieve()</code> 取 top-k NodeWithScore → 过一遍 node_postprocessors（过滤/重排/替换）→ <code>synthesize()</code> 把精选片段合成答案 → 返回 Response（answer + source_nodes）。</span><span data-lang="en"><code>retrieve()</code> fetches top-k NodeWithScore → runs node_postprocessors (filter/rerank/replace) → <code>synthesize()</code> fuses the curated chunks into an answer → returns a Response (answer + source_nodes).</span></div></div></div>
+  </details>
+</div>
 <div class="card spark">
   <div class="tag"><span data-lang="zh">💭 发散思考（没有标准答案）</span><span data-lang="en">💭 Open questions (no single right answer)</span></div>
   <ul>

@@ -386,6 +386,35 @@ print(engine.query('保修期是多久？'))</pre></div><div class="card keypts"
     <div class="acc-body"><div class="qa"><div class="a"><strong><span data-lang="zh">答案：B</span><span data-lang="en">Answer: B</span></strong> <span data-lang="zh">Settings 是全局默认配置单例，取代了过去到处传递的 ServiceContext。</span><span data-lang="en">Settings is the global default-config singleton that replaced the old, widely-passed ServiceContext.</span></div></div></div>
   </details>
 </div>
+<h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
+<div class="quiz interview">
+  <div class="qn">🎯 1. <span data-lang="zh"><code>Settings</code> 取代了什么？“全局默认 + 局部覆盖”是怎么配合的？</span><span data-lang="en">What did <code>Settings</code> replace, and how do 'global defaults + local override' work together?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">取代了旧的 ServiceContext，是个全局单例，集中配置 llm / embed_model / node_parser / chunk_size 等，去样板、可审计。局部可覆盖：某个 query engine 传自己的 <code>llm=</code> 或 <code>text_qa_template=</code> 即可，不动全局。</span><span data-lang="en">It replaced the old ServiceContext — a global singleton centralizing llm / embed_model / node_parser / chunk_size, cutting boilerplate and easing audit. Local override: a given query engine can pass its own <code>llm=</code> or <code>text_qa_template=</code> without touching the global.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 2. <span data-lang="zh">为什么说 Prompt 是 RAG 的“最后一公里”？</span><span data-lang="en">Why is the prompt the 'last mile' of RAG?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">检索结果<strong>一字不变</strong>，只换一句 prompt（语气、约束、输出格式），答案就可能大不相同。检索决定“给 LLM 看什么”，prompt 决定“让 LLM 怎么用它”——是质量的最后一道可控旋钮。</span><span data-lang="en">With the retrieved context <strong>unchanged</strong>, swapping one prompt (tone, constraints, output format) can change the answer entirely. Retrieval decides 'what the LLM sees'; the prompt decides 'how it uses it' — the last controllable knob on quality.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 3. <span data-lang="zh">同样的检索结果，换 prompt 就能改变答案——质量责任更多在检索还是 prompt？怎么分工调优？</span><span data-lang="en">Same retrieval, different prompt, different answer — does quality rest more on retrieval or the prompt? How do you split the tuning?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">两者分工：检索决定“依据对不对”（召回不到，prompt 再好也是巧妇难为无米之炊）；prompt 决定“依据用得对不对”（约束不编造、要出处、控格式）。先用评估把<strong>检索召回</strong>调达标，再用 prompt 调“忠实度/格式”，避免把两类问题混在一起。</span><span data-lang="en">They divide labor: retrieval decides whether the evidence is right (no recall, no prompt can save it); the prompt decides whether the evidence is used right (don't invent, cite, control format). Get <strong>recall</strong> to target first via evaluation, then tune faithfulness/format with the prompt — don't conflate the two.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 4. <span data-lang="zh"><code>text_qa_template</code> 里的 <code>{context_str}</code> 和 <code>{query_str}</code> 是什么？怎么用它强制“只引用”？</span><span data-lang="en">What are <code>{context_str}</code> and <code>{query_str}</code> in a <code>text_qa_template</code>, and how do you use it to force 'cite-only'?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">它们是占位符：<code>{context_str}</code> 注入检索到的片段，<code>{query_str}</code> 注入用户问题。写明“只依据下列资料回答；资料未提及就回答‘资料未提及’；并标注出处”，即可把“只引用、不编造”落到 prompt 层。</span><span data-lang="en">They're placeholders: <code>{context_str}</code> injects the retrieved chunks, <code>{query_str}</code> the user's question. Instruct 'answer only from the context below; if not mentioned, say so; cite sources' to enforce 'cite-only, never invent' at the prompt layer.</span></div></div></div>
+  </details>
+</div>
 <div class="card spark">
   <div class="tag"><span data-lang="zh">💭 发散思考（没有标准答案）</span><span data-lang="en">💭 Open questions (no single right answer)</span></div>
   <ul>

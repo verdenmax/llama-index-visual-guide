@@ -377,6 +377,35 @@ print(engine.query('把这几篇文档的结论逐点对比一下'))</pre></div>
     <div class="acc-body"><div class="qa"><div class="a"><strong><span data-lang="zh">答案：A</span><span data-lang="en">Answer: A</span></strong> <span data-lang="zh">tree_summarize 分组逐层总结再合并，天然适合覆盖大量片段的总结型问题。</span><span data-lang="en">tree_summarize summarizes in groups and merges upward — ideal for summary questions over many chunks.</span></div></div></div>
   </details>
 </div>
+<h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
+<div class="quiz interview">
+  <div class="qn">🎯 1. <span data-lang="zh">“多片段 → 单答案”的核心矛盾是什么？ResponseMode 本质在权衡什么？</span><span data-lang="en">What's the core tension of 'many chunks → one answer'? What does the ResponseMode fundamentally trade off?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">检索到的片段可能<strong>装不进一次上下文窗口</strong>。选 mode 本质是在“上下文窗口大小”和“片段数量”之间取舍——要么塞满一次写，要么分批迭代/分层合并。</span><span data-lang="en">The retrieved chunks may <strong>not fit in one context window</strong>. Choosing a mode is fundamentally a trade-off between 'context window size' and 'number of chunks' — pack-and-write-once vs iterate/merge in batches.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 2. <span data-lang="zh">compact / refine / tree_summarize / accumulate 各适合什么问题？</span><span data-lang="en">Which problem suits compact vs refine vs tree_summarize vs accumulate?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">compact（默认）：通用问答、省调用，尽量塞满再生成；refine：片段多、需细读，逐块迭代精炼；tree_summarize：全局总结类，分组逐层向上合并；accumulate：逐条抽取、每块各答再汇总。</span><span data-lang="en">compact (default): general Q&amp;A, fewer calls, pack then generate; refine: many chunks needing careful reading, iterate chunk by chunk; tree_summarize: global summaries, merge up a tree; accumulate: per-chunk extraction, answer each then collect.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 3. <span data-lang="zh"><code>compact</code> 实际上是什么？为什么把它设为默认？</span><span data-lang="en">What is <code>compact</code> actually, and why is it the default?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">它其实是 compact_and_refine：先把尽量多的片段塞满一个 prompt（减少调用次数），装不下时再退回 refine 的逐块迭代。兼顾省钱与不丢信息，所以适合做通用默认。</span><span data-lang="en">It's really compact_and_refine: pack as many chunks as fit into one prompt (fewer calls), falling back to refine's chunk-by-chunk iteration when they don't all fit. It balances cost and completeness, making it a sensible default.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 4. <span data-lang="zh">上下文窗口很小但片段很多时，refine 和 compact 各付出什么代价？</span><span data-lang="en">With a small context window but many chunks, what does refine cost vs compact?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">refine 要对每个片段各调一次 LLM——调用多、慢、贵，但每段都读到；compact 尽量合并、调用少，但窗口小的时候能塞进的片段有限，可能漏掉信息或频繁退化为 refine。窗口小+片段多正是两者矛盾最尖锐处。</span><span data-lang="en">refine calls the LLM once per chunk — many calls, slow and costly, but every chunk is read; compact merges to cut calls, but a small window limits how much fits, risking dropped info or frequent fallback to refine. Small window + many chunks is exactly where the tension peaks.</span></div></div></div>
+  </details>
+</div>
 <div class="card spark">
   <div class="tag"><span data-lang="zh">💭 发散思考（没有标准答案）</span><span data-lang="en">💭 Open questions (no single right answer)</span></div>
   <ul>

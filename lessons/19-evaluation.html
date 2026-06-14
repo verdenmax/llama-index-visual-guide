@@ -382,6 +382,35 @@ print(f'faithfulness: {passed}/{len(questions)} passed')</pre></div><div class="
     <div class="acc-body"><div class="qa"><div class="a"><strong><span data-lang="zh">答案：C</span><span data-lang="en">Answer: C</span></strong> <span data-lang="zh">忠实度衡量答案是否有据可依，是 RAG 防幻觉的核心指标。</span><span data-lang="en">Faithfulness measures whether the answer is grounded in the context — the core anti-hallucination metric.</span></div></div></div>
   </details>
 </div>
+<h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
+<div class="quiz interview">
+  <div class="qn">🎯 1. <span data-lang="zh">Faithfulness / Relevancy / Correctness 各衡量什么？分别需要什么输入？</span><span data-lang="en">What does each of Faithfulness / Relevancy / Correctness measure, and what input does each need?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">Faithfulness：答案是否<strong>忠于检索到的上下文</strong>（防幻觉），要 response（含 source_nodes）；Relevancy：检索到的上下文+答案是否<strong>切题</strong>，要 query+response；Correctness：答案对不对，要 query+response+<strong>参考答案</strong>，多为 1–5 评分。</span><span data-lang="en">Faithfulness: is the answer <strong>grounded in the retrieved context</strong> (anti-hallucination), needs response (+ source_nodes); Relevancy: are context+answer <strong>on-topic</strong>, needs query+response; Correctness: is the answer right, needs query+response+<strong>a reference answer</strong>, usually a 1–5 score.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 2. <span data-lang="zh">为什么说评估能把 RAG 调优从“凭感觉”变成“闭环”？</span><span data-lang="en">Why does evaluation turn RAG tuning from 'vibes' into a 'closed loop'?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">它给出可量化指标，于是“改切块/检索/Prompt → 评估 → 对比指标 → 决定保留或回退”成为可重复的闭环，还能挡住“修好一个、悄悄弄坏一批”的回归——把调优变成工程纪律而非手感。</span><span data-lang="en">It yields quantifiable metrics, so 'change chunking/retrieval/prompt → evaluate → compare → keep or revert' becomes a repeatable loop, and it catches the 'fix one, silently break many' regression — making tuning an engineering discipline, not a feel.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 3. <span data-lang="zh">评估用的是 LLM-as-judge。它有哪些局限？你怎么缓解？</span><span data-lang="en">Evaluation uses LLM-as-judge. What are its limits, and how do you mitigate them?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">局限：评判本身有噪声/偏见、可能偏向某种风格、成本高、对边界判断不稳。缓解：固定评判模型与 prompt、用二值/明确 rubric、对关键集做人评校准、看趋势而非单点分数、维护回归集对比相对变化。</span><span data-lang="en">Limits: the judge is noisy/biased, may favor a style, costs money, and is shaky on edge cases. Mitigate: pin the judge model and prompt, use binary/explicit rubrics, calibrate with human review on a key set, watch trends over single scores, and compare relative change on a fixed regression set.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 4. <span data-lang="zh">你会如何搭一个最小回归集，防止改动让 RAG 变差？</span><span data-lang="en">How would you build a minimal regression set so changes don't quietly degrade the RAG?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">挑一组有代表性的问题（覆盖常见、长尾、易错），尽量配“标准答案块/参考答案”；每次改动后用 BatchEvalRunner 跑这组、记录 Faithfulness/Relevancy 等分数；只在指标不降时合并改动，下降就定位回退。先小而稳，再逐步扩充。</span><span data-lang="en">Pick representative questions (common, long-tail, error-prone), ideally with gold chunks/reference answers; after each change run them via BatchEvalRunner and record Faithfulness/Relevancy; merge only when metrics hold, locate and revert when they drop. Start small and stable, then grow it.</span></div></div></div>
+  </details>
+</div>
 <div class="card spark">
   <div class="tag"><span data-lang="zh">💭 发散思考（没有标准答案）</span><span data-lang="en">💭 Open questions (no single right answer)</span></div>
   <ul>

@@ -376,6 +376,35 @@ print(chat.chat('你们支持哪些支付方式？'))</pre></div><div class="car
     <div class="acc-body"><div class="qa"><div class="a"><strong><span data-lang="zh">答案：B</span><span data-lang="en">Answer: B</span></strong> <span data-lang="zh">condense 模式先把指代消解成一个独立问题，确保检索到正确片段。</span><span data-lang="en">Condense mode resolves the reference into a standalone question first, so retrieval finds the right chunks.</span></div></div></div>
   </details>
 </div>
+<h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
+<div class="quiz interview">
+  <div class="qn">🎯 1. <span data-lang="zh">多轮 RAG 的两个真正难点是什么？为什么说聊天不只是“给 QueryEngine 套个循环”？</span><span data-lang="en">What are the two real hard parts of multi-turn RAG, and why is chat more than 'a loop around a QueryEngine'?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">① 指代消解——“它/那/上面说的”要先还原成具体所指；② 用<strong>哪个问题</strong>去检索——原话还是消解补全后的独立问题。直接套循环既解析不了指代、检索也会被残缺的追问带偏。</span><span data-lang="en">(1) Coreference — 'it / that / the one above' must resolve to a concrete referent; (2) <strong>which question</strong> to retrieve with — the raw turn or a condensed standalone query. A naive loop neither resolves references nor retrieves well on a fragmentary follow-up.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 2. <span data-lang="zh"><code>condense_question</code> 和 <code>context</code> 都是每轮都检索吗？“要不要检索”由谁决定？</span><span data-lang="en">Do <code>condense_question</code> and <code>context</code> both retrieve every turn? Who decides whether to retrieve at all?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">是的，两者都<strong>每轮检索</strong>（context 总是检索注入；condense 先把历史+新问压成独立问题再检索）。真正“按需决定要不要检索”是 <strong>agent/router</strong> 的能力，不是这两个 mode。</span><span data-lang="en">Yes — both <strong>retrieve every turn</strong> (context always retrieves and injects; condense first compresses history+question into a standalone query, then retrieves). Deciding <strong>whether</strong> to retrieve on demand is an <strong>agent/router</strong> capability, not these two modes.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 3. <span data-lang="zh">condense_question / context / condense_plus_context 你怎么选？</span><span data-lang="en">How do you choose among condense_question / context / condense_plus_context?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">condense_question：检索更聚焦（先消解再检索），但压缩可能丢上下文；context：保留原始对话上下文、实现直接，但追问含指代时检索可能不准；condense_plus_context：两者结合、通用性最好，是多数客服/问答助手的默认。</span><span data-lang="en">condense_question: focused retrieval (resolve then retrieve), but compression may drop context; context: keeps raw conversational context and is simple, but retrieval can miss on pronoun-laden follow-ups; condense_plus_context: both combined, most general — the default for most assistants.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 4. <span data-lang="zh">用户追问“那它呢？”，引擎把“它”解析错了，检索全跑偏。你怎么排查和改善？</span><span data-lang="en">On 'and what about it?', the engine resolves 'it' wrong and retrieval derails. How do you debug and improve it?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">先看 condense 后生成的“独立问题”长什么样（很多实现可打印改写后的 query）；若改写错→优化 condense 的 prompt、或保留更多对话历史、或换 condense_plus_context；必要时让用户的指代更明确，或上 agent 做更强的对话状态管理。</span><span data-lang="en">Inspect the condensed standalone question (many implementations let you print the rewritten query); if the rewrite is wrong → improve the condense prompt, keep more history, or switch to condense_plus_context; when needed, disambiguate references or move to an agent with stronger dialogue-state management.</span></div></div></div>
+  </details>
+</div>
 <div class="card spark">
   <div class="tag"><span data-lang="zh">💭 发散思考（没有标准答案）</span><span data-lang="en">💭 Open questions (no single right answer)</span></div>
   <ul>

@@ -379,6 +379,35 @@ print(round(emb.similarity(a, c), 3))   # 低：语义无关</pre></div><div cla
     <div class="acc-body"><div class="qa"><div class="a"><strong><span data-lang="zh">答案：C</span><span data-lang="en">Answer: C</span></strong> <span data-lang="zh">语义相近的文本向量距离也近，所以即使用词不同也能被召回。</span><span data-lang="en">Semantically similar text has nearby vectors, so it's recalled even with different wording.</span></div></div></div>
   </details>
 </div>
+<h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
+<div class="quiz interview">
+  <div class="qn">🎯 1. <span data-lang="zh">为什么向量检索能懂“同义不同词”，而关键词匹配不能？</span><span data-lang="en">Why can vector search catch paraphrases ('same meaning, different words') when keyword matching can't?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">Embedding 把文本映射到向量空间，使<strong>语义相近 = 向量距离近</strong>（按余弦/夹角度量）。所以“退款要多久”能命中“几天到账”——它们用词不同但语义相邻；关键词匹配只看字面重叠，错过同义改写。</span><span data-lang="en">Embeddings map text into a space where <strong>similar meaning = nearby vectors</strong> (by cosine/angle). So 'how long for a refund' matches 'arrives in a few days' — different words, adjacent meaning; keyword matching sees only literal overlap and misses paraphrases.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 2. <span data-lang="zh">为什么查询和文档<strong>必须</strong>用同一个 embedding 模型？不一致会怎样？</span><span data-lang="en">Why <strong>must</strong> the query and documents use the same embedding model? What breaks otherwise?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">不同模型产生不同的坐标系，两套向量不可比，算出的相似度毫无意义、检索基本失效。这也是为什么换 embedding 模型必须重建索引——旧向量要用新模型全部重算。</span><span data-lang="en">Different models produce different coordinate systems; the two sets of vectors aren't comparable, so similarities are meaningless and retrieval collapses. It's also why swapping the embedding model forces a full re-index — old vectors must be recomputed.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 3. <span data-lang="zh">“换一个更强的 embedding 模型就能提升召回”——这句话哪里不严谨？</span><span data-lang="en">'Just switch to a stronger embedding model and recall improves' — what's sloppy about that claim?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">更强的<strong>通用</strong>模型未必在<strong>你的领域</strong>更好——领域/微调的小模型常反超。且换模型要重建整个索引（成本）、可能改变维度与相似度分布。该用评估集量化，而不是默认“更大=更好”。</span><span data-lang="en">A stronger <strong>general</strong> model isn't always better in <strong>your domain</strong> — domain/fine-tuned smaller models often win. And switching forces a full re-index (cost) and can change dimensions/score distributions. Measure with an eval set rather than assuming 'bigger = better'.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 4. <span data-lang="zh">RAG 召回差，你怎么判断是 embedding 的问题，还是切块/检索的问题？</span><span data-lang="en">Recall is poor — how do you tell whether it's the embedding vs the chunking/retrieval?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">先看 <code>retrieve()</code> 的 top-k：正确块根本没进来→可能是切块太碎/太粗或 embedding 不贴领域；正确块进来了但排名靠后→调 top_k 或加 rerank。可用一组带“标准答案块”的查询量化命中率，分别替换变量验证。</span><span data-lang="en">Inspect the top-k from <code>retrieve()</code>: the right chunk never appears → likely bad chunking or an off-domain embedding; it appears but ranks low → tune top_k or add a reranker. Quantify hit-rate with queries that have known gold chunks, swapping one variable at a time.</span></div></div></div>
+  </details>
+</div>
 <div class="card spark">
   <div class="tag"><span data-lang="zh">💭 发散思考（没有标准答案）</span><span data-lang="en">💭 Open questions (no single right answer)</span></div>
   <ul>

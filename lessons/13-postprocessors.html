@@ -384,6 +384,35 @@ engine = index.as_query_engine(
     <div class="acc-body"><div class="qa"><div class="a"><strong><span data-lang="zh">答案：D</span><span data-lang="en">Answer: D</span></strong> <span data-lang="zh">它按阈值过滤掉低相关 Node，减少噪声进入生成阶段。</span><span data-lang="en">It filters out low-relevance Nodes by threshold, reducing noise before generation.</span></div></div></div>
   </details>
 </div>
+<h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
+<div class="quiz interview">
+  <div class="qn">🎯 1. <span data-lang="zh">为什么说后处理是 RAG 调优里“性价比最高”的一环？</span><span data-lang="en">Why is post-processing the 'best bang-for-buck' step in RAG tuning?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">它在“检索之后、生成之前”，多为非 LLM 的轻量操作（打分阈值、窗口替换）或一次轻调用（rerank），却能去噪、补上下文、显著提升答案——<strong>不重训、不换模型</strong>，改动小、见效快。</span><span data-lang="en">It sits 'after retrieval, before generation' and is mostly lightweight non-LLM work (score thresholds, window replacement) or one light call (rerank), yet it denoises and restores context for a clear quality lift — <strong>no retraining, no model swap</strong>.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 2. <span data-lang="zh"><code>similarity_cutoff</code> 设太高、太低各会怎样？你用什么信号来定它？</span><span data-lang="en">What happens if <code>similarity_cutoff</code> is too high vs too low, and what signal sets it?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">太高→把相关块也误杀、召回不足；太低→噪声混进生成。定法：看一批查询里相关/不相关块的<strong>分数分布</strong>，把阈值卡在两者之间的“谷”；不同 embedding 模型的分数尺度不同，阈值要按模型重标，别照搬。</span><span data-lang="en">Too high → kills relevant chunks, under-recall; too low → noise reaches generation. Set it from the <strong>score distribution</strong> of relevant vs irrelevant chunks across sample queries, placing the threshold in the valley between them. Score scales differ per embedding model, so re-calibrate rather than copy a number.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 3. <span data-lang="zh">阈值过滤和交叉编码器 rerank，分别什么时候用？</span><span data-lang="en">When do you use threshold filtering vs cross-encoder reranking?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">阈值过滤便宜但粗糙，适合先砍掉明显低分；rerank（Cohere/LLM）更准——它用更强模型对 query-doc 配对重新打分，能纠正向量召回的排序错误，但要额外一次调用、更慢更贵。常组合：先 top_k 多取 → cutoff 粗筛 → rerank 精排。</span><span data-lang="en">Threshold filtering is cheap but blunt — good for cutting obvious low scores; reranking (Cohere/LLM) is more accurate, re-scoring query-doc pairs with a stronger model to fix vector-ranking mistakes, but costs an extra slower call. Often combined: fetch wide → cutoff → rerank.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 4. <span data-lang="zh">句窗（sentence-window）+ <code>MetadataReplacementPostProcessor</code> 解决了什么矛盾？</span><span data-lang="en">What tension do sentence-window + <code>MetadataReplacementPostProcessor</code> resolve together?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">“检索要精准（小块）”与“生成要上下文（大块）”的矛盾：以单句检索保证精准，命中后用后处理把单句替换成它前后句的 window 再喂给 LLM，等于检索粒度和喂入粒度解耦。</span><span data-lang="en">The clash between 'retrieve precisely (small)' and 'generate with context (large)': retrieve on single sentences for precision, then post-process replaces the hit sentence with its surrounding window before generation — decoupling retrieval granularity from what the LLM reads.</span></div></div></div>
+  </details>
+</div>
 <div class="card spark">
   <div class="tag"><span data-lang="zh">💭 发散思考（没有标准答案）</span><span data-lang="en">💭 Open questions (no single right answer)</span></div>
   <ul>

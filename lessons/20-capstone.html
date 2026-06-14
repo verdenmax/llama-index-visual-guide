@@ -399,6 +399,35 @@ for q in eval_set:
     print(q, 'PASS' if ok else 'FAIL')
 print(f'通过率 pass-rate: {passed}/{len(eval_set)}')</pre></div><div class="card keypts"><div class="tag"><span data-lang="zh">✅ 本课要点</span><span data-lang="en">✅ Key points</span></div><ul><li><span data-lang="zh">完整 RAG = 写入路径（建一次、落盘）+ 查询路径（反复问）。</span><span data-lang="en">A full RAG = write path (build once, persist) + query path (ask repeatedly).</span></li><li><span data-lang="zh">每一站都是<strong>可替换</strong>组件：换库、换检索、换合成都不动主结构。</span><span data-lang="en">Every stop is a <strong>swappable</strong> component: change store/retrieval/synthesis without touching the skeleton.</span></li><li><span data-lang="zh">持久化 + 评估让它从 demo 走向<strong>可维护、可回归</strong>。</span><span data-lang="en">Persistence + evaluation take it from demo to <strong>maintainable and regression-safe</strong>.</span></li></ul></div><div class="card highlight"><div class="tag"><span data-lang="zh">💡 设计亮点</span><span data-lang="en">💡 Design insight</span></div><div data-lang="zh">整条管道每一站都能独立替换，却共享统一接口——这正是 LlamaIndex 的核心思想：<strong>用可组合的标准件搭出你自己的 RAG</strong>。</div><div data-lang="en">Every stop swaps independently yet shares one interface — that's LlamaIndex's core idea: <strong>compose your own RAG from standard, interchangeable parts</strong>.</div></div><div class="selftest">
 <h2><span data-lang="zh">🧪 自测 · 想一想为什么这么设计</span><span data-lang="en">🧪 Self-check · think about the design</span></h2>
+<h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
+<div class="quiz interview">
+  <div class="qn">🎯 1. <span data-lang="zh">端到端 RAG 应用，“首次建库”和“以后复用”代码应该怎么分支？</span><span data-lang="en">In an end-to-end RAG app, how should the code branch between 'first build' and 'later reuse'?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">用 <code>if os.path.exists(PERSIST)</code>：存在就 <code>load_index_from_storage</code> 秒级复活；否则跑一遍写入路径（load → 切块/摄取 → 建索引）再 <code>persist</code> 落盘。把“建一次（重）”和“问多次（轻）”分开，启动才快。</span><span data-lang="en">Use <code>if os.path.exists(PERSIST)</code>: if present, <code>load_index_from_storage</code> revives it in seconds; otherwise run the write path (load → split/ingest → index) once, then <code>persist</code>. Separating 'build once (heavy)' from 'ask many (light)' keeps startup fast.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 2. <span data-lang="zh">为什么 <code>Settings.embed_model</code> 必须在<strong>建索引之前</strong>设好？设晚了会怎样？</span><span data-lang="en">Why must <code>Settings.embed_model</code> be set <strong>before</strong> building the index? What breaks if it's set late?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">落盘的向量由 embed_model 决定；加载后必须用<strong>同一个</strong>模型才能对齐检索。若建索引时用了默认/错的 embed_model，向量就是错坐标系的——查询要么报错、要么相似度全错，且只能重建索引才能修。</span><span data-lang="en">The persisted vectors are determined by the embed_model; after loading you must use the <strong>same</strong> model for retrieval to line up. If the index was built with a default/wrong embed_model, the vectors are in the wrong space — queries error or score nonsensically, fixable only by re-indexing.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 3. <span data-lang="zh">把这套 capstone 改造成“带引用脚注的客服机器人”，你会替换或新增哪几件？</span><span data-lang="en">To turn this capstone into a 'support bot with citation footnotes', which parts would you change or add?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">① QueryEngine 换成 <code>chat_mode='condense_plus_context'</code> 的 Chat Engine（多轮记忆）；② 加引用后处理，把 <code>source_nodes</code> 渲染成脚注；③ 收紧 prompt（只引用、给出处）；④ 挂 Faithfulness 评估当上线前质量闸。写入/查询主干骨架不变。</span><span data-lang="en">(1) swap the QueryEngine for a Chat Engine (<code>chat_mode='condense_plus_context'</code>) for memory; (2) add a citation postprocessor rendering <code>source_nodes</code> as footnotes; (3) tighten the prompt (cite-only); (4) attach a Faithfulness evaluator as a pre-launch gate. The write/query backbone stays.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 4. <span data-lang="zh">用一句话概括整本书的核心思想——LlamaIndex 的 RAG 观是什么？</span><span data-lang="en">In one sentence, what's the core idea of the whole guide — LlamaIndex's view of RAG?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">RAG 是一条<strong>由可组合标准件搭成</strong>的数据管道：写入路径（加载→切块→向量化→存储→索引）把知识外置成可检索、可更新的索引，查询路径（检索→后处理→合成）在其上据此作答；每一站都遵守统一接口、可独立替换与评估。</span><span data-lang="en">RAG is a data pipeline <strong>assembled from composable standard parts</strong>: the write path (load→split→embed→store→index) externalizes knowledge into a searchable, refreshable index, and the query path (retrieve→post-process→synthesize) answers from it — every stop sharing one interface, independently swappable and measurable.</span></div></div></div>
+  </details>
+</div>
 <div class="card spark">
   <div class="tag"><span data-lang="zh">💭 发散思考（没有标准答案）</span><span data-lang="en">💭 Open questions (no single right answer)</span></div>
   <ul>

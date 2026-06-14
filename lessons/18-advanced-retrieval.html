@@ -385,6 +385,35 @@ print(len(merged))</pre></div><div class="card keypts"><div class="tag"><span da
     <div class="acc-body"><div class="qa"><div class="a"><strong><span data-lang="zh">答案：B</span><span data-lang="en">Answer: B</span></strong> <span data-lang="zh">统一的 BaseRetriever 接口让检索策略可插拔，QueryEngine 不感知具体实现。</span><span data-lang="en">The uniform BaseRetriever interface makes retrieval strategies pluggable; the QueryEngine doesn't care which one.</span></div></div></div>
   </details>
 </div>
+<h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
+<div class="quiz interview">
+  <div class="qn">🎯 1. <span data-lang="zh">朴素 top-k 检索有哪三类典型短板？进阶检索分别怎么补？</span><span data-lang="en">What are the three typical weaknesses of naive top-k retrieval, and how does advanced retrieval address each?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">① 召回不全（换个问法本能命中的被漏掉）→ Query Fusion 改写多版查询再融合；② 命中碎片（块太碎、上下文不全）→ AutoMerging 合并父块 / Recursive 跟随引用；③ 多库分流（该查哪个源）→ Router 自动路由。</span><span data-lang="en">(1) Incomplete recall (a rephrasing would have hit) → Query Fusion rewrites and fuses several queries; (2) fragmented hits (chunks too small, missing context) → AutoMerging merges parent blocks / Recursive follows references; (3) multi-source routing (which store to query) → Router auto-routes.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 2. <span data-lang="zh">Query Fusion 是怎么提升召回的？它的额外成本是什么？</span><span data-lang="en">How does Query Fusion lift recall, and what's its extra cost?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">把一个问题改写成<strong>多个</strong>版本（<code>num_queries</code>）各自检索，再用 reciprocal rerank 融合多路结果——覆盖更多“问法”，召回更全。代价：多跑几轮检索 + 一次改写的 LLM 调用，更慢、更贵。</span><span data-lang="en">It rewrites one question into <strong>several</strong> variants (<code>num_queries</code>), retrieves each, then fuses the result lists via reciprocal rerank — covering more phrasings for fuller recall. Cost: several extra retrieval passes plus a rewrite LLM call — slower and pricier.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 3. <span data-lang="zh">“进阶检索没有免费的午餐”——对延迟敏感的线上问答，你会接受 fusion 的开销吗？怎么权衡？</span><span data-lang="en">'Advanced retrieval is no free lunch' — for latency-sensitive live Q&amp;A, would you accept fusion's overhead? How do you weigh it?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">先量化：fusion 提升的召回/答案质量值多少？延迟预算还剩多少？高价值、可容忍几百 ms 的场景值得；强延迟约束下可改用更便宜的手段（更好的 embedding、轻量 rerank、缓存常见查询），或只对“难问题”按需触发 fusion。</span><span data-lang="en">Quantify first: how much does fusion improve recall/answer quality, and what's the latency budget? High-value flows tolerant of a few hundred ms justify it; under tight latency, prefer cheaper levers (better embedding, light rerank, caching common queries) or trigger fusion only for 'hard' questions.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 4. <span data-lang="zh">AutoMerging 检索解决什么？它和单纯调大 chunk_size 有何不同？</span><span data-lang="en">What does AutoMerging retrieval solve, and how is it different from just using a bigger chunk_size?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">它用<strong>小块检索</strong>（精准），当命中同一父块的多个小块时再<strong>合并成父块</strong>喂给 LLM（补上下文）——兼得精准与上下文。直接调大 chunk_size 则全程用大块，检索会更糊、噪声更多。</span><span data-lang="en">It retrieves with <strong>small chunks</strong> (precise), and when several small chunks under the same parent are hit, <strong>merges them into the parent</strong> for the LLM (context) — precision and context together. A larger chunk_size uses big chunks throughout, blurring retrieval and adding noise.</span></div></div></div>
+  </details>
+</div>
 <div class="card spark">
   <div class="tag"><span data-lang="zh">💭 发散思考（没有标准答案）</span><span data-lang="en">💭 Open questions (no single right answer)</span></div>
   <ul>

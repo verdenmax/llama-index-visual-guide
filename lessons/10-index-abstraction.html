@@ -382,6 +382,35 @@ print(engine.query('全文主要讲了什么？'))</pre></div><div class="card k
     <div class="acc-body"><div class="qa"><div class="a"><strong><span data-lang="zh">答案：B</span><span data-lang="en">Answer: B</span></strong> <span data-lang="zh">总结需要覆盖全部内容，SummaryIndex 遍历所有 Node，而 VectorStoreIndex 只取 top-k。</span><span data-lang="en">Summarizing must cover everything; SummaryIndex iterates all Nodes, whereas VectorStoreIndex only takes top-k.</span></div></div></div>
   </details>
 </div>
+<h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
+<div class="quiz interview">
+  <div class="qn">🎯 1. <span data-lang="zh">为什么说“选 Index = 选检索范式”？Index 和向量库是一回事吗？</span><span data-lang="en">Why is 'choosing an Index = choosing a retrieval paradigm'? Is an Index the same as a vector store?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">不是。向量库是<strong>存储</strong>；Index 是<strong>为某种检索方式组织 Node 的结构</strong>，它决定的不是“存哪儿”而是“怎么找”。VectorStoreIndex 按相似度定点召回，SummaryIndex 遍历全部做总结——选 Index 就选定了检索行为。</span><span data-lang="en">No. A vector store is <strong>storage</strong>; an Index is a <strong>structure that organizes Nodes for a retrieval style</strong> — it decides not 'where things live' but 'how you find them'. VectorStoreIndex pinpoints by similarity; SummaryIndex walks everything to summarize. Choosing the Index fixes the retrieval behavior.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 2. <span data-lang="zh">定点 FAQ 问答 vs 整篇合同的全局摘要，你分别选哪种 Index？为什么？</span><span data-lang="en">Pinpoint FAQ Q&amp;A vs a global summary of a whole contract — which Index for each, and why?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">FAQ → VectorStoreIndex：问题指向某几段，按相似度取 top-k 最省、最准。全局摘要 → SummaryIndex + <code>response_mode='tree_summarize'</code>：需要看<strong>全部</strong>内容再逐层合并，定点检索反而会漏。</span><span data-lang="en">FAQ → VectorStoreIndex: the question targets a few chunks, so top-k by similarity is cheapest and most precise. Global summary → SummaryIndex with <code>response_mode='tree_summarize'</code>: you must see <strong>all</strong> content and merge it up; pinpoint retrieval would miss parts.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 3. <span data-lang="zh">一个知识库里既有定点 FAQ、又要支持“整库总结”，怎么办？</span><span data-lang="en">One knowledge base needs both pinpoint FAQ and 'summarize the whole base' — how do you handle it?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">建多个 Index（向量索引 + 摘要索引），用 <code>RouterQueryEngine</code> 按问题自动路由到合适的那个；或用 <code>QueryEngineTool</code> 把它们包成工具交给上层选择。一个 Index 难以同时擅长两种范式。</span><span data-lang="en">Build multiple indices (vector + summary) and let a <code>RouterQueryEngine</code> route each question to the right one; or wrap them as <code>QueryEngineTool</code>s for an upper layer to choose. One Index can't excel at both paradigms.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 4. <span data-lang="zh">四种 Index 都通过同一个 <code>from_documents</code> 入口构建，这种统一带来什么好处？</span><span data-lang="en">All four Index types build via the same <code>from_documents</code> entry — what does that uniformity buy?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">可替换性：换检索范式只换 Index 类、上层 <code>as_query_engine()</code> 用法不变；学习与组合成本低；也便于做 Router 这类“多 Index 一致调度”的上层抽象。</span><span data-lang="en">Interchangeability: switching paradigm means switching the Index class while the upstream <code>as_query_engine()</code> usage stays; low learning/composition cost; and it enables 'uniformly dispatch many indices' abstractions like the Router.</span></div></div></div>
+  </details>
+</div>
 <div class="card spark">
   <div class="tag"><span data-lang="zh">💭 发散思考（没有标准答案）</span><span data-lang="en">💭 Open questions (no single right answer)</span></div>
   <ul>
