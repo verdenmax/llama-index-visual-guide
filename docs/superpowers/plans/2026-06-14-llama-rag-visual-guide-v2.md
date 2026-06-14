@@ -82,7 +82,7 @@ def test_annot_center_and_callouts():
 
 def test_compare2_two_columns():
     h = d.compare2((L("左", "L"), "<p>a</p>"), (L("右", "R"), "<p>b</p>"))
-    assert h.count("fcol") == 2 and "fvs" in h
+    assert h.count('class="fcol"') == 2 and "fvs" in h
     assert "<p>a</p>" in h and "<p>b</p>" in h
 
 
