@@ -397,7 +397,7 @@ print(len(merged))</pre></div><div class="card keypts"><div class="tag"><span da
   <div class="qn">🎯 2. <span data-lang="zh">Query Fusion 是怎么提升召回的？它的额外成本是什么？</span><span data-lang="en">How does Query Fusion lift recall, and what's its extra cost?</span></div>
   <details class="accordion">
     <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
-    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">把一个问题改写成<strong>多个</strong>版本（<code>num_queries</code>）各自检索，再用 reciprocal rerank 融合多路结果——覆盖更多“问法”，召回更全。代价：多跑几轮检索 + 一次改写的 LLM 调用，更慢、更贵。</span><span data-lang="en">It rewrites one question into <strong>several</strong> variants (<code>num_queries</code>), retrieves each, then fuses the result lists via reciprocal rerank — covering more phrasings for fuller recall. Cost: several extra retrieval passes plus a rewrite LLM call — slower and pricier.</span></div></div></div>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">把一个问题<strong>改写成 <code>num_queries</code>−1 个变体（再加上原问题）</strong>各自检索，再把多路结果<strong>融合</strong>（常用 reciprocal-rank fusion / RRF，需显式设 <code>mode</code>）——覆盖更多“问法”，召回更全。代价：多跑几轮检索 + 一次改写的 LLM 调用，更慢、更贵。</span><span data-lang="en">It generates <strong><code>num_queries</code>−1 rewrites (plus the original)</strong>, retrieves each, then <strong>fuses</strong> the result lists (commonly with reciprocal-rank fusion / RRF, set via <code>mode</code>) — covering more phrasings for fuller recall. Cost: several extra retrieval passes plus a rewrite LLM call — slower and pricier.</span></div></div></div>
   </details>
 </div>
 <div class="quiz interview">

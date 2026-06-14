@@ -388,10 +388,10 @@ print(engine.query('保修期是多久？'))</pre></div><div class="card keypts"
 </div>
 <h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
 <div class="quiz interview">
-  <div class="qn">🎯 1. <span data-lang="zh"><code>Settings</code> 取代了什么？“全局默认 + 局部覆盖”是怎么配合的？</span><span data-lang="en">What did <code>Settings</code> replace, and how do 'global defaults + local override' work together?</span></div>
+  <div class="qn">🎯 1. <span data-lang="zh">有人到处用全局 <code>Settings</code>、有人坚持每个组件显式传参。各自的利弊是什么？你会怎么定规范？</span><span data-lang="en">Some use the global <code>Settings</code> everywhere; others pass config explicitly to each component. Trade-offs, and what convention would you set?</span></div>
   <details class="accordion">
     <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
-    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">取代了旧的 ServiceContext，是个全局单例，集中配置 llm / embed_model / node_parser / chunk_size 等，去样板、可审计。局部可覆盖：某个 query engine 传自己的 <code>llm=</code> 或 <code>text_qa_template=</code> 即可，不动全局。</span><span data-lang="en">It replaced the old ServiceContext — a global singleton centralizing llm / embed_model / node_parser / chunk_size, cutting boilerplate and easing audit. Local override: a given query engine can pass its own <code>llm=</code> or <code>text_qa_template=</code> without touching the global.</span></div></div></div>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">全局 Settings：少样板、改一处全局生效，但是隐式依赖、难追踪“这条链路到底用了哪个模型”、测试易串味；显式传参：可读、可测、可在同进程跑多套配置，但啰嗦。规范：全局设默认值，关键/差异化组件（评估用的 judge、特殊 query engine）显式覆盖并就近声明。</span><span data-lang="en">Global Settings: less boilerplate, one change applies everywhere — but it's an implicit dependency, hard to trace 'which model did this path use', and tests can leak state; explicit args: readable, testable, multiple configs can coexist in one process — but verbose. Convention: set sane global defaults, and explicitly override key/divergent components (an eval judge, a special query engine) declared close to use.</span></div></div></div>
   </details>
 </div>
 <div class="quiz interview">

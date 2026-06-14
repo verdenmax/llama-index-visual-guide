@@ -386,10 +386,10 @@ engine = index.as_query_engine()</pre></div><div class="card keypts"><div class=
 </div>
 <h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
 <div class="quiz interview">
-  <div class="qn">🎯 1. <span data-lang="zh"><code>VectorStoreIndex.from_documents(docs)</code> 这一行背后，依次发生了什么？</span><span data-lang="en">What happens, step by step, behind the single line <code>VectorStoreIndex.from_documents(docs)</code>?</span></div>
+  <div class="qn">🎯 1. <span data-lang="zh">写入路径（建索引）和查询路径（问答）在你的系统里该分别跑在哪里、用什么节奏？为什么不该每次提问都重建索引？</span><span data-lang="en">Where and at what cadence should the write path (indexing) vs query path (answering) run, and why not rebuild the index on every question?</span></div>
   <details class="accordion">
     <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
-    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">写入路径三步合一：把每个 Document 切块成 Node → 用 embed_model 把每个 Node 向量化 → 把向量与 Node 写入索引。它是 <code>BaseIndex.from_documents</code> 提供的快捷方式。</span><span data-lang="en">Three write-path steps in one: chunk each Document into Nodes → embed each Node via embed_model → write vectors and Nodes into the index. It's the shortcut from <code>BaseIndex.from_documents</code>.</span></div></div></div>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">写入路径重、做一次：放离线/批处理或后台任务，产物用 <code>persist</code> 落盘；查询路径轻、做多次：在线、低延迟、复用同一索引。每次提问都重建＝把 O(语料) 的工作塞进每个请求，又慢又烧钱，还无法水平扩展。</span><span data-lang="en">The write path is heavy and runs once: offline/batch or a background job, with results <code>persist</code>ed; the query path is light and runs many times: online, low-latency, reusing the index. Rebuilding per question forces O(corpus) work into every request — slow, costly, and impossible to scale out.</span></div></div></div>
   </details>
 </div>
 <div class="quiz interview">

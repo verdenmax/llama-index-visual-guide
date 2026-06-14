@@ -382,10 +382,10 @@ for n in retriever.retrieve('国际订单的退款要多久？'):
   </details>
 </div>
 <div class="quiz interview">
-  <div class="qn">🎯 2. <span data-lang="zh"><code>retrieve()</code> 返回的是什么类型？此刻 LLM 调用了吗？</span><span data-lang="en">What type does <code>retrieve()</code> return, and has the LLM been called yet?</span></div>
+  <div class="qn">🎯 2. <span data-lang="zh">向量检索漏掉了一个含精确型号“X-2000”的关键段落——字面明明就在文档里。为什么会漏？怎么补救？</span><span data-lang="en">Vector search missed a key passage with the exact part number 'X-2000' — even though it's literally in the docs. Why, and how do you fix it?</span></div>
   <details class="accordion">
     <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
-    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">返回 <code>List[NodeWithScore]</code>（Node + 相似度分数）。此刻<strong>还没</strong>调用 LLM——检索是查询路径的第一步，生成在后面的合成阶段。</span><span data-lang="en">A <code>List[NodeWithScore]</code> (Node + similarity score). The LLM has <strong>not</strong> been called yet — retrieval is the first step of the query path; generation happens later in synthesis.</span></div></div></div>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">向量化偏“语义”，对精确符号/罕见 token/型号/代码不敏感——语义上“X-2000”与别的型号很近，可能排不进 top-k。补救：混合检索（向量 + BM25/关键词，把精确匹配召回回来）、把型号存进 metadata 做精确过滤、或对这类查询加 rerank。</span><span data-lang="en">Embeddings capture meaning and are weak on exact symbols/rare tokens/part numbers/code — semantically 'X-2000' sits near other models and may miss top-k. Fixes: hybrid retrieval (vector + BM25/keyword to recover exact matches), store the part number in metadata for exact filtering, or add a reranker for such queries.</span></div></div></div>
   </details>
 </div>
 <div class="quiz interview">
