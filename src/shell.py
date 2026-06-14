@@ -288,6 +288,8 @@ table.t td.mono, table.t td .mono { font-family: ui-monospace, monospace; font-s
 .quiz ol.opts { list-style: upper-alpha; margin: .55rem 0 .6rem 1.5rem; padding: 0; }
 .quiz ol.opts li { margin: .3rem 0; padding-left: .15rem; }
 .quiz details.accordion { margin: .5rem 0 0; }
+.selftest > h3 { margin: 1.6rem 0 .5rem; font-size: 1rem; }
+.quiz.interview { border-left-color: var(--purple); }
 .selftest code { font-family: ui-monospace, monospace; font-size: .9em; color: var(--accent-ink);
   background: var(--accent-soft); padding: 0 .28em; border-radius: 4px; }
 

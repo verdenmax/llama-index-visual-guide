@@ -499,6 +499,24 @@ def render(fname):
             f"  </details>\n"
             f"</div>"
         )
+    interviews = data.get("interview", [])
+    if interviews:
+        ihead = i18n.t("🎯 面试官提问 · 试着答出要点", "🎯 Interviewer asks · cover the key points")
+        reveal = i18n.t("看参考要点", "Show key points")
+        hint = i18n.t("点击展开", "expand")
+        out.append(f"<h3>{ihead}</h3>")
+        for j, item in enumerate(interviews, 1):
+            out.append(
+                f'<div class="quiz interview">\n'
+                f'  <div class="qn">🎯 {j}. {i18n.render(item["q"], block=False)}</div>\n'
+                f'  <details class="accordion">\n'
+                f'    <summary>{reveal} <span class="hint">{hint}</span></summary>\n'
+                f'    <div class="acc-body"><div class="qa"><div class="a">'
+                f'{i18n.render(item["answer"], block=False)}'
+                f"</div></div></div>\n"
+                f"  </details>\n"
+                f"</div>"
+            )
     opens = data.get("open", [])
     if opens:
         spark = i18n.t("💭 发散思考（没有标准答案）", "💭 Open questions (no single right answer)")
