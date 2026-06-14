@@ -396,6 +396,35 @@ for n in resp.source_nodes:      # 答案的出处，可逐条核对
     <div class="acc-body"><div class="qa"><div class="a"><strong><span data-lang="zh">答案：A</span><span data-lang="en">Answer: A</span></strong> <span data-lang="zh">LlamaIndex 是 RAG 的“数据与编排框架”：统一各阶段接口，底层换 LLM / 向量库 / embedding 都不改主链路。</span><span data-lang="en">LlamaIndex is the data + orchestration framework for RAG: it unifies each stage so swapping the LLM / vector store / embedding doesn't change the main pipeline.</span></div></div></div>
   </details>
 </div>
+<h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
+<div class="quiz interview">
+  <div class="qn">🎯 1. <span data-lang="zh">用一句话向非技术同事解释 RAG，再用一句话说清它和微调的区别。</span><span data-lang="en">Explain RAG to a non-technical colleague in one sentence, then contrast it with fine-tuning in one more.</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">RAG＝答题前先“翻资料”再作答（开卷）；微调＝把知识焊进模型权重。要点：RAG 更新知识只需重建索引、可溯源、便宜；微调贵、难溯源，更适合改风格/格式而非加事实知识。</span><span data-lang="en">RAG = look up sources first, then answer (open-book); fine-tuning = bake knowledge into weights. Key points: RAG updates by re-indexing, is traceable and cheap; fine-tuning is costly, hard to cite, and better for changing style/format than adding facts.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 2. <span data-lang="zh">什么情况下你<strong>不</strong>用 RAG，而是直接长上下文全塞或微调？</span><span data-lang="en">When would you <strong>not</strong> use RAG, and instead stuff long context or fine-tune?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">语料极小且固定→直接塞进上下文；要改变模型的行为/语气/输出格式→微调；强实时的单一短文档→长上下文。RAG 的甜区是大、私有、时效性强、且需要溯源的知识库。</span><span data-lang="en">Tiny fixed corpus → just stuff context; need to change behavior/tone/output format → fine-tune; one short real-time doc → long context. RAG's sweet spot is large, private, time-sensitive knowledge that needs citations.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 3. <span data-lang="zh">上线后用户反馈“它还是会编”，在 RAG 框架下你会从哪几处依次排查？</span><span data-lang="en">Users report 'it still makes things up' — where do you investigate, in order?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">先看 <code>response.source_nodes</code>：① 检索有没有命中正确依据（召回问题→调 top_k/embedding/切块）；② Prompt 有没有约束“只依据资料、未提及就说不知道”；③ 合成是否越界发挥；④ 用 Faithfulness 评估量化。</span><span data-lang="en">Start from <code>response.source_nodes</code>: (1) did retrieval surface the right evidence (recall → tune top_k/embedding/chunking); (2) does the prompt constrain 'answer only from sources, say unknown otherwise'; (3) is synthesis over-reaching; (4) quantify with a Faithfulness evaluator.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 4. <span data-lang="zh">RAG 把模型“记忆”外置成索引，最大的运维好处和最大的新负担各是什么？</span><span data-lang="en">RAG externalizes memory into an index — what's the biggest ops benefit and the biggest new burden?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">好处：更新知识只重建索引、模型零改动、答案可溯源。负担：你要维护一整条数据管道（加载→切块→embedding→向量库→重建→评估），检索质量成为新瓶颈与新的失败点。</span><span data-lang="en">Benefit: update knowledge by re-indexing, model untouched, answers traceable. Burden: you now own a whole data pipeline (load→split→embed→store→rebuild→eval), and retrieval quality becomes the new bottleneck and failure point.</span></div></div></div>
+  </details>
+</div>
 <div class="card spark">
   <div class="tag"><span data-lang="zh">💭 发散思考（没有标准答案）</span><span data-lang="en">💭 Open questions (no single right answer)</span></div>
   <ul>

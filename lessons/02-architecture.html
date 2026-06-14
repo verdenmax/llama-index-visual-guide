@@ -381,6 +381,35 @@ Settings.llm = Anthropic(model='claude-3-5-sonnet-latest')</pre></div><div class
     <div class="acc-body"><div class="qa"><div class="a"><strong><span data-lang="zh">答案：A</span><span data-lang="en">Answer: A</span></strong> <span data-lang="zh">命名约定：路径不含 <code>core</code> 即为具体集成实现；core 只定义接口。</span><span data-lang="en">By convention, a path without <code>core</code> is a concrete integration; core only defines interfaces.</span></div></div></div>
   </details>
 </div>
+<h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
+<div class="quiz interview">
+  <div class="qn">🎯 1. <span data-lang="zh">看到 <code>from llama_index.llms.openai import OpenAI</code>，你立刻能判断哪几件事？</span><span data-lang="en">Seeing <code>from llama_index.llms.openai import OpenAI</code>, what do you instantly know?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">路径不含 <code>core</code> → 这是第三方<strong>集成实现</strong>，不是核心抽象；它是独立 pip 包（需单独安装）；换厂商通常只改这一行导入 + 一行配置；core 只定义接口。</span><span data-lang="en">No <code>core</code> in the path → it's a third-party <strong>integration</strong>, not a core abstraction; it's a separate pip package; swapping vendors is usually this import + one config line; core only defines the interface.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 2. <span data-lang="zh">“接口在 core、实现在集成包”的分层，什么时候反而成为<strong>负担</strong>？</span><span data-lang="en">When does the core/integration split become a <strong>burden</strong> instead of a benefit?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">要点：装的小包变多、版本矩阵变复杂；某个集成可能滞后于 core 的接口变更而踩坑；调试要跨包跳转；小项目嫌零碎。代价换来的是生态能独立演进。</span><span data-lang="en">Key points: more small packages, a more complex version matrix; an integration may lag behind a core interface change; debugging hops across packages; small projects find it fragmented. The price buys an ecosystem that evolves independently.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 3. <span data-lang="zh">本地用 Ollama 跑通的 RAG 要上线换成 OpenAI，你会改哪些、不改哪些？为什么 Embedding 要特别小心？</span><span data-lang="en">Moving a local Ollama RAG to OpenAI for production — what changes, what doesn't, and why is the embedding special?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">改 <code>Settings.llm</code>（基本一行）；retriever / index / query engine 不动。换 Embedding 模型则<strong>必须重建索引</strong>——已落盘的向量用旧模型算出，与新模型坐标系不可比。</span><span data-lang="en">Change <code>Settings.llm</code> (about one line); retriever / index / query engine stay. But swapping the <strong>embedding</strong> model forces a re-index — stored vectors were computed by the old model and aren't comparable to the new one's space.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 4. <span data-lang="zh">为什么 LlamaIndex 把 300+ 集成拆成独立包，而不是打成一个大包？</span><span data-lang="en">Why split 300+ integrations into separate packages instead of one monolith?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">独立发版与依赖隔离（不会因为装一个就拖入一堆无关依赖）、按需安装、各厂商自行迭代；core 保持稳定、不被任一集成的节奏绑死。</span><span data-lang="en">Independent releases and dependency isolation (one install doesn't drag in unrelated deps), à-la-carte installs, vendors iterate on their own; core stays stable, not bound to any one integration's cadence.</span></div></div></div>
+  </details>
+</div>
 <div class="card spark">
   <div class="tag"><span data-lang="zh">💭 发散思考（没有标准答案）</span><span data-lang="en">💭 Open questions (no single right answer)</span></div>
   <ul>

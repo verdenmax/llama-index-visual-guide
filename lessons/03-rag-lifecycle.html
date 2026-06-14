@@ -384,6 +384,35 @@ engine = index.as_query_engine()</pre></div><div class="card keypts"><div class=
     <div class="acc-body"><div class="qa"><div class="a"><strong><span data-lang="zh">答案：C</span><span data-lang="en">Answer: C</span></strong> <span data-lang="zh">它是写入路径的快捷方式：内部依次切块、调用 embed_model 向量化、写入向量索引。</span><span data-lang="en">It's the write-path shortcut: internally it chunks, embeds via embed_model, and writes vectors into the index.</span></div></div></div>
   </details>
 </div>
+<h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
+<div class="quiz interview">
+  <div class="qn">🎯 1. <span data-lang="zh"><code>VectorStoreIndex.from_documents(docs)</code> 这一行背后，依次发生了什么？</span><span data-lang="en">What happens, step by step, behind the single line <code>VectorStoreIndex.from_documents(docs)</code>?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">写入路径三步合一：把每个 Document 切块成 Node → 用 embed_model 把每个 Node 向量化 → 把向量与 Node 写入索引。它是 <code>BaseIndex.from_documents</code> 提供的快捷方式。</span><span data-lang="en">Three write-path steps in one: chunk each Document into Nodes → embed each Node via embed_model → write vectors and Nodes into the index. It's the shortcut from <code>BaseIndex.from_documents</code>.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 2. <span data-lang="zh">写入路径做一次、查询路径做很多次——这对你的部署架构意味着什么？</span><span data-lang="en">The write path runs once, the query path many times — what does that mean for your deployment?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">建索引可放离线/批处理、结果用 <code>persist</code> 落盘；查询在线、要低延迟、复用同一索引。把“建一次”与“问多次”分开，才能各自扩容（如查询侧无状态水平扩展）。</span><span data-lang="en">Index-building can be offline/batch with results <code>persist</code>ed; querying is online, latency-sensitive, reusing the same index. Separating 'build once' from 'ask many' lets each scale independently (e.g. stateless horizontal scaling on the query side).</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 3. <span data-lang="zh">如果同一个索引要服务上千 QPS，你会缓存或持久化哪一步？为什么？</span><span data-lang="en">If one index must serve thousands of QPS, which step would you cache or persist, and why?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">持久化索引本身（<code>persist</code> + <code>load_index_from_storage</code>），避免每次启动重新切块/向量化；向量库交给可托管的生产库；查询路径尽量无状态，便于水平扩展。</span><span data-lang="en">Persist the index itself (<code>persist</code> + <code>load_index_from_storage</code>) so you never re-chunk/re-embed on startup; move the vector store to a managed production DB; keep the query path stateless to scale out.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 4. <span data-lang="zh">高层 API（5 行）和手装低层管道是什么关系？什么时候该“下沉”到低层？</span><span data-lang="en">How do the 5-line high-level API and the hand-wired low-level pipeline relate, and when should you drop down?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">高层 API 只是低层管道默认装配的快捷方式，二者共享同一套对象。当你要自定义某一站——换检索器、加后处理、改合成策略或 prompt——就用 <code>from_args</code> 等低层入口拆开装配。</span><span data-lang="en">The high-level API is just a shortcut over the low-level pipeline's default wiring; both share the same objects. Drop down (e.g. <code>from_args</code>) when you need to customize a stop — swap the retriever, add postprocessing, change synthesis or the prompt.</span></div></div></div>
+  </details>
+</div>
 <div class="card spark">
   <div class="tag"><span data-lang="zh">💭 发散思考（没有标准答案）</span><span data-lang="en">💭 Open questions (no single right answer)</span></div>
   <ul>

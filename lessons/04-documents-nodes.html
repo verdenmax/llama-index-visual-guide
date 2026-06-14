@@ -386,6 +386,35 @@ print(src.node_id if src else None)</pre></div><div class="card keypts"><div cla
     <div class="acc-body"><div class="qa"><div class="a"><strong><span data-lang="zh">答案：D</span><span data-lang="en">Answer: D</span></strong> <span data-lang="zh">Document 会被切成 Node；检索、返回的 source_nodes、以及响应合成都以 Node 为单位。</span><span data-lang="en">A Document is split into Nodes; retrieval, the returned source_nodes, and synthesis all operate on Nodes.</span></div></div></div>
   </details>
 </div>
+<h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
+<div class="quiz interview">
+  <div class="qn">🎯 1. <span data-lang="zh">为什么 RAG 的检索单位是 <code>Node</code> 而不是整篇 <code>Document</code>？</span><span data-lang="en">Why is the unit of retrieval a <code>Node</code> rather than the whole <code>Document</code>?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">整篇文档里通常只有一两段相关，把整篇压成<strong>一个</strong>向量会被无关内容稀释、命中不准；切成 Node 后检索更精准，且 Node 携带 metadata 与 relationships，让下游“说同一种语言”。</span><span data-lang="en">A whole doc is usually relevant only in a paragraph or two; squeezing it into <strong>one</strong> vector dilutes the signal. Nodes make retrieval precise and carry metadata + relationships so everything downstream speaks one language.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 2. <span data-lang="zh"><code>relationships</code>（SOURCE / PREVIOUS / NEXT）在什么真实需求下派上用场？</span><span data-lang="en">When do <code>relationships</code> (SOURCE / PREVIOUS / NEXT) actually earn their keep?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">溯源（SOURCE 指回原 Document）、前后文扩展（命中一个 Node 时把相邻 Node 一起带上，避免断句）、以及句窗/自动合并等进阶检索的基础。</span><span data-lang="en">Provenance (SOURCE points back to the Document), prev/next context expansion (pull neighbors so a hit isn't a half-sentence), and as the basis for sentence-window / auto-merging retrieval.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 3. <span data-lang="zh">如果有人坚持“直接用整篇文档做检索更省事”，你会用什么例子反驳？</span><span data-lang="en">If someone insists 'just retrieve whole documents, it's simpler', how would you push back with an example?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">一份 50 页手册里只有半页讲退款：整篇的向量被另外 49.5 页稀释，查“退款”可能根本排不进 top-k；即便命中，也要把 50 页塞进 LLM，既贵又“迷失在中间”。</span><span data-lang="en">A 50-page manual with half a page on refunds: the doc vector is drowned by the other 49.5 pages, so 'refund' may not even rank into top-k; and even if it hits, you'd feed 50 pages to the LLM — costly and 'lost in the middle'.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 4. <span data-lang="zh">检索老是返回相关但不对的段落，<code>metadata</code> 能怎样帮你收窄？</span><span data-lang="en">Retrieval keeps returning related-but-wrong chunks — how can <code>metadata</code> help narrow it?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">用 metadata 过滤（如 <code>MetadataFilters</code> 限定 <code>product=&quot;X&quot;</code> 或 <code>year=2024</code>）把检索范围先缩到对的子集，相当于“先按标签筛、再按语义排”，是向量检索的第二通道。</span><span data-lang="en">Filter by metadata (e.g. <code>MetadataFilters</code> for <code>product=&quot;X&quot;</code> or <code>year=2024</code>) to restrict retrieval to the right subset — 'filter by tag, then rank by meaning', the second channel alongside vectors.</span></div></div></div>
+  </details>
+</div>
 <div class="card spark">
   <div class="tag"><span data-lang="zh">💭 发散思考（没有标准答案）</span><span data-lang="en">💭 Open questions (no single right answer)</span></div>
   <ul>

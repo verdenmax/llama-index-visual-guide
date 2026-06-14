@@ -384,6 +384,35 @@ print(engine.query('退款多久到账？'))</pre></div><div class="card keypts"
     <div class="acc-body"><div class="qa"><div class="a"><strong><span data-lang="zh">答案：C</span><span data-lang="en">Answer: C</span></strong> <span data-lang="zh">重叠让跨越块边界的句子/语义不丢失，提升检索召回。</span><span data-lang="en">Overlap keeps sentences/meaning that straddle a boundary from being lost, improving recall.</span></div></div></div>
   </details>
 </div>
+<h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
+<div class="quiz interview">
+  <div class="qn">🎯 1. <span data-lang="zh"><code>chunk_size</code> 太大、太小各会出什么问题？你会怎么定它？</span><span data-lang="en">What goes wrong if <code>chunk_size</code> is too large vs too small, and how do you set it?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">太大：块里混入无关内容、检索噪声多、还挤占 LLM 上下文；太小：完整语义被切碎、块间断裂读不成句。定法：看内容结构（手册偏小、叙事偏大），并受 embedding token 上限约束（多在 512 左右），最后用评估调。</span><span data-lang="en">Too large: irrelevant content, noisy retrieval, and it hogs LLM context; too small: complete thoughts get shredded. Set it by content structure (manuals smaller, narrative larger), bounded by the embedding token limit (~512), then tune via evaluation.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 2. <span data-lang="zh"><code>chunk_overlap</code> 解决什么问题？把它设为 0 会怎样？</span><span data-lang="en">What problem does <code>chunk_overlap</code> solve, and what happens if you set it to 0?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">让相邻块共享边界句，避免把一句话从中间切断。设为 0 时，跨块的句子可能两边都答不全（“7 个工作” | “日内到账”），检索命中任一块都拿不到完整语义。</span><span data-lang="en">It makes adjacent chunks share boundary sentences so a thought isn't cut in half. At 0, a sentence split across chunks is incomplete on both sides, so hitting either chunk loses the full meaning.</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 3. <span data-lang="zh">sentence-window 是怎么同时做到“检索精准”和“上下文完整”的？</span><span data-lang="en">How does sentence-window get both precise retrieval and full context at once?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">它把<strong>检索单位</strong>和<strong>喂给 LLM 的单位</strong>解耦：以单句为 Node 去检索（足够精准），命中后用 <code>MetadataReplacementPostProcessor</code> 把单句换成它前后句组成的 window 再交给 LLM（补回上下文）。</span><span data-lang="en">It decouples the <strong>retrieval unit</strong> from the <strong>unit fed to the LLM</strong>: retrieve on single sentences (precise), then on a hit swap the sentence for its surrounding window via <code>MetadataReplacementPostProcessor</code> before generation (full context).</span></div></div></div>
+  </details>
+</div>
+<div class="quiz interview">
+  <div class="qn">🎯 4. <span data-lang="zh">SentenceSplitter / TokenTextSplitter / SemanticSplitterNodeParser 各适合什么场景？</span><span data-lang="en">When would you reach for SentenceSplitter vs TokenTextSplitter vs SemanticSplitterNodeParser?</span></div>
+  <details class="accordion">
+    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">SentenceSplitter：通用默认，按句凑到 chunk_size、不切断句子；TokenTextSplitter：要严格控长（贴 token 预算）时；SemanticSplitter：主题多变的长文，按语义断点切，块更内聚但更慢、更贵。</span><span data-lang="en">SentenceSplitter: the general default, packs sentences up to chunk_size without cutting them; TokenTextSplitter: when you need strict length control against a token budget; SemanticSplitter: topically varied long text, splitting at semantic breakpoints — more coherent but slower and costlier.</span></div></div></div>
+  </details>
+</div>
 <div class="card spark">
   <div class="tag"><span data-lang="zh">💭 发散思考（没有标准答案）</span><span data-lang="en">💭 Open questions (no single right answer)</span></div>
   <ul>
