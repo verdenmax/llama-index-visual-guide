@@ -174,6 +174,17 @@ LESSON_02 = (
         "The import path tells them apart: paths with <code>core</code> are core abstractions; those without are a "
         "specific third-party integration.",
     ))
+    + d.layers([
+        (L("应用 / 你的代码", "Your app / your code"),
+         L("只调用统一抽象，几乎不感知底层换没换", "calls the unified abstractions, barely notices swaps below")),
+        (L("llama-index-core", "llama-index-core"),
+         L("稳定的抽象与编排：Index / Retriever / QueryEngine …", "stable abstractions + orchestration: Index / Retriever / QueryEngine …")),
+        (L("300+ 集成包", "300+ integration packages"),
+         L("各家 LLM / Embedding / 向量库 的具体实现", "concrete LLM / embedding / vector-store implementations")),
+    ], caption=L(
+        "两层结构：core 定接口、集成填实现，应用只依赖 core",
+        "Two layers: core defines the interfaces, integrations fill them in, and your app depends only on core",
+    ))
     + c.analogy(L(
         "core 像主板上的<strong>标准插槽</strong>，集成包像各品牌的内存条/显卡：只要符合插槽规范，"
         "插上即用，换品牌不用换主板。",
@@ -196,9 +207,72 @@ LESSON_02 = (
             ],
         ),
     )
+    + c.section(
+        L("为什么把接口和实现拆开", "Why split interfaces from implementations"),
+        L(
+            "core 只定义“能做什么”的抽象接口，具体“怎么做”交给独立集成包。于是新增一个 LLM 或向量库厂商，"
+            "只需发布一个集成包，core 不必改动、也不必跟着发版；你的应用只依赖 core 的稳定接口，换厂商几乎零成本。",
+            "core defines only the abstract “what”; each concrete “how” lives in a separate integration. So adding a "
+            "new LLM or vector-store vendor is just publishing one integration package — core never changes or "
+            "re-releases, and because your app depends only on core's stable interface, swapping vendors is near-free.",
+        ),
+        d.annot(
+            L("BaseLLM 接口（core）", "BaseLLM interface (core)"),
+            [
+                (L("OpenAI", "OpenAI"), L("llama-index-llms-openai", "llama-index-llms-openai")),
+                (L("Anthropic", "Anthropic"), L("llama-index-llms-anthropic", "llama-index-llms-anthropic")),
+                (L("HuggingFace", "HuggingFace"), L("llama-index-llms-huggingface", "llama-index-llms-huggingface")),
+                (L("Ollama（本地）", "Ollama (local)"), L("llama-index-llms-ollama", "llama-index-llms-ollama")),
+            ],
+            caption=L(
+                "一个 core 接口，多份集成实现：插上即用、按需安装",
+                "One core interface, many integration impls: plug in à la carte",
+            ),
+        ),
+    )
     + c.source_ref(
         "llama_index/core/__init__.py", "(package root)",
         L("core 导出所有稳定抽象；集成包各自独立发版", "core exports the stable abstractions; integrations ship as separate packages"),
+    )
+    + c.accordion(
+        L("深入：分层架构的取舍", "Deep dive: the trade-offs of the layered architecture"),
+        c.qa_item(
+            L("🧪 示例：一次装三个包", "🧪 Example: installing three packages"),
+            L(
+                "一个典型项目会装 <code>llama-index-core</code> + <code>llama-index-llms-openai</code> + "
+                "<code>llama-index-embeddings-openai</code>：核心一份，其余按需各取所需。",
+                "A typical project installs <code>llama-index-core</code> + <code>llama-index-llms-openai</code> + "
+                "<code>llama-index-embeddings-openai</code>: one core, the rest à la carte.",
+            ),
+        ),
+        c.qa_item(
+            L("❓ 为什么这么设计", "❓ Why designed this way"),
+            L(
+                "让生态可<strong>独立演进</strong>：300+ 厂商各自迭代发版，不被 core 的节奏绑死，也不会把彼此的依赖互相拖进来。",
+                "It lets the ecosystem <strong>evolve independently</strong>: 300+ vendors iterate and release on their "
+                "own cadence, unshackled from core's schedule and from each other's dependencies.",
+            ),
+        ),
+        c.qa_item(
+            L("⚙️ 内部怎么跑", "⚙️ How it runs inside"),
+            L(
+                "命名空间约定是关键：<code>llama_index.core.*</code> 是抽象，<code>llama_index.llms.x</code> / "
+                "<code>llama_index.vector_stores.y</code> 是实现，导入路径一眼可辨。",
+                "The namespace convention is the key: <code>llama_index.core.*</code> is abstractions, while "
+                "<code>llama_index.llms.x</code> / <code>llama_index.vector_stores.y</code> are implementations — the "
+                "import path tells you which at a glance.",
+            ),
+        ),
+        c.qa_item(
+            L("🔀 替代方案", "🔀 Alternatives"),
+            L(
+                "单体框架（所有实现塞进一个包）安装简单，但依赖臃肿、升级互相牵制；插件式分层用多装几个小包，"
+                "换来灵活与可维护。",
+                "A monolith (all implementations in one package) is simpler to install but bloats dependencies and "
+                "couples upgrades; the plugin-style split trades a few extra small installs for flexibility and "
+                "maintainability.",
+            ),
+        ),
     )
     + c.code(
         "# 核心 + 按需安装集成（每个集成是独立的 pip 包）\n"
@@ -210,6 +284,17 @@ LESSON_02 = (
         "Settings.llm = OpenAI(model='gpt-4o-mini')\n"
         "Settings.embed_model = OpenAIEmbedding(model='text-embedding-3-small')",
         caption=L("core 定接口，集成填实现", "core defines interfaces, integrations fill them in"),
+    )
+    + c.code(
+        "# 同一套链路，换一家 LLM 只动这一块\n"
+        "from llama_index.core import Settings\n\n"
+        "# A) OpenAI\n"
+        "from llama_index.llms.openai import OpenAI\n"
+        "Settings.llm = OpenAI(model='gpt-4o-mini')\n\n"
+        "# B) 换成 Anthropic：只改导入 + 这一行，其余代码原封不动\n"
+        "from llama_index.llms.anthropic import Anthropic\n"
+        "Settings.llm = Anthropic(model='claude-3-5-sonnet-latest')",
+        caption=L("换 provider 只改一行：core 之上的代码完全不变", "Swap provider in one line: everything above core stays the same"),
     )
     + c.key_points([
         L("导入路径带 <code>core</code> = 核心抽象；不带 = 第三方集成实现。",
@@ -235,6 +320,19 @@ LESSON_03 = (
         "the <strong>query path</strong> (ask, many times). The high-level API hides each stage's detail — this "
         "lesson is the map; later lessons visit each stop.",
     ))
+    + d.vflow([
+        (L("SimpleDirectoryReader(...).load_data()", "SimpleDirectoryReader(...).load_data()"),
+         L("→ Document 列表", "→ a list of Document")),
+        (L("VectorStoreIndex.from_documents(docs)", "VectorStoreIndex.from_documents(docs)"),
+         L("→ Node → 向量 → 写入索引", "→ Node → vectors → stored in the index")),
+        (L("index.as_query_engine()", "index.as_query_engine()"),
+         L("→ 装配 检索 / 后处理 / 合成", "→ wires retrieve / post-process / synthesize")),
+        (L("engine.query('…')", "engine.query('…')"),
+         L("→ 检索 → 合成 → 答案 + source_nodes", "→ retrieve → synthesize → answer + source_nodes")),
+    ], caption=L(
+        "四行 API，每一行的产出正好喂给下一行",
+        "Four API lines — each line's output is exactly the next line's input",
+    ))
     + c.analogy(L(
         "写入路径像<strong>建图书馆</strong>：收书、拆章节、编索书号、上架。查询路径像<strong>借阅问答</strong>："
         "按主题找到相关几页，读完再用自己的话回答你。",
@@ -258,6 +356,27 @@ LESSON_03 = (
             ],
         ),
     )
+    + c.section(
+        L("高层 API 只是低层管道的快捷方式", "The high-level API is just a shortcut over the low-level pipeline"),
+        L(
+            "那几行高层 API 并没有发明新东西，它们只是把底层管道的默认装配“一键化”。新手用一行跑通，"
+            "进阶者可以拆开任意一站、替换其中的组件——同一套抽象，支持两种使用深度。",
+            "Those few high-level lines invent nothing new; they merely package the low-level pipeline's default "
+            "wiring into one click. Beginners get it running in a line; experts open any stop and swap its "
+            "components — one set of abstractions, two depths of use.",
+        ),
+        d.compare2(
+            (L("写入路径（做一次）", "Write path (run once)"), i18n.render(L(
+                "加载 → 切块 → 向量化 → 建索引。较重但只需一次，产物是可复用的索引。",
+                "Load → split → embed → index. Heavier, but one-off; the product is a reusable index.",
+            ))),
+            (L("查询路径（做很多次）", "Query path (run many times)"), i18n.render(L(
+                "检索 → 后处理 → 合成。每次提问都走一遍，复用同一个索引，秒级返回。",
+                "Retrieve → post-process → synthesize. Runs on every question, reusing the same index, in seconds.",
+            ))),
+            caption=L("建一次索引，问无数次", "Build the index once, query it countless times"),
+        ),
+    )
     + c.source_ref(
         "indices/base.py", "BaseIndex.from_documents",
         L("写入路径的“快捷方式”（VectorStoreIndex 继承自 BaseIndex），内部串起 split→embed→store",
@@ -266,6 +385,45 @@ LESSON_03 = (
     + c.source_ref(
         "base/base_query_engine.py", "BaseQueryEngine.query",
         L("查询路径的统一入口", "the unified entry point of the query path"),
+    )
+    + c.accordion(
+        L("深入：两行 API 各藏了什么", "Deep dive: what the two one-liners hide"),
+        c.qa_item(
+            L("🧪 示例：还是那 5 行", "🧪 Example: those same 5 lines"),
+            L(
+                "<code>load_data → from_documents → as_query_engine → query</code> 四步，就是一个完整 RAG 的最短写法；"
+                "本书后面每一课，都是在拆开其中的某一步。",
+                "<code>load_data → from_documents → as_query_engine → query</code> is the shortest complete RAG; every "
+                "later lesson in this guide simply opens up one of those steps.",
+            ),
+        ),
+        c.qa_item(
+            L("❓ 为什么这么设计", "❓ Why designed this way"),
+            L(
+                "快捷方式降低上手门槛，又不牺牲可定制性：默认装配开箱即用，需要时再逐站替换，二者共用同一套对象。",
+                "Shortcuts lower the barrier to entry without sacrificing customizability: the default wiring works out "
+                "of the box, and you can replace any stop when needed — both share the very same objects.",
+            ),
+        ),
+        c.qa_item(
+            L("⚙️ 内部怎么跑", "⚙️ How it runs inside"),
+            L(
+                "<code>from_documents</code> 内部依次跑 split → embed → store，把 Document 变成带向量的 Node 存进索引；"
+                "<code>query</code> 内部跑 retrieve → synthesize，把问题变成答案。",
+                "<code>from_documents</code> internally runs split → embed → store, turning Documents into vector-bearing "
+                "Nodes in the index; <code>query</code> internally runs retrieve → synthesize, turning a question into an "
+                "answer.",
+            ),
+        ),
+        c.qa_item(
+            L("🔀 替代方案", "🔀 Alternatives"),
+            L(
+                "你完全可以手动逐站装配（自建 node_parser / embed_model / retriever / synthesizer），换取最大控制力；"
+                "高层 API 只是把这套装配的常见默认值替你填好。",
+                "You can always wire each stop by hand (your own node_parser / embed_model / retriever / synthesizer) for "
+                "maximum control; the high-level API just fills in that wiring's common defaults for you.",
+            ),
+        ),
     )
     + c.code(
         "from llama_index.core import VectorStoreIndex, SimpleDirectoryReader\n\n"
@@ -278,6 +436,19 @@ LESSON_03 = (
         "print(resp)                  # 答案\n"
         "print(resp.source_nodes)     # 依据：检索到的片段",
         caption=L("同一个 index，写一次、问多次", "one index: write once, query many times"),
+    )
+    + c.code(
+        "from llama_index.core import (\n"
+        "    VectorStoreIndex, SimpleDirectoryReader, StorageContext, load_index_from_storage)\n\n"
+        "# —— 首次：建好索引并落盘 ——\n"
+        "docs = SimpleDirectoryReader('./data').load_data()\n"
+        "index = VectorStoreIndex.from_documents(docs)\n"
+        "index.storage_context.persist('./storage')\n\n"
+        "# —— 以后：直接从磁盘加载，跳过重新建索引 ——\n"
+        "ctx = StorageContext.from_defaults(persist_dir='./storage')\n"
+        "index = load_index_from_storage(ctx)\n"
+        "engine = index.as_query_engine()",
+        caption=L("把“写一次”落盘，之后秒级复用", "Persist the “write once” to disk, then reuse it in seconds"),
     )
     + c.key_points([
         L("写入路径做一次、查询路径做多次；二者共享同一个 <code>index</code>。",
