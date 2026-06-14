@@ -3,6 +3,7 @@ LlamaIndex RAG visual guide. No third-party dependencies."""
 
 import base64
 
+import diagrams
 import i18n
 from i18n import L
 
@@ -386,7 +387,7 @@ def page(filename, content, home_href="../index.html"):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title_zh}</title>
 {head_meta(title_zh, desc, og_type="article")}
-<style>{CSS}{EXTRA_CSS}{i18n.LANG_CSS}</style>
+<style>{CSS}{EXTRA_CSS}{diagrams.DIAGRAM_CSS}{i18n.LANG_CSS}</style>
 </head><body>
 <div class="topbar">
   <div class="topbar-inner">
@@ -462,7 +463,7 @@ def index_page(lesson_prefix=""):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{SITE} · 从数据流理解 RAG</title>
 {head_meta(SITE + " · 从数据流理解 RAG", desc, og_type="website")}
-<style>{CSS}{EXTRA_CSS}{i18n.LANG_CSS}</style>
+<style>{CSS}{EXTRA_CSS}{diagrams.DIAGRAM_CSS}{i18n.LANG_CSS}</style>
 </head><body>
 <div class="topbar">
   <div class="topbar-inner">

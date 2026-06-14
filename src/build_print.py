@@ -12,6 +12,7 @@ ROOT = os.path.abspath(os.path.join(HERE, ".."))
 sys.path.insert(0, HERE)
 
 import shell  # noqa: E402
+import diagrams  # noqa: E402
 import i18n  # noqa: E402
 from registry import CONTENT  # noqa: E402
 import quizzes  # noqa: E402
@@ -38,6 +39,7 @@ h2, h3, h4 { break-after: avoid; }
 .lesson-head .lp { font-size: .72rem; text-transform: uppercase; color: var(--accent); font-weight: 700; }
 .lesson-head h1 { font-size: 1.7rem; margin: .25rem 0 0; border: none; }
 .lesson-head .ln { color: var(--faint); font-weight: 600; }
+.fig, .frow, .fvcol, .flstack, .fannot, .fcompare, .fgrid, .fscatterwrap { break-inside: avoid; }
 """
 
 
@@ -76,7 +78,7 @@ def build_print():
 <html lang="zh-CN" data-uilang="zh"><head>
 <meta charset="utf-8">
 <title>{shell.SITE}</title>
-<style>{shell.CSS}{shell.EXTRA_CSS}{i18n.LANG_CSS}{PRINT_CSS}</style>
+<style>{shell.CSS}{shell.EXTRA_CSS}{diagrams.DIAGRAM_CSS}{i18n.LANG_CSS}{PRINT_CSS}</style>
 </head><body>
 <section class="print-cover">
   <div class="emoji">🦙</div>
