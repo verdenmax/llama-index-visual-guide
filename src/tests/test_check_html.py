@@ -52,3 +52,19 @@ def test_unbalanced_bilingual_blocks_is_an_error():
     html = GOOD.replace('<div data-lang="en">en</div>', '<div data-lang="en">en</div><div data-lang="zh">多</div>')
     issues = check_html.check_lesson("02-architecture.html", html)
     assert any(i[0] == "ERR" and "unbalanced bilingual" in i[2] for i in issues)
+
+
+def test_fewer_than_two_figures_is_a_warning():
+    issues = check_html.check_lesson("02-architecture.html", GOOD)
+    assert any(i[0] == "WARN" and "figures" in i[2] for i in issues)
+
+
+def test_two_figures_clears_the_figure_warning():
+    html = GOOD + '<div class="fig">a</div><div class="fig">b</div>'
+    issues = check_html.check_lesson("02-architecture.html", html)
+    assert not any("figures" in i[2] for i in issues)
+
+
+def test_glossary_is_exempt_from_figure_warning():
+    issues = check_html.check_lesson("21-glossary.html", GOOD)
+    assert not any("figures" in i[2] for i in issues)
