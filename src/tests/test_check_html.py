@@ -7,9 +7,11 @@ GOOD = (
     '<button data-lang-toggle>EN</button>'
     '<h1>t</h1><div data-lang="zh">中</div><div data-lang="en">en</div>'
     '<div class="card analogy">a</div><div class="card keypts">本课要点</div>'
+    '<div class="fig">f1</div><div class="fig">f2</div>'
     '<a href="01-what-is-llamaindex.html">p</a><a href="03-rag-lifecycle.html">n</a>'
     "</body></html>"
 )
+NO_FIG = GOOD.replace('<div class="fig">f1</div><div class="fig">f2</div>', "")
 
 
 def test_good_lesson_has_no_errors():
@@ -54,17 +56,16 @@ def test_unbalanced_bilingual_blocks_is_an_error():
     assert any(i[0] == "ERR" and "unbalanced bilingual" in i[2] for i in issues)
 
 
-def test_fewer_than_two_figures_is_a_warning():
-    issues = check_html.check_lesson("02-architecture.html", GOOD)
-    assert any(i[0] == "WARN" and "figures" in i[2] for i in issues)
+def test_fewer_than_two_figures_is_an_error():
+    issues = check_html.check_lesson("02-architecture.html", NO_FIG)
+    assert any(i[0] == "ERR" and "figures" in i[2] for i in issues)
 
 
 def test_two_figures_clears_the_figure_warning():
-    html = GOOD + '<div class="fig">a</div><div class="fig">b</div>'
-    issues = check_html.check_lesson("02-architecture.html", html)
+    issues = check_html.check_lesson("02-architecture.html", GOOD)
     assert not any("figures" in i[2] for i in issues)
 
 
 def test_glossary_is_exempt_from_figure_warning():
-    issues = check_html.check_lesson("21-glossary.html", GOOD)
+    issues = check_html.check_lesson("21-glossary.html", NO_FIG)
     assert not any("figures" in i[2] for i in issues)

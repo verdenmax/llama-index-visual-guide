@@ -69,7 +69,7 @@ def check_lesson(fname, html):
             add("WARN", "no analogy card")
         nfig = html.count('class="fig"')
         if nfig < 2:
-            add("WARN", f'only {nfig} diagram(s) (class="fig"); need >=2 figures')
+            add("ERR", f'only {nfig} diagram(s) (class="fig"); need >=2 figures')
     # unescaped '<' inside <pre>
     for pre in re.findall(r"<pre[^>]*>(.*?)</pre>", html, re.S):
         cleaned = re.sub(r"</?(?:span|strong|b|em|u|a)\b[^>]*>", "", pre)
