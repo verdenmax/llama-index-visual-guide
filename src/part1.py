@@ -1,5 +1,7 @@
 """Part 1 (macro overview): lessons 01-03. Content filled task-by-task."""
 import components as c
+import diagrams as d
+import i18n
 from i18n import L
 
 
@@ -13,6 +15,20 @@ LESSON_01 = (
         "<strong>Retrieval-Augmented Generation (RAG)</strong> pipeline. It doesn't train models — it owns "
         "everything <em>around</em> them: loading, chunking, embedding and indexing your data, then at query "
         "time retrieving the relevant pieces and feeding them to the LLM for a <strong>grounded</strong> answer.",
+    ))
+    + d.flow([
+        ("load", L("加载", "Load")),
+        ("split", L("切块", "Split")),
+        ("embed", L("向量化", "Embed")),
+        ("store", L("存储", "Store")),
+        ("index", L("索引", "Index")),
+        ("retrieve", L("检索", "Retrieve")),
+        ("synth", L("合成", "Synthesize")),
+        ("answer", L("回答", "Answer")),
+    ], caption=L(
+        "RAG 全景：左半是写入路径（建好索引，做一次），右半是查询路径（据此作答，做很多次）",
+        "The RAG pipeline at a glance: the left half (write path) builds the index once; "
+        "the right half (query path) answers from it, many times",
     ))
     + c.analogy(L(
         "把 LLM 想成一个聪明但在<strong>闭卷</strong>考试的学生：只能凭记忆答题，记不住就开始编。"
@@ -36,9 +52,78 @@ LESSON_01 = (
             ],
         ),
     )
+    + c.section(
+        L("三个痛点，同一个根因", "Three pains, one root cause"),
+        L(
+            "知识截止、幻觉、私有数据看似三件事，根因只有一个：模型的知识在训练时就被<strong>冻结</strong>"
+            "在参数里，既无法更新，也说不清依据。RAG 不去改这套被冻结的参数，而是在提问时临时<strong>挂载</strong>"
+            "一份可检索的外部资料，让答案有据可查、随时可换。",
+            "Knowledge cutoff, hallucination and private data look like three problems but share one root cause: the "
+            "model's knowledge is <strong>frozen</strong> into its weights at training time — it can neither refresh "
+            "nor cite. RAG doesn't touch those frozen weights; it <strong>mounts</strong> a searchable external "
+            "corpus at query time so answers stay grounded and the knowledge stays swappable.",
+        ),
+        d.compare2(
+            (L("闭卷 LLM", "Closed-book LLM"), i18n.render(L(
+                "只凭参数里的记忆作答；遇到没学过或已过时的内容就开始“编”，且给不出处。",
+                "Answers only from memory baked into its weights; for anything unseen or stale it makes things up, "
+                "with no sources.",
+            ))),
+            (L("开卷 RAG", "Open-book RAG"), i18n.render(L(
+                "先检索相关资料，再据此作答，每句话都能逐条追溯到出处。",
+                "Retrieves relevant material first, then answers from it — every claim traceable to a source.",
+            ))),
+            caption=L(
+                "同一个问题：闭卷靠脆弱的记忆，开卷靠可核对的检索",
+                "Same question: closed-book leans on fragile memory, open-book on checkable retrieval",
+            ),
+        ),
+    )
     + c.source_ref(
         "llama_index/core/__init__.py", "VectorStoreIndex · SimpleDirectoryReader",
         L("RAG 的高层入口都从这里导出", "the high-level RAG entry points are exported here"),
+    )
+    + c.accordion(
+        L("深入：RAG 的来龙去脉", "Deep dive: the why and how of RAG"),
+        c.qa_item(
+            L("🧪 示例：直接塞进 prompt 会怎样", "🧪 Example: what if you just stuff the prompt"),
+            L(
+                "把整本手册粘进 prompt 看似省事，但会撞上上下文长度上限、推理更慢更贵，且模型容易“迷失在中间”"
+                "而漏掉关键句。RAG 只挑最相关的几段进 prompt，既省 token 又更准。",
+                "Pasting a whole manual into the prompt seems easy, but you hit the context-length ceiling, pay more "
+                "for slower inference, and the model tends to get “lost in the middle” and miss key lines. RAG feeds "
+                "only the few most relevant snippets — cheaper and more accurate.",
+            ),
+        ),
+        c.qa_item(
+            L("❓ 为什么这么设计", "❓ Why designed this way"),
+            L(
+                "把知识<strong>外置</strong>成可检索索引，意味着更新知识只需重建索引、模型零改动；"
+                "同一个模型可服务无数套互不相同的私有库。",
+                "<strong>Externalizing</strong> knowledge into a searchable index means updating knowledge is just "
+                "rebuilding the index — the model never changes, and one model can serve countless private corpora.",
+            ),
+        ),
+        c.qa_item(
+            L("⚙️ 内部怎么跑", "⚙️ How it runs inside"),
+            L(
+                "<code>from_documents</code> 在写入路径里把文档切块、向量化、写进索引；"
+                "<code>query</code> 在查询路径里把问题向量化、取最近邻、再交给 LLM 据此作答——两行 API 各藏了一条管道。",
+                "<code>from_documents</code> runs the write path (split → embed → store); <code>query</code> runs the "
+                "query path (embed the question → nearest-neighbor search → LLM answers from them) — each one-liner "
+                "hides a pipeline.",
+            ),
+        ),
+        c.qa_item(
+            L("🔀 替代方案", "🔀 Alternatives"),
+            L(
+                "微调把知识焊进参数（更新贵、难溯源）；超长上下文直接全塞（贵且会“迷失在中间”）；"
+                "RAG 取两者之间——外置、可更新、可溯源，是私有或时效性知识的默认选择。",
+                "Fine-tuning welds knowledge into weights (costly to update, hard to cite); ultra-long context just "
+                "dumps everything in (expensive, “lost in the middle”); RAG sits in between — external, refreshable, "
+                "citable — the default for private or time-sensitive knowledge.",
+            ),
+        ),
     )
     + c.code(
         "pip install llama-index\n\n"
@@ -50,6 +135,17 @@ LESSON_01 = (
         "engine = index.as_query_engine()\n"
         "print(engine.query('这些文档讲了什么？'))",
         caption=L("最小可运行 RAG：5 行", "A minimal runnable RAG in 5 lines"),
+    )
+    + c.code(
+        "from llama_index.core import VectorStoreIndex, SimpleDirectoryReader\n\n"
+        "index = VectorStoreIndex.from_documents(\n"
+        "    SimpleDirectoryReader('./data').load_data())\n\n"
+        "engine = index.as_query_engine(similarity_top_k=3)\n"
+        "resp = engine.query('退款要多久到账？')\n\n"
+        "print(resp)                      # 有依据的回答\n"
+        "for n in resp.source_nodes:      # 答案的出处，可逐条核对\n"
+        "    print(round(n.score, 3), n.node.get_content()[:60])",
+        caption=L("可溯源查询：每个答案都能追到检索片段", "Traceable query: trace every answer back to its retrieved snippets"),
     )
     + c.key_points([
         L("RAG = 先<strong>检索</strong>相关片段，再让 LLM 据此<strong>生成</strong>，避免重训与幻觉。",
