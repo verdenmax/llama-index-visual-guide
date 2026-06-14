@@ -347,7 +347,7 @@ html[data-uilang="en"] [data-lang="en"]{display:revert}
 nodes = index.as_retriever(similarity_top_k=5).retrieve('退款政策？')
 pp = SimilarityPostprocessor(similarity_cutoff=0.7)
 kept = pp.postprocess_nodes(nodes)   # 丢掉分数低于 0.7 的
-print(len(nodes), '->', len(kept))
+print(len(nodes), '-&gt;', len(kept))
 
 # 句窗专用：把单句节点替换为其上下文窗口
 from llama_index.core.postprocessor import MetadataReplacementPostProcessor

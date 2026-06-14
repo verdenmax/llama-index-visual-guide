@@ -238,7 +238,7 @@ LESSON_13 = (
         "nodes = index.as_retriever(similarity_top_k=5).retrieve('退款政策？')\n"
         "pp = SimilarityPostprocessor(similarity_cutoff=0.7)\n"
         "kept = pp.postprocess_nodes(nodes)   # 丢掉分数低于 0.7 的\n"
-        "print(len(nodes), '->', len(kept))\n\n"
+        "print(len(nodes), '-&gt;', len(kept))\n\n"
         "# 句窗专用：把单句节点替换为其上下文窗口\n"
         "from llama_index.core.postprocessor import MetadataReplacementPostProcessor\n"
         "mr = MetadataReplacementPostProcessor(target_metadata_key='window')",

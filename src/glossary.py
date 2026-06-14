@@ -22,7 +22,7 @@ LESSON_21 = (
         ("answer", L("回答", "Answer")),
     ], caption=L("按数据流复习全书术语", "Review the whole guide's terms along the data flow"))
     + c.compare_table(
-        [L("术语 Term", "术语 Term"), L("一句话 In a line", "一句话 In a line"), L("课 Lesson", "课 Lesson")],
+        [L("术语", "Term"), L("一句话", "In a line"), L("课", "Lesson")],
         [
             [L("<code>RAG</code>", "<code>RAG</code>"), _term("检索增强生成：先检索相关片段再让 LLM 生成", "retrieve relevant chunks, then let the LLM generate"), L('<a href="01-what-is-llamaindex.html">01</a>', '<a href="01-what-is-llamaindex.html">01</a>')],
             [L("<code>Document</code>", "<code>Document</code>"), _term("一整份原始资料", "one whole raw source"), L('<a href="04-documents-nodes.html">04</a>', '<a href="04-documents-nodes.html">04</a>')],

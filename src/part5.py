@@ -151,7 +151,7 @@ LESSON_20 = (
         "PERSIST = './storage'\n"
         "if os.path.exists(PERSIST):                      # 已建过就秒加载\n"
         "    index = load_index_from_storage(StorageContext.from_defaults(persist_dir=PERSIST))\n"
-        "else:                                            # 首次：摄取 -> 建索引 -> 落盘\n"
+        "else:                                            # 首次：摄取 -&gt; 建索引 -&gt; 落盘\n"
         "    docs = SimpleDirectoryReader('./data').load_data()\n"
         "    nodes = IngestionPipeline(transformations=[SentenceSplitter(chunk_size=512, chunk_overlap=50)]).run(documents=docs)\n"
         "    index = VectorStoreIndex(nodes)\n"

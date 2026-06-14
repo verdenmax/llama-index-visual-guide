@@ -361,7 +361,7 @@ Settings.embed_model = OpenAIEmbedding(model='text-embedding-3-small')
 PERSIST = './storage'
 if os.path.exists(PERSIST):                      # 已建过就秒加载
     index = load_index_from_storage(StorageContext.from_defaults(persist_dir=PERSIST))
-else:                                            # 首次：摄取 -> 建索引 -> 落盘
+else:                                            # 首次：摄取 -&gt; 建索引 -&gt; 落盘
     docs = SimpleDirectoryReader('./data').load_data()
     nodes = IngestionPipeline(transformations=[SentenceSplitter(chunk_size=512, chunk_overlap=50)]).run(documents=docs)
     index = VectorStoreIndex(nodes)
