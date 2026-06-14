@@ -102,6 +102,10 @@ QUIZZES = {
                          "By convention, a path without <code>core</code> is a concrete integration; core only defines interfaces."),
             },
         ],
+        "open": [
+            L("把接口放在 core、实现放在集成包，这种分层在什么情况下反而会成为负担？",
+              "Putting interfaces in core and implementations in integrations — when might this layering become a burden rather than a benefit?"),
+        ],
     },
     "03-rag-lifecycle.html": {
         "mcq": [
@@ -141,6 +145,10 @@ QUIZZES = {
                          "A Document is split into Nodes; retrieval, the returned source_nodes, and synthesis all operate on Nodes."),
             },
         ],
+        "open": [
+            L("如果检索单位从 Node 改回整篇 Document，RAG 的哪些环节会变好、哪些会变差？",
+              "If the unit of retrieval went back from Node to the whole Document, which parts of RAG would improve and which would suffer?"),
+        ],
     },
     "05-readers.html": {
         "mcq": [
@@ -157,6 +165,10 @@ QUIZZES = {
                 "why": L("Reader 只负责把来源加载成 Document；切块、向量化、建索引都是后续阶段。",
                          "A Reader only loads sources into Documents; chunking, embedding and indexing are later stages."),
             },
+        ],
+        "open": [
+            L("一个 PDF 通常每页产出一个 Document，这会如何影响你后续的切块大小与“引用到第几页”的设计？",
+              "A PDF usually yields one Document per page — how does that shape your downstream chunk size and page-level citation design?"),
         ],
     },
     "06-node-parsers.html": {
@@ -194,6 +206,10 @@ QUIZZES = {
                          "Metadata enables filtering by source/tag and better question-to-chunk matching, complementing vector similarity."),
             },
         ],
+        "open": [
+            L("LLM 抽取元数据要花钱花时间。对你的语料，哪些元数据值得用 LLM 抽，哪些直接在 Reader 阶段手写就够？",
+              "LLM metadata extraction costs time and money. For your corpus, which metadata is worth an LLM, and which is fine to hand-write at the Reader stage?"),
+        ],
     },
     "08-embeddings.html": {
         "mcq": [
@@ -211,6 +227,10 @@ QUIZZES = {
                          "Semantically similar text has nearby vectors, so it's recalled even with different wording."),
             },
         ],
+        "open": [
+            L("如果上线后想换一个更好的 embedding 模型，需要付出什么代价？这对“多久重建一次索引”有什么启示？",
+              "If you wanted a better embedding model after launch, what's the cost — and what does that imply about how often you rebuild the index?"),
+        ],
     },
     "09-vector-stores.html": {
         "mcq": [
@@ -227,6 +247,10 @@ QUIZZES = {
                 "why": L("VectorStore 接口统一，换实现只改注入这一步，主链路不动。",
                          "The VectorStore interface is uniform; swapping implementations only changes the injection — the pipeline stays."),
             },
+        ],
+        "open": [
+            L("从内存版 SimpleVectorStore 迁到生产向量库，你会用哪些标准来选（规模、过滤、事务、运维）？",
+              "Moving from the in-memory SimpleVectorStore to a production vector DB, what criteria would you choose by (scale, filtering, transactions, ops)?"),
         ],
     },
     "10-index-abstraction.html": {
@@ -266,6 +290,10 @@ QUIZZES = {
                          "The cache skips recomputing identical inputs, and docstore dedup processes only new/changed documents."),
             },
         ],
+        "open": [
+            L("如果知识库每天只变动 1%，“每次全量重建”与“增量摄取”在成本和复杂度上如何取舍？",
+              "If your knowledge base changes 1% a day, how do you trade off 'full rebuild each time' vs 'incremental ingestion' in cost and complexity?"),
+        ],
     },
     "12-retrievers.html": {
         "mcq": [
@@ -283,6 +311,10 @@ QUIZZES = {
                          "Retrieval only fetches relevant Nodes (NodeWithScore); producing the answer is the synthesizer's job later."),
             },
         ],
+        "open": [
+            L("如果检索分数普遍偏低，你会先调 top_k、换 embedding，还是改切块？怎么判断是哪一环的问题？",
+              "If retrieval scores are uniformly low, would you tune top_k, swap the embedding, or re-chunk first — and how would you tell which stage is at fault?"),
+        ],
     },
     "13-postprocessors.html": {
         "mcq": [
@@ -299,6 +331,10 @@ QUIZZES = {
                 "why": L("它按阈值过滤掉低相关 Node，减少噪声进入生成阶段。",
                          "It filters out low-relevance Nodes by threshold, reducing noise before generation."),
             },
+        ],
+        "open": [
+            L("相似度阈值设太高会怎样、太低又会怎样？你会用什么信号来定这个阈值？",
+              "What happens if the similarity cutoff is too high vs too low — and what signal would you use to set it?"),
         ],
     },
     "14-response-synthesizers.html": {
@@ -338,6 +374,10 @@ QUIZZES = {
                          "The QueryEngine is the query path's composition root: it chains retriever + node_postprocessors + response_synthesizer behind one .query()."),
             },
         ],
+        "open": [
+            L("要把“默认问答”改造成“只引用、不编造”的客服引擎，你会替换 QueryEngine 的哪几件组件？",
+              "To reshape default Q&amp;A into a 'cite-only, never invent' support engine, which components of the QueryEngine would you swap?"),
+        ],
     },
     "16-chat-engine.html": {
         "mcq": [
@@ -354,6 +394,10 @@ QUIZZES = {
                 "why": L("condense 模式先把指代消解成一个独立问题，确保检索到正确片段。",
                          "Condense mode resolves the reference into a standalone question first, so retrieval finds the right chunks."),
             },
+        ],
+        "open": [
+            L("多轮对话里“每轮都检索”有时是浪费。你会用什么规则决定某一轮要不要触发检索？",
+              "In multi-turn chat, retrieving every turn is sometimes wasteful. What rule would you use to decide whether a given turn should trigger retrieval?"),
         ],
     },
     "17-settings-prompts.html": {
@@ -372,6 +416,10 @@ QUIZZES = {
                          "Settings is the global default-config singleton that replaced the old, widely-passed ServiceContext."),
             },
         ],
+        "open": [
+            L("同样的检索结果，换一句 prompt 就能改变答案——这把“质量责任”更多压在检索上还是 prompt 上？你怎么分工调优？",
+              "Same retrieval, different prompt, different answer — does that put more of the quality burden on retrieval or on the prompt, and how would you split your tuning effort?"),
+        ],
     },
     "18-advanced-retrieval.html": {
         "mcq": [
@@ -388,6 +436,10 @@ QUIZZES = {
                 "why": L("统一的 BaseRetriever 接口让检索策略可插拔，QueryEngine 不感知具体实现。",
                          "The uniform BaseRetriever interface makes retrieval strategies pluggable; the QueryEngine doesn't care which one."),
             },
+        ],
+        "open": [
+            L("进阶检索都用更多计算换更好结果。对一个延迟敏感的线上问答，你会接受 query fusion 的额外开销吗？如何权衡？",
+              "Advanced retrieval trades more compute for better results. For a latency-sensitive live Q&amp;A, would you accept query-fusion's overhead — and how would you weigh it?"),
         ],
     },
     "19-evaluation.html": {

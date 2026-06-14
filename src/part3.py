@@ -14,16 +14,36 @@ LESSON_12 = (
         "<strong>top-k</strong> Nodes (scored <code>NodeWithScore</code>). <code>index.as_retriever()</code> is the "
         "entry point — no LLM has been called yet.",
     ))
-    + d.flow([
-        ("q", L("问题", "Question")),
-        ("embed", L("向量化", "Embed")),
-        ("search", L("索引近邻搜索", "Nearest-neighbor search")),
-        ("topk", L("top-k NodeWithScore", "top-k NodeWithScore")),
-    ], active="search", caption=L(
-        "检索四步：把问题变向量、在索引里找最近邻、取回带分数的 top-k Node —— 全程还没调用 LLM",
-        "Retrieval in four steps: embed the question, search the index for nearest neighbors, return the scored "
-        "top-k Nodes — no LLM is called yet",
-    ))
+    + d.compare2(
+        (L("好召回", "Good recall"), i18n.render(L(
+            "问「退款政策是什么？」→ <code>retrieve()</code> 取回 top-3：<br>"
+            "<strong>0.89</strong> 退款政策条款 ✓<br>"
+            "<strong>0.86</strong> 退款到账时限 ✓<br>"
+            "<strong>0.83</strong> 退款申请流程 ✓<br>"
+            "三块全相关、分数高，正确依据都在 top-k 里。",
+            "Ask “What's the refund policy?” → <code>retrieve()</code> returns top-3:<br>"
+            "<strong>0.89</strong> refund-policy clause ✓<br>"
+            "<strong>0.86</strong> refund timing ✓<br>"
+            "<strong>0.83</strong> how to file a refund ✓<br>"
+            "all relevant, all high-scoring — the right evidence sits in the top-k.",
+        ))),
+        (L("坏召回", "Bad recall"), i18n.render(L(
+            "同一个问题，却取回：<br>"
+            "<strong>0.71</strong> 配送时效 ✗ 跑题<br>"
+            "<strong>0.55</strong> 账户注册 ✗ 跑题<br>"
+            "<strong>0.31</strong> 退款政策条款 —— 正确块分数偏低、险些没进 top-k<br>"
+            "无关块挤进来、正确依据沉到末尾，召回失准。",
+            "Same query, yet it fetches:<br>"
+            "<strong>0.71</strong> delivery times ✗ off-topic<br>"
+            "<strong>0.55</strong> account signup ✗ off-topic<br>"
+            "<strong>0.31</strong> refund-policy clause — the right chunk, scoring low, barely in the top-k<br>"
+            "noise crowds in and the right evidence sinks to the bottom — recall is off.",
+        ))),
+        caption=L(
+            "不调用 LLM，只看 <code>retrieve()</code> 的结果就能判断召回好坏",
+            "Without calling the LLM, you can judge recall from <code>retrieve()</code>'s results alone",
+        ),
+    )
     + c.analogy(L(
         "图书管理员按你的主题<strong>取回最相关的几页</strong>，整齐摆在桌上——但还没开始替你写答案。",
         "The librarian <strong>brings back the few most relevant pages</strong> and lays them out — but hasn't started "
@@ -63,6 +83,15 @@ LESSON_12 = (
             "LLM at all: just inspect whether the Nodes from <code>retrieve()</code> contain the right evidence. Tuning "
             "the cutoff, swapping retrievers or changing top_k is then verified instantly, without paying for "
             "generation every time.",
+        ),
+        L(
+            "这正是把检索单列一课的原因：命中率（hit-rate）、MRR 这类指标只对 <code>retrieve()</code> 的输出打分，"
+            "完全不跑生成。召回这关没过，再强的 LLM 也只是在错误的资料上一本正经地作答；先把“取回对的内容”调好，"
+            "后面的后处理与合成才谈得上意义。",
+            "That's exactly why retrieval earns a lesson of its own: metrics like hit-rate or MRR score only the output "
+            "of <code>retrieve()</code>, never running generation. If recall fails, even the strongest LLM merely "
+            "reasons fluently over the wrong material; get “fetch the right content” right first, and only then do "
+            "post-processing and synthesis even matter.",
         ),
     )
     + c.source_ref("indices/vector_store/retrievers/retriever.py", "VectorIndexRetriever", L("向量索引的检索器", "the vector-index retriever"))
@@ -175,14 +204,27 @@ LESSON_13 = (
     )
     + d.compare2(
         (L("过滤前", "Before cutoff"), i18n.render(L(
-            "top-k 里混着几个相似度很低的块——它们与问题无关，却会占上下文、带偏答案。",
-            "The top-k mixes in a few low-similarity chunks — irrelevant to the question, yet they eat context and skew the answer.",
+            "问「退款多久到账？」检索 top-k：<br>"
+            "<strong>0.86</strong> 退款到账时限 ✓<br>"
+            "<strong>0.41</strong> 配送时效 ✗ 低分却混进 top-k<br>"
+            "→ 答案被带偏：<em>“一般 3–5 个工作日<strong>送达</strong>”</em>——答成了配送，答非所问。",
+            "Ask “How long until a refund lands?”; top-k:<br>"
+            "<strong>0.86</strong> refund timing ✓<br>"
+            "<strong>0.41</strong> delivery times ✗ low score, still slips in<br>"
+            "→ Answer derails: <em>“usually <strong>delivered</strong> in 3–5 business days”</em> — that's shipping, off-question.",
         ))),
-        (L("过滤后", "After cutoff"), i18n.render(L(
-            "用 similarity_cutoff 丢掉低分块，只把真正相关的高分 Node 交给 LLM。",
-            "A similarity_cutoff drops the low-scoring chunks, handing the LLM only the genuinely relevant high-score Nodes.",
+        (L("过滤后", "After cutoff (0.7)"), i18n.render(L(
+            "<code>similarity_cutoff=0.7</code> 丢掉 0.41 那块，只留：<br>"
+            "<strong>0.86</strong> 退款到账时限 ✓<br>"
+            "→ 答案命中：<em>“退款 3–5 个工作日原路退回”</em>——同一个问题，这次答对了。",
+            "<code>similarity_cutoff=0.7</code> drops the 0.41 chunk, leaving:<br>"
+            "<strong>0.86</strong> refund timing ✓<br>"
+            "→ Answer lands: <em>“refunds post back to source in 3–5 business days”</em> — same question, now correct.",
         ))),
-        caption=L("一个阈值就能显著提纯喂给 LLM 的内容", "One threshold noticeably purifies what the LLM sees"),
+        caption=L(
+            "同一个问题：滤掉一个低分噪声块，答案就从“答非所问”变成“命中正确依据”",
+            "Same question: drop one low-score noise chunk and the answer flips from off-topic to on-target",
+        ),
     )
     + c.section(
         L("最便宜的一档提质", "The cheapest quality lever"),
@@ -302,12 +344,12 @@ LESSON_14 = (
     + c.section(
         L("常用 ResponseMode", "Common ResponseModes"),
         c.compare_table(
-            [L("模式", "Mode"), L("怎么合成", "How it synthesizes"), L("适合", "Good for")],
+            [L("模式", "Mode"), L("适合", "Good for")],
             [
-                [L("compact（默认）", "compact (default)"), L("尽量塞满上下文再生成", "pack context, then generate"), L("通用、省调用", "general, fewer calls")],
-                [L("refine", "refine"), L("逐个片段迭代精炼答案", "iteratively refine over chunks"), L("片段多、需细读", "many chunks, careful reading")],
-                [L("tree_summarize", "tree_summarize"), L("两两/分组总结向上合并", "summarize in a tree"), L("总结类问题", "summary questions")],
-                [L("accumulate", "accumulate"), L("每片段各自作答再汇总", "answer per chunk, then collect"), L("逐条抽取", "per-chunk extraction")],
+                [L("compact（默认）", "compact (default)"), L("通用、省调用", "general, fewer calls")],
+                [L("refine", "refine"), L("片段多、需细读", "many chunks, careful reading")],
+                [L("tree_summarize", "tree_summarize"), L("总结类问题", "summary questions")],
+                [L("accumulate", "accumulate"), L("逐条抽取", "per-chunk extraction")],
             ],
         ),
     )
@@ -385,6 +427,35 @@ LESSON_14 = (
         "print(engine.query('把这几篇文档的结论逐点对比一下'))",
         caption=L("显式装配合成器：把 refine 接到查询引擎上", "Wire a synthesizer explicitly: attach refine to the query engine"),
     )
+    + c.section(
+        L("把三课串成一条查询路径", "Threading lessons 12–14 into one query path"),
+        L(
+            "第 12、13、14 课各自从 <code>index.as_retriever</code> 起步，读起来像三段彼此独立的代码。其实一次 "
+            "<code>.query()</code> 就把它们串成一条流水线：同一批 Node 被检索取回、被后处理筛选、再交合成器落笔，"
+            "一路传递下去。",
+            "Lessons 12, 13 and 14 each start over at <code>index.as_retriever</code>, so they read like three "
+            "disconnected snippets. In reality one <code>.query()</code> threads them into a single pipeline: the same "
+            "batch of Nodes is retrieved, filtered by post-processing, then handed to the synthesizer — flowing straight "
+            "through.",
+        ),
+        d.vflow([
+            (L("问「国际订单的退款要几天？」", "Q “How many days for an international-order refund?”"),
+             L("第 12 课 · retrieve(similarity_top_k=5)", "Lesson 12 · retrieve(similarity_top_k=5)")),
+            (L("取回 5 个 NodeWithScore", "5 NodeWithScore returned"),
+             L("0.88 退款时限 ✓ · 0.83 国际退款 ✓ · 0.79 退款流程 ✓ · 0.48 配送时效 ✗ · 0.31 账户注册 ✗",
+               "0.88 refund timing ✓ · 0.83 intl refund ✓ · 0.79 refund flow ✓ · 0.48 delivery ✗ · 0.31 signup ✗")),
+            (L("第 13 课 · similarity_cutoff=0.7 筛", "Lesson 13 · similarity_cutoff=0.7 filters"),
+             L("丢掉 0.48 与 0.31 两块，只留 3 个高分 Node", "drops the 0.48 and 0.31 chunks, keeping 3 high-score Nodes")),
+            (L("第 14 课 · synthesize（compact）", "Lesson 14 · synthesize (compact)"),
+             L("把 3 个 Node 揉成一个答案", "fuses the 3 Nodes into one answer")),
+            (L("Response", "Response"),
+             L("“国际订单退款约 5–7 个工作日” + source_nodes（3 条可溯源）",
+               "“International-order refunds take ~5–7 business days” + source_nodes (3 traceable)")),
+        ], caption=L(
+            "一个问题一路传递：第 12 课取回 → 第 13 课筛 → 第 14 课合成",
+            "One question passed straight through: Lesson 12 retrieves → Lesson 13 filters → Lesson 14 synthesizes",
+        )),
+    )
     + c.key_points([
         L("Synthesizer 解决“<strong>多个 Node 如何合成一个答案</strong>”。",
           "The synthesizer solves “<strong>how many Nodes become one answer</strong>”."),
@@ -436,12 +507,15 @@ LESSON_15 = (
         L("QueryEngine 是查询路径的组合根", "The QueryEngine is the query path's composition root"),
         L(
             "检索器、后处理器、合成器是三个<strong>正交</strong>的组件：换检索器不影响合成策略，加后处理器不影响检索。"
-            "QueryEngine 只负责把它们装配起来、对外暴露一个 <code>.query()</code>。理解这个组合根，"
-            "你就能把“默认问答”改造成任意 RAG 变体。",
+            "QueryEngine 只负责把它们装配起来、对外暴露一个 <code>.query()</code>。值得记住的是：<code>index.as_query_engine(...)</code> "
+            "与 <code>RetrieverQueryEngine.from_args(...)</code> 产出的其实是<strong>同一种 QueryEngine</strong>，只是装配深度不同——"
+            "前者用默认接线、一行起步，后者让你逐件指定检索器 / 后处理器 / 合成器。",
             "The retriever, postprocessors and synthesizer are three <strong>orthogonal</strong> components: swapping the "
             "retriever doesn't touch the synthesis strategy, and adding a postprocessor doesn't touch retrieval. The "
-            "QueryEngine just wires them together behind one <code>.query()</code>. Grasp this composition root and you "
-            "can reshape “default Q&amp;A” into any RAG variant.",
+            "QueryEngine just wires them together behind one <code>.query()</code>. Worth remembering: "
+            "<code>index.as_query_engine(...)</code> and <code>RetrieverQueryEngine.from_args(...)</code> yield the "
+            "<strong>very same kind of QueryEngine</strong> — they differ only in wiring depth: the former starts in one "
+            "line with default wiring, the latter lets you specify the retriever / postprocessors / synthesizer piece by piece.",
         ),
         d.vflow([
             (L("engine.query('…')", "engine.query('…')"), L("收到问题", "receives the question")),
@@ -484,10 +558,11 @@ LESSON_15 = (
         c.qa_item(
             L("🔀 替代方案", "🔀 Alternatives"),
             L(
-                "<code>as_query_engine(...)</code> 用默认装配、一行起步；<code>from_args(...)</code> 给最大控制力——"
-                "两者产出同一种 QueryEngine，只是装配深度不同。",
-                "<code>as_query_engine(...)</code> starts in one line with default wiring; <code>from_args(...)</code> "
-                "gives maximum control — both yield the same kind of QueryEngine, differing only in wiring depth.",
+                "那什么时候才真的需要 <code>from_args(...)</code>？当你要换非默认检索器（如 BM25 / 混合检索）、"
+                "串联多个后处理器，或指定特定 ResponseMode 时——否则 <code>as_query_engine(...)</code> 的默认装配已经够用。",
+                "So when do you actually reach for <code>from_args(...)</code>? When you need a non-default retriever "
+                "(e.g. BM25 / hybrid), a chain of postprocessors, or a specific ResponseMode — otherwise the default "
+                "wiring of <code>as_query_engine(...)</code> already suffices.",
             ),
         ),
     )
@@ -571,11 +646,18 @@ LESSON_16 = (
         L("多轮的真正难点", "What's actually hard about multi-turn"),
         L(
             "多轮聊天不是给 QueryEngine 套个循环就行。难点有二：一是<strong>指代消解</strong>——“它 / 那 / 上面说的”"
-            "要先还原成具体所指；二是<strong>何时检索</strong>——闲聊轮不必检索，事实轮才要。两种 ChatMode 正是这两个问题的两种解法。",
+            "要先还原成具体所指；二是<strong>用哪个问题去检索</strong>——是拿用户这轮的原话，还是拿指代消解后补全的独立问题？"
+            "两种 ChatMode 正是这第二个问题的两种答案：<code>condense_question</code> 先把“历史 + 新问”压成一个独立问题、再用它检索；"
+            "<code>context</code> 直接用原话每轮检索、把片段注入上下文。<strong>注意：两种模式都每轮检索</strong>——"
+            "真正“要不要检索”的按需判断属于 Agent / Router 的范畴（见第 17、18 课）。",
             "Multi-turn chat is not just wrapping a loop around a QueryEngine. Two things are hard: "
             "<strong>coreference</strong> — “it / that / the one above” must be resolved to a concrete referent first; and "
-            "<strong>when to retrieve</strong> — chit-chat turns need no retrieval, factual ones do. The two ChatModes are "
-            "two answers to exactly these problems.",
+            "<strong>which question to retrieve with</strong> — the user's raw words this turn, or the standalone question "
+            "rebuilt after resolving the coreference? The two ChatModes are two answers to this second problem: "
+            "<code>condense_question</code> first condenses “history + new question” into one standalone query, then "
+            "retrieves with it; <code>context</code> retrieves every turn with the raw words and injects the snippets. "
+            "<strong>Note: both modes retrieve on every turn</strong> — truly deciding <em>whether</em> to retrieve at all "
+            "is agent / router behavior (Lessons 17–18).",
         ),
         d.flow([
             ("u", L("“那它呢？”", "“and its …?”"), L("含指代", "has a pronoun")),
@@ -657,8 +739,10 @@ LESSON_16 = (
           "<code>condense_plus_context</code> combines both and is the most general."),
     ])
     + c.design_highlight(L(
-        "多轮 RAG 的真正难点是“<strong>指代消解 + 何时检索</strong>”。两种 mode 是两种解法——这也是为什么聊天不只是“给 QueryEngine 套个循环”。",
-        "The real challenge of multi-turn RAG is “<strong>coreference + when to retrieve</strong>.” The two modes are two "
-        "answers — which is why chat is more than “wrap a loop around a QueryEngine.”",
+        "多轮 RAG 的真正难点是<strong>指代消解</strong>，以及<strong>用哪个问题去检索</strong>——用原话，还是用消解后补全的独立问题。"
+        "两种 mode 给出两种答案（且都每轮检索）——这也是为什么聊天不只是“给 QueryEngine 套个循环”。",
+        "The real challenge of multi-turn RAG is <strong>coreference</strong> and <strong>which question to retrieve "
+        "with</strong> — the raw words, or the standalone question rebuilt after resolving it. The two modes give two "
+        "answers (both retrieving every turn) — which is why chat is more than “wrap a loop around a QueryEngine.”",
     ))
 )

@@ -5,6 +5,12 @@ import i18n
 from i18n import L
 
 
+def _lessons(*pairs):
+    """Render clickable lesson-number links (identical in both languages)."""
+    links = " · ".join(f'<a href="{fname}">{num}</a>' for num, fname in pairs)
+    return L(links, links)
+
+
 LESSON_20 = (
     c.pipeline(None)
     + c.lead(L(
@@ -33,14 +39,27 @@ LESSON_20 = (
         "plug it in and it runs.",
     ))
     + c.section(
-        L("总装清单（每步回指对应课）", "Assembly checklist (each step links back to a lesson)"),
+        L("总装清单（每步都可点回对应课）", "Assembly checklist (every step links back to its lessons)"),
         c.compare_table(
-            [L("步骤", "Step"), L("对应课", "Lesson")],
+            [L("阶段", "Stage"), L("对应课（可点）", "Lessons (clickable)")],
             [
-                [L("加载 + 切块 + 抽取", "load + split + extract"), L("第 5 / 6 / 7 课", "Lessons 5 / 6 / 7")],
-                [L("Embedding + 建索引 + 持久化", "embed + index + persist"), L("第 8 / 10 / 11 课", "Lessons 8 / 10 / 11")],
-                [L("检索 + 后处理 + 合成", "retrieve + post-process + synthesize"), L("第 12 / 13 / 14 课", "Lessons 12 / 13 / 14")],
-                [L("查询 / 多轮 / 评估", "query / chat / evaluate"), L("第 15 / 16 / 19 课", "Lessons 15 / 16 / 19")],
+                [L("加载 → 文档/节点 → 切块 → 抽取", "load → docs/nodes → split → extract"),
+                 _lessons(("04", "04-documents-nodes.html"), ("05", "05-readers.html"),
+                          ("06", "06-node-parsers.html"), ("07", "07-metadata-extractors.html"))],
+                [L("向量化 → 索引 → 向量库 → 持久化", "embed → index → vector store → persist"),
+                 _lessons(("08", "08-embeddings.html"), ("09", "09-vector-stores.html"),
+                          ("10", "10-index-abstraction.html"), ("11", "11-ingestion-storage.html"))],
+                [L("检索 → 后处理 → 合成", "retrieve → post-process → synthesize"),
+                 _lessons(("12", "12-retrievers.html"), ("13", "13-postprocessors.html"),
+                          ("14", "14-response-synthesizers.html"))],
+                [L("查询引擎 / 多轮聊天", "query engine / multi-turn chat"),
+                 _lessons(("15", "15-query-engine.html"), ("16", "16-chat-engine.html"))],
+                [L("全局配置 &amp; Prompt（贯穿全程）", "global Settings &amp; prompts (throughout)"),
+                 _lessons(("17", "17-settings-prompts.html"))],
+                [L("进阶检索（可选升级）", "advanced retrieval (optional upgrade)"),
+                 _lessons(("18", "18-advanced-retrieval.html"))],
+                [L("评估闭环", "evaluation loop"),
+                 _lessons(("19", "19-evaluation.html"))],
             ],
         ),
     )
@@ -49,12 +68,17 @@ LESSON_20 = (
         L(
             "前 19 课每一课都拆开了管道上的一站；这一课把它们按同一套接口拼回去。整条链路只有两个阶段："
             "<strong>写入路径</strong>把数据变成可复用、可落盘的索引，<strong>查询路径</strong>在索引之上反复检索、合成、作答。"
-            "因为每一站都遵守统一抽象，你可以只替换其中一件（换向量库、换检索器、加一道评估），而不动其余结构。",
+            "因为每一站都遵守统一抽象，你可以只替换其中一件（换向量库、换检索器、加一道评估），而不动其余结构。"
+            "举例：想要更强的召回，把 <code>as_retriever</code> 换成第 18 课的 <code>QueryFusionRetriever</code> 即可，主流程一行不改；"
+            "而全局 <code>Settings</code>（第 17 课）从一开始就在背后统一着 LLM 与 embedding。",
             "Each of the first 19 lessons opened up one stop on the pipeline; this one snaps them back together behind "
             "one shared interface. The whole chain has just two phases: the <strong>write path</strong> turns data into "
             "a reusable, persistable index, and the <strong>query path</strong> retrieves, synthesizes and answers on "
             "top of it — over and over. Because every stop obeys the same abstraction, you can swap a single part (a "
-            "different vector store, a different retriever, an added evaluator) without disturbing the rest.",
+            "different vector store, a different retriever, an added evaluator) without disturbing the rest. For "
+            "example, to boost recall just swap <code>as_retriever</code> for Lesson 18's <code>QueryFusionRetriever</code> "
+            "— the main flow doesn't change a line; meanwhile the global <code>Settings</code> (Lesson 17) has been "
+            "unifying the LLM and embedding behind the scenes all along.",
         ),
         d.compare2(
             (L("首次建库（load → ingest → persist）", "First build (load → ingest → persist)"), i18n.render(L(

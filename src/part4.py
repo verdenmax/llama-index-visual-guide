@@ -14,23 +14,6 @@ LESSON_17 = (
         "old <code>ServiceContext</code>. <strong>Prompt templates</strong> control “how exactly we ask the LLM”, "
         "customizable per domain for tone and constraints.",
     ))
-    + d.annot(
-        L("全局 Settings 面板", "The global Settings panel"),
-        [
-            (L("<code>llm</code>", "<code>llm</code>"),
-             L("默认生成模型；各处未显式传参时都用它", "default generation model; used wherever a call passes none of its own")),
-            (L("<code>embed_model</code>", "<code>embed_model</code>"),
-             L("默认向量化模型；决定建索引与检索用哪套向量", "default embedding model; sets the vectors used to index and to retrieve")),
-            (L("<code>node_parser</code>", "<code>node_parser</code>"),
-             L("默认切块器；决定 Document 如何拆成 Node", "default splitter; how Documents get cut into Nodes")),
-            (L("<code>chunk_size</code>", "<code>chunk_size</code>"),
-             L("默认切块大小；在召回粒度与上下文长度间取舍", "default chunk size; trades recall granularity against context length")),
-        ],
-        caption=L(
-            "一处设定，全管道默认生效——任何单个组件仍可就地覆盖",
-            "Set once and it becomes the pipeline-wide default — yet any single component can still override it locally",
-        ),
-    )
     + c.analogy(L(
         "Settings 像项目的<strong>默认设置面板</strong>：定一次，处处生效，单处仍可覆盖。Prompt 模板像<strong>填空式提问公式</strong>，"
         "把检索到的上下文和用户问题填进固定结构。",
@@ -89,6 +72,28 @@ LESSON_17 = (
             caption=L(
                 "同一套 RAG：全局定基线，局部按需特例化",
                 "One RAG setup: set a global baseline, then special-case locally on demand",
+            ),
+        ),
+        d.compare2(
+            (L("Prompt A · 宽松", "Prompt A · loose"), i18n.render(L(
+                "模板只说“根据资料回答”。检索到的同一份上下文里其实<strong>没提保修期</strong>，"
+                "宽松的措辞却纵容 LLM 顺嘴补一句<strong>“一般为一年”</strong>——看似贴心，实为编造、无出处。",
+                "The template merely says “answer from the materials”. The retrieved context never actually "
+                "<strong>mentions the warranty period</strong>, yet the loose wording lets the LLM blurt out "
+                "<strong>“usually one year”</strong> — helpful-looking, but fabricated and unsourced.",
+            ))),
+            (L("Prompt B · 严格", "Prompt B · strict"), i18n.render(L(
+                "模板写死“只用资料回答；未提及就说‘资料未提及’”。<strong>检索结果一字未变</strong>、"
+                "问题也一样，这次 LLM <strong>老实回答“资料未提及”</strong>——不编、可追溯。",
+                "The template hard-codes “answer only from the materials; if not mentioned, say ‘not in the "
+                "materials’”. With the <strong>retrieved snippets byte-for-byte identical</strong> and the same "
+                "question, the LLM now <strong>honestly says “not in the materials”</strong> — no fabrication, "
+                "fully traceable.",
+            ))),
+            caption=L(
+                "同一份上下文、同一个问题，只换 Prompt：答案从“编造”翻转为“老实说不知道”——这就是 RAG 的最后一公里",
+                "Same context, same question, only the prompt changes: the answer flips from fabrication to an honest "
+                "“I don't know” — RAG's last mile",
             ),
         ),
     )
@@ -209,45 +214,40 @@ LESSON_18 = (
         "fragments back into a passage</strong>, and <strong>pick the right corpus</strong> per question.",
     ))
     + c.section(
-        L("四种进阶检索器", "Four advanced retrievers"),
-        c.compare_table(
-            [L("检索器", "Retriever"), L("解决的问题", "What it solves")],
-            [
-                [L("QueryFusionRetriever", "QueryFusionRetriever"), L("一问改写多版、结果融合排序", "multi-rephrase + fused ranking")],
-                [L("AutoMergingRetriever", "AutoMergingRetriever"), L("命中多个小块时合并成父块", "merge small hits into a parent block")],
-                [L("RecursiveRetriever", "RecursiveRetriever"), L("从摘要/引用跳转到原文", "hop from summaries/refs to source")],
-                [L("RouterRetriever", "RouterRetriever"), L("按问题选择不同索引/工具", "route to different indexes/tools")],
-            ],
-        ),
-    )
-    + c.section(
-        L("进阶检索：补齐基础 top-k 的短板", "Advanced retrieval: patching top-k's weak spots"),
+        L("基础 top-k 的三类短板，进阶检索逐一补齐", "Top-k's three weak spots — advanced retrieval patches each"),
         L(
-            "朴素 top-k 相似度检索有三块典型短板：<strong>召回不全</strong>（换个问法本能命中的内容被漏掉）、"
+            "把这些进阶检索当成一堆零散“高级技巧”去记，很容易迷失。换个视角：它们都在补朴素 top-k 相似度检索的"
+            "<strong>三类典型短板</strong>——<strong>召回不全</strong>（换个问法本能命中的内容被漏掉）、"
             "<strong>命中碎片</strong>（块切得太碎，单个 Node 只剩半句上下文）、<strong>多库分流</strong>"
-            "（不同问题其实应查不同索引）。进阶检索器各补一块，而且都实现同一个 <code>BaseRetriever</code>，"
-            "可即插即换、互相嵌套。",
-            "Plain top-k similarity search has three classic gaps: <strong>missed recall</strong> (content a different "
-            "phrasing would have hit gets dropped), <strong>fragmented hits</strong> (chunks so small a single Node "
-            "holds half a thought), and <strong>multiple corpora</strong> (different questions really belong to "
-            "different indexes). Each advanced retriever fills one gap, and all implement the same "
-            "<code>BaseRetriever</code> — swap or nest them freely.",
+            "（不同问题其实该查不同索引）。看清这三道缺口，下面四种检索器就各有归属——其中“命中碎片”有"
+            "横向合并、纵向递归两种补法；而且它们都实现同一个 <code>BaseRetriever</code>，可即插即换、互相嵌套。",
+            "Memorizing advanced retrieval as a pile of scattered “tricks” gets you lost. Flip the view: they all "
+            "patch plain top-k's <strong>three classic weak spots</strong> — <strong>missed recall</strong> (a "
+            "different phrasing would have hit, but it's dropped), <strong>fragmented hits</strong> (chunks so small "
+            "a single Node holds half a thought), and <strong>multiple corpora</strong> (different questions belong "
+            "to different indexes). Name those three gaps and the four retrievers below each find their place — "
+            "“fragmented hits” gets two cures, merging sideways and recursing down — and since all implement one "
+            "<code>BaseRetriever</code>, you swap or nest them freely.",
         ),
         d.grid(
-            [L("检索器", "Retriever"), L("解决什么", "Solves")],
+            [L("基础 top-k 的短板", "Top-k's weak spot"), L("进阶检索器", "Advanced retriever"), L("怎么补", "How it patches")],
             [
-                [L("<code>QueryFusionRetriever</code>", "<code>QueryFusionRetriever</code>"),
-                 L("召回不全：一题多版改写再融合，覆盖更多说法", "missed recall: multi-rephrase then fuse to cover more phrasings")],
-                [L("<code>AutoMergingRetriever</code>", "<code>AutoMergingRetriever</code>"),
-                 L("命中碎片：相邻子块自动合并回父块", "fragmented hits: merge adjacent child chunks into the parent")],
-                [L("<code>RecursiveRetriever</code>", "<code>RecursiveRetriever</code>"),
-                 L("跟随引用：从摘要/索引节点递归到原文", "follow refs: recurse from summary/index nodes to the source")],
-                [L("<code>RouterRetriever</code>", "<code>RouterRetriever</code>"),
-                 L("多库分流：由 LLM 选择该查哪个索引/工具", "multiple corpora: an LLM picks which index/tool to query")],
+                [L("召回不全", "Missed recall"),
+                 L("<code>QueryFusionRetriever</code>", "<code>QueryFusionRetriever</code>"),
+                 L("一题多版改写再融合，覆盖更多说法", "multi-rephrase then fuse to cover more phrasings")],
+                [L("命中碎片", "Fragmented hits"),
+                 L("<code>AutoMergingRetriever</code>", "<code>AutoMergingRetriever</code>"),
+                 L("相邻子块自动合并回父块", "merge adjacent child chunks back into the parent")],
+                [L("命中碎片", "Fragmented hits"),
+                 L("<code>RecursiveRetriever</code>", "<code>RecursiveRetriever</code>"),
+                 L("从摘要/索引节点递归到完整原文", "recurse from summary/index nodes to the full source")],
+                [L("多库分流", "Multiple corpora"),
+                 L("<code>RouterRetriever</code>", "<code>RouterRetriever</code>"),
+                 L("由 LLM 选择该查哪个索引/工具", "an LLM picks which index/tool to query")],
             ],
             caption=L(
-                "四种进阶检索器各补一块短板——接口统一，可单用也可叠加",
-                "Four advanced retrievers, each patching one gap — one interface, used alone or stacked",
+                "三类短板组织起四种检索器：“命中碎片”有合并与递归两解，其余各对一招——接口统一，可单用也可叠加",
+                "Three weak spots organize four retrievers: “fragmented hits” has two cures (merge, recurse), the rest map one-to-one — one interface, used alone or stacked",
             ),
         ),
     )
@@ -337,19 +337,20 @@ LESSON_18 = (
           "Fusion lifts recall via rephrase+merge; AutoMerging lifts context completeness via relationships."),
     ])
     + c.design_highlight(L(
-        "因为“检索”早就被抽象成统一接口，这些聪明策略才能像<strong>乐高</strong>一样替换基础检索器，而 QueryEngine 完全无感。",
-        "Because “retrieval” was abstracted to one interface early, these clever strategies swap in like <strong>Lego</strong> "
-        "for the basic retriever — the QueryEngine never notices.",
+        "进阶检索没有免费的午餐：fusion 多跑几轮检索来提召回，但更慢更贵；auto-merging 合并父块补上下文，"
+        "却可能引入冗余。每一种都是在用更多计算换更好结果。",
+        "Advanced retrieval is no free lunch: fusion runs extra retrieval passes to lift recall but costs more and "
+        "runs slower; auto-merging merges parent blocks to restore context but can add redundancy. Each trades more "
+        "compute for better results.",
     ))
 )
 LESSON_19 = (
     c.pipeline(None)
     + c.lead(L(
-        "RAG 到底好不好？用<strong>评估器</strong>量化：<strong>忠实度</strong>（Faithfulness：答案有没有被检索内容支撑）、"
-        "<strong>相关性</strong>（Relevancy：检索与答案是否切题）、<strong>正确性</strong>（Correctness：对照参考答案打分）。",
-        "Is the RAG any good? Quantify it with <strong>evaluators</strong>: <strong>Faithfulness</strong> (is the answer "
-        "grounded in retrieved content?), <strong>Relevancy</strong> (are retrieval and answer on-topic?), and "
-        "<strong>Correctness</strong> (score against a reference answer).",
+        "RAG 到底好不好，不能只凭“感觉还行”。<strong>评估器（Evaluator）</strong>把答案质量"
+        "<strong>量化成分数</strong>，让“好”与“坏”有据可比——下面这张表把核心的几把尺子摆在一起。",
+        "Is the RAG any good? “Feels fine” isn't an answer. <strong>Evaluators</strong> <strong>quantify</strong> "
+        "answer quality into scores so “good” and “bad” become comparable — the grid below lays out the core rulers.",
     ))
     + d.grid(
         [L("评估器", "Evaluator"), L("衡量什么", "Measures"), L("需要的输入", "Needs")],
@@ -370,41 +371,33 @@ LESSON_19 = (
         ),
     )
     + c.analogy(L(
-        "给答案打分的<strong>三把尺子</strong>：有没有瞎编（忠实）、答没答到点（相关）、对不对（正确）。",
-        "Three rulers for grading an answer: did it make things up (faithful), did it stay on point (relevant), and is "
-        "it right (correct).",
+        "评估器就像给作文判卷的<strong>老师</strong>：不是一句“感觉不错”，而是拿固定的几把尺子逐项打分——"
+        "分数能横向比较、也能复算。",
+        "An evaluator is like a <strong>teacher grading essays</strong>: not a vague “seems good” but scoring against "
+        "a fixed set of rulers — numbers you can compare across runs and recompute.",
     ))
-    + c.section(
-        L("三类评估器", "Three evaluators"),
-        c.compare_table(
-            [L("评估器", "Evaluator"), L("回答的问题", "Question it answers")],
-            [
-                [L("FaithfulnessEvaluator", "FaithfulnessEvaluator"), L("答案是否被检索到的上下文支撑？", "is the answer supported by retrieved context?")],
-                [L("RelevancyEvaluator", "RelevancyEvaluator"), L("检索 + 答案是否切题？", "are retrieval + answer relevant?")],
-                [L("CorrectnessEvaluator", "CorrectnessEvaluator"), L("对照参考答案对不对？", "is it correct vs a reference?")],
-            ],
-        ),
-    )
     + c.section(
         L("把调优变成可度量的闭环", "Turn tuning into a measurable loop"),
         L(
             "没有评估，调 RAG 就是“凭感觉”：改了切块、换了检索、调了 Prompt，到底变好还是变坏，全靠主观印象。"
             "评估把它变成一个<strong>闭环</strong>：每次改动后，用<strong>同一套问题和指标</strong>跑一遍，"
-            "对比分数再决定保留还是回退。于是每一步优化都有据可依，也能挡住“修好一个、悄悄弄坏一批”的回归。",
+            "对比分数再决定保留还是回退。于是每一步优化都有据可依，也能挡住“修好一个、悄悄弄坏一批”的回归。"
+            "下面用一组真实感的分数，看这个闭环跑起来是什么样。",
             "Without evaluation, tuning RAG is “by feel”: after changing chunking, retrieval or the prompt, whether it "
             "improved is a subjective impression. Evaluation turns it into a <strong>closed loop</strong>: after each "
             "change, run the <strong>same questions and metrics</strong>, compare the scores, then decide to keep or "
             "revert. Every optimization becomes evidence-based, and you catch the “fix one, silently break a batch” "
-            "regressions.",
+            "regressions. The numbers below show one turn of that loop in action.",
         ),
         d.flow([
-            ("change", L("改进", "Tweak"), L("切块/检索/Prompt", "chunking/retrieval/prompt")),
-            ("eval", L("评估", "Evaluate"), L("跑评估器", "run evaluators")),
-            ("compare", L("对比指标", "Compare metrics"), L("与上次基线比", "vs the last baseline")),
-            ("decide", L("决策", "Decide"), L("保留或回退 → 再改进", "keep or revert → tweak again")),
+            ("baseline", L("基线", "Baseline"), L("Faithfulness 0.82", "Faithfulness 0.82")),
+            ("change", L("改一处", "Change one"), L("chunk_size 512 → 1024", "chunk_size 512 → 1024")),
+            ("retest", L("重测", "Re-measure"), L("同一批问题", "same question set")),
+            ("compare", L("对比", "Compare"), L("0.82 → 0.71，↓ 变差", "0.82 → 0.71, worse ↓")),
+            ("decide", L("决定", "Decide"), L("回退，守住基线", "revert, keep the baseline")),
         ], caption=L(
-            "评估闭环：改一处 → 量一次 → 比一比 → 决定去留，再回到第一步",
-            "The eval loop: change one thing → measure → compare → keep or revert, then back to step one",
+            "一次真实的闭环：基线 0.82 → 把 chunk_size 改大反降到 0.71 → 回退；倘若改成加一道 rerank 升到 0.91，就予以保留——分数让去留有据，再回到第一步",
+            "One real turn of the loop: baseline 0.82 → enlarging chunk_size drops it to 0.71 → revert; had a rerank lifted it to 0.91 you'd keep it — the score makes the call, then back to step one",
         )),
     )
     + c.source_ref("evaluation/faithfulness.py", "FaithfulnessEvaluator", L("忠实度评估（防幻觉）", "faithfulness (anti-hallucination)"))

@@ -327,10 +327,14 @@ table.t td.mono, table.t td .mono { font-family: ui-monospace, monospace; font-s
 .legend { display:flex; gap:1.2rem; flex-wrap:wrap; margin-top:1rem; font-size:.8rem; color:var(--muted); }
 .legend span { display:flex; align-items:center; gap:.4rem; }
 .legend i { width:12px; height:12px; border-radius:3px; display:inline-block; }
-.pdf-btn { display:inline-flex; align-items:center; gap:.4rem; padding:.55rem 1.1rem;
-  background:var(--accent); color:#fff; border-radius:10px; font-size:.9rem; font-weight:650;
+.start-btn { display:inline-flex; align-items:center; gap:.4rem; padding:.6rem 1.2rem;
+  background:var(--accent); color:#fff; border-radius:10px; font-size:.95rem; font-weight:700;
   box-shadow:var(--shadow); transition:.15s; }
-.pdf-btn:hover { background:var(--accent-ink); transform:translateY(-1px); }
+.start-btn:hover { background:var(--accent-ink); transform:translateY(-1px); }
+.pdf-btn { display:inline-flex; align-items:center; gap:.4rem; padding:.55rem 1.1rem;
+  background:transparent; color:var(--accent-ink); border:1px solid var(--accent);
+  border-radius:10px; font-size:.9rem; font-weight:650; transition:.15s; }
+.pdf-btn:hover { background:var(--accent-soft); transform:translateY(-1px); }
 """
 
 EXTRA_CSS = r"""
@@ -450,6 +454,7 @@ def index_page(lesson_prefix=""):
         "code and a design insight.",
     ))
     pdf_btn = i18n.t(f"📄 下载完整 PDF（全 {total} 课）", f"📄 Download full PDF ({total} lessons)")
+    start_btn = i18n.t("从第 01 课开始 →", "Start with Lesson 01 →")
     anchor = i18n.render(L(
         "📌 对照 <strong>llama-index-core 0.14.22</strong> / Python 3.10+ · 最后核验 2026-06 · "
         "源码引用以「文件 + 符号名」为主（行号随上游更新而变）",
@@ -478,7 +483,8 @@ def index_page(lesson_prefix=""):
     <div class="part">{hero_part}</div>
     <h1>{hero_h1}</h1>
     <p class="lead">{hero_lead}</p>
-    <div style="margin-top:1.1rem">
+    <div style="margin-top:1.1rem; display:flex; gap:.6rem; flex-wrap:wrap">
+      <a href="{lesson_prefix}01-what-is-llamaindex.html" class="start-btn">{start_btn}</a>
       <a href="llama-index-visual-guide.pdf" class="pdf-btn">{pdf_btn}</a>
     </div>
     <p style="margin:.8rem 0 0;color:var(--faint);font-size:.8rem">{anchor}</p>

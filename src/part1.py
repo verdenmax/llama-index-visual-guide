@@ -63,21 +63,15 @@ LESSON_01 = (
             "nor cite. RAG doesn't touch those frozen weights; it <strong>mounts</strong> a searchable external "
             "corpus at query time so answers stay grounded and the knowledge stays swappable.",
         ),
-        d.compare2(
-            (L("闭卷 LLM", "Closed-book LLM"), i18n.render(L(
-                "只凭参数里的记忆作答；遇到没学过或已过时的内容就开始“编”，且给不出处。",
-                "Answers only from memory baked into its weights; for anything unseen or stale it makes things up, "
-                "with no sources.",
-            ))),
-            (L("开卷 RAG", "Open-book RAG"), i18n.render(L(
-                "先检索相关资料，再据此作答，每句话都能逐条追溯到出处。",
-                "Retrieves relevant material first, then answers from it — every claim traceable to a source.",
-            ))),
-            caption=L(
-                "同一个问题：闭卷靠脆弱的记忆，开卷靠可核对的检索",
-                "Same question: closed-book leans on fragile memory, open-book on checkable retrieval",
-            ),
-        ),
+        d.flow([
+            ("update", L("知识更新 / 新文档", "Knowledge update / new docs")),
+            ("reindex", L("重建索引（分钟级）", "Rebuild the index (minutes)")),
+            ("model", L("同一个模型零改动", "Same model, zero changes")),
+            ("live", L("新答案立即生效", "New answers take effect at once")),
+        ], caption=L(
+            "RAG 把模型的“记忆”外置成可随时重建的索引——更新知识不必碰模型",
+            "RAG externalizes the model's memory into a rebuildable index — update knowledge without touching the model",
+        )),
     )
     + c.source_ref(
         "llama_index/core/__init__.py", "VectorStoreIndex · SimpleDirectoryReader",
@@ -301,14 +295,14 @@ LESSON_02 = (
           "Import path with <code>core</code> = core abstraction; without = a third-party integration."),
         L("集成是<strong>独立 pip 包</strong>，按需安装，互不绑定版本。",
           "Integrations are <strong>separate pip packages</strong>, installed à la carte."),
-        L("换 LLM / Embedding / 向量库只改导入与一行配置，主链路不动。",
-          "Swapping the LLM / embedding / vector store is an import + one config line; the pipeline stays."),
+        L("换 <strong>LLM</strong> 只改一行；换 <strong>Embedding</strong> 还得重建索引（向量要重算）；换<strong>向量库</strong>改的是存储注入——三者代价不同。",
+          "Swapping the <strong>LLM</strong> is a one-liner; swapping the <strong>embedding</strong> also forces a re-index (vectors must be recomputed); swapping the <strong>vector store</strong> changes storage wiring — different costs."),
     ])
     + c.design_highlight(L(
-        "“接口在 core、实现在 integration”的分层，让生态可以<strong>独立演进</strong>："
-        "新增一个向量库只需发一个集成包，core 不必改动也不必发版。",
-        "Putting “interfaces in core, implementations in integrations” lets the ecosystem <strong>evolve "
-        "independently</strong>: adding a vector store is just a new integration package — core never changes.",
+        "这套分层的真正红利：本地用 Ollama 把整条 RAG 跑通，上线只把 <code>Settings.llm</code> 换成 OpenAI——"
+        "retriever / index / query engine 一行都不用改。",
+        "The real dividend of this layering: prototype the whole RAG locally on Ollama, then ship by swapping just "
+        "<code>Settings.llm</code> to OpenAI — your retriever / index / query engine don't change a line.",
     ))
 )
 LESSON_03 = (
@@ -324,11 +318,11 @@ LESSON_03 = (
         (L("SimpleDirectoryReader(...).load_data()", "SimpleDirectoryReader(...).load_data()"),
          L("→ Document 列表", "→ a list of Document")),
         (L("VectorStoreIndex.from_documents(docs)", "VectorStoreIndex.from_documents(docs)"),
-         L("→ Node → 向量 → 写入索引", "→ Node → vectors → stored in the index")),
+         L("→ Node → 向量 → 写入索引（切块见第 6 课 · 向量化见第 8 课）", "→ Node → vectors → stored in the index (split → L6 · embed → L8)")),
         (L("index.as_query_engine()", "index.as_query_engine()"),
          L("→ 装配 检索 / 后处理 / 合成", "→ wires retrieve / post-process / synthesize")),
         (L("engine.query('…')", "engine.query('…')"),
-         L("→ 检索 → 合成 → 答案 + source_nodes", "→ retrieve → synthesize → answer + source_nodes")),
+         L("→ 检索 → 合成 → 答案 + source_nodes（检索见第 12 课 · 合成见第 14 课）", "→ retrieve → synthesize → answer + source_nodes (retrieve → L12 · synthesize → L14)")),
     ], caption=L(
         "四行 API，每一行的产出正好喂给下一行",
         "Four API lines — each line's output is exactly the next line's input",

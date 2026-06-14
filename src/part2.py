@@ -51,11 +51,14 @@ LESSON_04 = (
         L(
             "检索、排序、返回、合成全部以 Node 为单位，是为了让下游组件“说同一种语言”：向量库存的是 Node、"
             "检索器返回的是 Node、合成器读的也是 Node，无论原始来源是 PDF、网页还是数据库。Document 太粗——"
-            "一篇上万字无法精准命中；Node 把粒度收敛到“一次讲清一件事”的片段，既适配 embedding 的长度上限，"
-            "又让命中更准、引用更细。",
+            "一篇上万字里真正相关的常常只有一两段，整篇压成<strong>一个</strong>向量时，相关内容会被大量无关文字"
+            "<strong>稀释</strong>，命中既不准也不稳；Node 把粒度收敛到“一次讲清一件事”的片段，既适配 embedding "
+            "的长度上限，又让命中更准、引用更细。",
             "Retrieval, ranking, results and synthesis all operate on Nodes so that every downstream component "
             "“speaks one language”: the vector store holds Nodes, the retriever returns Nodes, the synthesizer reads "
-            "Nodes — whatever the original source. A Document is too coarse — a 10k-word file can't be hit precisely; "
+            "Nodes — whatever the original source. A Document is too coarse — in a 10k-word file usually only a "
+            "paragraph or two is relevant, and squeezing the whole thing into <strong>one</strong> vector "
+            "<strong>dilutes</strong> that signal with unrelated text, so hits are neither precise nor stable; "
             "a Node narrows granularity to “one idea at a time”, fitting the embedding's length limit while making "
             "hits sharper and citations finer.",
         ),
@@ -200,27 +203,34 @@ LESSON_05 = (
         ),
     )
     + c.section(
-        L("统一 Document 让管道与来源解耦", "One Document type decouples the pipeline from its sources"),
+        L("一个文件可能产出多个 Document", "One file can yield many Documents"),
         L(
-            "Reader 的全部价值，是把“来源的差异”挡在管道之外。无论数据来自本地 PDF、Notion、数据库还是网页爬取，"
-            "一旦变成 Document，后面的切块、向量化、索引、检索就完全一样。于是换数据源不影响任何下游组件，"
-            "新增一种来源也只是再写一个 Reader——这正是可组合管道的起点。",
-            "A Reader's whole job is to keep “source differences” out of the pipeline. Whether the data comes from a "
-            "local PDF, Notion, a database or a web crawl, once it becomes a Document the downstream split, embed, "
-            "index and retrieve steps are identical. So changing sources disturbs no downstream component, and adding "
-            "a new source is just one more Reader — exactly where a composable pipeline begins.",
+            "容易以为“读 N 个文件就得到 N 个 Document”，其实不一定：很多解析器按<strong>自然边界</strong>切分，"
+            "一个 PDF 通常<strong>每页一个 Document</strong>，于是 <code>len(docs)</code> 往往大于文件数。"
+            "这个粒度会一路向下传导——Document 越多，切出的 Node 越多；而每个 Document 自带的 <code>page_label</code> "
+            "等元数据，正是日后“引用到第几页”溯源的依据。所以加载完先 <code>print(len(docs))</code>、"
+            "看一眼 <code>docs[0].metadata</code>，对后面的切块数量与引用粒度都心里有数。",
+            "It's tempting to assume “N files in, N Documents out”, but not necessarily: many parsers split on "
+            "<strong>natural boundaries</strong> — a PDF usually yields <strong>one Document per page</strong> — so "
+            "<code>len(docs)</code> is often larger than the file count. That granularity propagates downstream: more "
+            "Documents means more Nodes after chunking, and the <code>page_label</code> each Document carries is "
+            "exactly what later lets you cite “which page”. So after loading, <code>print(len(docs))</code> and peek "
+            "at <code>docs[0].metadata</code> — it tells you a lot about downstream chunk counts and citation granularity.",
         ),
-        d.grid(
-            [L("扩展名", "Extension"), L("解析器", "Parser")],
+        d.annot(
+            L("report.pdf（1 个文件）", "report.pdf (1 file)"),
             [
-                [L(".pdf", ".pdf"), L("PDFReader", "PDFReader")],
-                [L(".md / .txt", ".md / .txt"), L("平文本读取", "plain-text reader")],
-                [L(".docx", ".docx"), L("DocxReader", "DocxReader")],
-                [L(".csv", ".csv"), L("CSVReader / PandasCSVReader", "CSVReader / PandasCSVReader")],
+                (L("Document(page=1)", "Document(page=1)"),
+                 L("第 1 页正文 + page_label", "page 1's text + page_label")),
+                (L("Document(page=2)", "Document(page=2)"),
+                 L("第 2 页正文 + page_label", "page 2's text + page_label")),
+                (L("Document(page=3) …", "Document(page=3) …"),
+                 L("逐页扇出，依此类推", "fanned out page by page, and so on")),
             ],
             caption=L(
-                "SimpleDirectoryReader 按扩展名把每个文件分派给对应解析器",
-                "SimpleDirectoryReader dispatches each file to a parser by its extension",
+                "一个文件按页扇出多个 Document：所以 len(docs) ≠ 文件数，且每个 Document 自带页码供日后溯源",
+                "One file fans out into many Documents by page — so len(docs) ≠ the file count, and each Document "
+                "carries its page number for later provenance",
             ),
         ),
     )
@@ -352,12 +362,16 @@ LESSON_06 = (
     + c.section(
         L("chunk_size / chunk_overlap 的权衡", "The chunk_size / chunk_overlap trade-off"),
         L(
-            "chunk_size 太大，块里混入大量无关内容，检索噪声多、还挤占 LLM 上下文；太小，完整语义被切碎，"
+            "chunk_size 太大，块里混入大量无关内容，检索噪声多、还挤占 LLM 上下文；而且块再大也不能超过 "
+            "<strong>embedding 模型的 token 上限</strong>——常见模型大多在 <strong>512 token</strong> 左右"
+            "（详见第 8 课），超出的部分会被悄悄截断、白白丢失。太小，完整语义被切碎，"
             "块与块之间断裂、读不成句。chunk_overlap 用少量冗余换“不把一句话切两半”。这对“精准命中 vs 保留上下文”"
             "的张力，sentence-window 给了一个漂亮的折中：用单句去检索（足够精准），却把前后句组成的窗口喂给 "
             "LLM（补回上下文）。",
-            "Too large a chunk_size mixes in lots of irrelevant text — noisy retrieval that also hogs LLM context; too "
-            "small and a complete thought is shredded, with chunks that break mid-sentence. chunk_overlap trades a "
+            "Too large a chunk_size mixes in lots of irrelevant text — noisy retrieval that also hogs LLM context; and "
+            "a chunk can never exceed the <strong>embedding model's token limit</strong> either — most models cap "
+            "around <strong>512 tokens</strong> (see Lesson 8), and anything past that is silently truncated and lost. "
+            "Too small and a complete thought is shredded, with chunks that break mid-sentence. chunk_overlap trades a "
             "little redundancy for “never cut a sentence in half”. For the tension between “precise hits vs. retained "
             "context”, sentence-window offers an elegant compromise: retrieve on a single sentence (precise enough), "
             "yet feed the LLM the window of surrounding sentences (context restored).",
@@ -469,21 +483,27 @@ LESSON_07 = (
         "Enriching Nodes with <strong>metadata</strong> (title, keywords, the questions it answers, a summary) boosts "
         "retrieval and filtering. Extractors use an LLM to generate that metadata per Node automatically.",
     ))
-    + d.annot(
-        L("Node + 抽取的元数据", "Node + extracted metadata"),
-        [
-            (L("document_title", "document_title"),
-             L("TitleExtractor 推断的文档标题", "a document title inferred by TitleExtractor")),
-            (L("excerpt_keywords", "excerpt_keywords"),
-             L("KeywordExtractor 提取的关键词", "keywords pulled by KeywordExtractor")),
-            (L("questions_this_excerpt_can_answer", "questions_this_excerpt_can_answer"),
-             L("该片段能回答的问题", "the questions this chunk can answer")),
-            (L("section_summary", "section_summary"),
-             L("SummaryExtractor 生成的摘要", "a summary produced by SummaryExtractor")),
-        ],
+    + d.compare2(
+        (L("抽取前 Node.metadata", "Before — Node.metadata"), i18n.render(L(
+            "检索只能靠正文向量。此刻元数据很<strong>稀</strong>：<code>{'page': 3}</code>——只有加载时带进来的页码。",
+            "Retrieval can only ride on the body vector. Right now the metadata is <strong>sparse</strong>: "
+            "<code>{'page': 3}</code> — just the page number carried in at load time.",
+        ))),
+        (L("抽取后 Node.metadata", "After — Node.metadata"), i18n.render(L(
+            "抽取器补上三个键：<code>document_title='退款政策'</code>、"
+            "<code>excerpt_keywords='退款,时效,原路'</code>、"
+            "<code>questions_this_excerpt_can_answer='退款多久到账？'</code>。"
+            "这些就是向量之外的<strong>第二检索通道</strong>：可按字段过滤，也让问句更易对齐。",
+            "Extractors add three keys: <code>document_title='Refund policy'</code>, "
+            "<code>excerpt_keywords='refund,timing,original'</code>, "
+            "<code>questions_this_excerpt_can_answer='How long do refunds take?'</code>. That's the "
+            "<strong>second retrieval channel</strong> beyond the vector: filterable by field, and far easier to "
+            "align with a user's question.",
+        ))),
         caption=L(
-            "每个 extractor 往 Node.metadata 写入一个特定键名，成为检索的第二通道",
-            "Each extractor writes a specific key into Node.metadata — a second channel for retrieval",
+            "抽取前后对照同一个 Node.metadata：抽取器把它从一个页码，填成可过滤、可对齐问句的第二检索通道",
+            "The same Node.metadata, before and after: extractors grow it from a lone page number into a filterable, "
+            "question-aligned second retrieval channel",
         ),
     )
     + c.analogy(L(
@@ -555,12 +575,20 @@ LESSON_07 = (
         c.qa_item(
             L("⚙️ 内部怎么跑", "⚙️ How it runs inside"),
             L(
-                "每个 extractor 都是一个 transformation：对每个 Node 调用一次 LLM，按提示词生成内容，并写进固定的 "
-                "metadata 键（document_title / excerpt_keywords / questions_this_excerpt_can_answer / section_summary）。"
-                "因此 N 个块 × M 个抽取器 ≈ N×M 次 LLM 调用。",
-                "Each extractor is a transformation: it makes one LLM call per Node, generates content from a prompt, "
-                "and writes it to a fixed metadata key (document_title / excerpt_keywords / "
-                "questions_this_excerpt_can_answer / section_summary). So N chunks × M extractors ≈ N×M LLM calls.",
+                "每个 extractor 都是一个 transformation，按提示词生成内容并写进固定的 metadata 键"
+                "（document_title / excerpt_keywords / questions_this_excerpt_can_answer / section_summary）。"
+                "但调用次数要分两类看：<strong>逐块</strong>的抽取器（KeywordExtractor / QuestionsAnsweredExtractor / "
+                "SummaryExtractor）对每个 Node 各调一次 LLM，开销随块数 N 线性增长；<strong>文档级</strong>的抽取器"
+                "（如 TitleExtractor）只为每篇文档推断一次标题、再共享给该文档的所有 Node，大致<strong>每篇文档一次</strong>"
+                "而非每块一次。所以总开销并不是简单的 N×M——只有逐块抽取器才真正乘以 N。",
+                "Each extractor is a transformation that generates content from a prompt and writes it to a fixed "
+                "metadata key (document_title / excerpt_keywords / questions_this_excerpt_can_answer / "
+                "section_summary). But the call count splits in two: <strong>per-node</strong> extractors "
+                "(KeywordExtractor / QuestionsAnsweredExtractor / SummaryExtractor) make one LLM call per Node, so cost "
+                "grows linearly with the chunk count N; <strong>document-level</strong> extractors (e.g. "
+                "TitleExtractor) infer one title per document and share it across that document's Nodes — roughly "
+                "<strong>once per document</strong>, not once per chunk. So the total is not simply N×M — only the "
+                "per-node extractors truly multiply by N.",
             ),
         ),
         c.qa_item(
@@ -632,10 +660,13 @@ LESSON_08 = (
             (22, 68, L("发票", "invoice")),
         ],
         (24, 28),
-        k=3,
+        k=2,
         caption=L(
-            "查询（黄点）落在“退款/退货”一带，top-k 命中语义最近的块，而非字面相同的块",
-            "The query (amber) lands near “refund / returns”; top-k grabs the semantically nearest chunks, not literally matching ones",
+            "查询（黄点）落在“退款/退货”一带，top-2 圈出语义最近的退款政策与退货流程，而非字面相同的块。"
+            "注意：2D 散点只是直觉示意，真正的度量是两个向量的夹角（余弦相似度），而非图上的平面距离",
+            "The query (amber) lands among “refund / returns”; top-2 circles the two nearest in meaning — refund "
+            "policy and returns — not literally matching ones. Note: the 2D scatter is only an intuition; the real "
+            "metric is the angle between the two vectors (cosine similarity), not flat distance on the plane",
         ),
     )
     + c.analogy(L(
@@ -654,16 +685,23 @@ LESSON_08 = (
         ),
     )
     + c.section(
-        L("语义相近 = 向量距离近", "Similar meaning = nearby vectors"),
+        L("同一个 embedding 模型，才有可比的坐标系", "One embedding model, one comparable space"),
         L(
-            "向量检索的全部前提，是“语义相近”能被翻译成“向量距离近”。LlamaIndex 默认用余弦相似度衡量两个向量的"
-            "夹角——夹角越小越相关。一个关键约束：查询和文档必须用同一个 embedding 模型，否则两套坐标系不可比，"
-            "再近的语义也算不出近的距离。换更强的模型能直接提升召回，但要把整个索引重新向量化。",
-            "The whole premise of vector search is that “similar meaning” translates into “nearby vectors”. By default "
-            "LlamaIndex measures the angle between two vectors with cosine similarity — the smaller the angle, the more "
-            "related. One key constraint: the query and the documents must use the same embedding model, or the two "
-            "coordinate systems aren't comparable and even close meanings won't score as close. A stronger model lifts "
-            "recall directly, but means re-embedding the whole index.",
+            "既然检索靠“向量够不够近”，那“用什么尺子量近”就至关重要。LlamaIndex 默认用<strong>余弦相似度</strong>，"
+            "量的是两个向量的<strong>夹角</strong>——夹角越小越相关。由此引出一个硬约束：查询和文档"
+            "<strong>必须用同一个 embedding 模型</strong>。反例很直接——文档用模型 A 向量化、查询却用模型 B，"
+            "两者落在<strong>互不相通的坐标系</strong>里，算出来的相似度只是两堆无关数字的巧合，毫无意义。"
+            "至于换“更强”的模型：通用榜单更高未必在<strong>你的领域</strong>里召回更好，领域专用或微调过的小模型"
+            "常常胜过更大的通用模型；而且一旦更换，整个索引都得<strong>重新向量化</strong>。",
+            "Since retrieval hinges on “are the vectors close enough”, what you measure closeness with matters. By "
+            "default LlamaIndex uses <strong>cosine similarity</strong>, measuring the <strong>angle</strong> between "
+            "two vectors — the smaller the angle, the more related. That implies a hard constraint: the query and the "
+            "documents <strong>must use the same embedding model</strong>. The counter-example is stark — embed the "
+            "documents with model A but the query with model B, and the two live in <strong>incompatible coordinate "
+            "systems</strong>; any similarity you compute is a coincidence of unrelated numbers, meaningless. As for "
+            "switching to a “stronger” model: a higher general-leaderboard score doesn't guarantee better recall in "
+            "<strong>your</strong> domain — a domain-specific or fine-tuned smaller model often beats a bigger general "
+            "one — and any switch forces a full <strong>re-embedding</strong> of the index.",
         ),
         d.flow(
             [
@@ -672,8 +710,9 @@ LESSON_08 = (
                 ("vec", L("向量 [1536]", "vector [1536]"), L("语义的坐标，按余弦比近邻", "semantic coordinates, compared by cosine")),
             ],
             caption=L(
-                "embedding 把文本映射成定长向量；语义越近，向量夹角越小",
-                "Embedding maps text to a fixed-length vector; closer meaning means a smaller angle",
+                "embedding 把文本映射成定长向量；只有查询与文档共用同一个模型，向量才落在同一个坐标系里、夹角才可比",
+                "Embedding maps text to a fixed-length vector; only when query and documents share one model do the "
+                "vectors live in the same space and their angle becomes comparable",
             ),
         ),
     )
@@ -754,9 +793,11 @@ LESSON_08 = (
           "The unified <code>BaseEmbedding</code> interface lets you swap models without touching the pipeline."),
     ])
     + c.design_highlight(L(
-        "检索质量很大程度由 embedding 模型决定；把它抽象成可替换组件，意味着 RAG 可以随模型进步而<strong>免费升级</strong>。",
-        "Retrieval quality largely rides on the embedding model; abstracting it as a swappable component means RAG can "
-        "<strong>upgrade for free</strong> as models improve.",
+        "embedding 模型是管道里最“牵一发而动全身”的一环：它定义了整套语义坐标系，所以换 LLM、换切块器都只是局部调整，"
+        "唯独换 embedding 模型必须把<strong>全部向量重算一遍</strong>——选型要趁早，更要贴合你的领域。",
+        "The embedding model is the pipeline's most load-bearing link: it defines the entire semantic coordinate "
+        "system, so swapping the LLM or the splitter is a local change — but swapping the embedding model forces you "
+        "to <strong>re-embed every vector</strong>. Choose it early, and choose it for your domain.",
     ))
 )
 LESSON_09 = (
@@ -808,14 +849,17 @@ LESSON_09 = (
         ),
         d.compare2(
             (L("内存 SimpleVectorStore", "In-memory SimpleVectorStore"), i18n.render(L(
-                "零依赖，随进程而生灭；线性扫描全部向量。适合学习、原型与小数据。",
-                "Zero-dependency, lives and dies with the process; scans every vector linearly. Great for learning, "
-                "prototypes and small data.",
+                "零依赖，随进程而生灭；<strong>线性扫描</strong>全部向量，返回的是<strong>精确</strong>最近邻。"
+                "适合学习、原型与小数据。",
+                "Zero-dependency, lives and dies with the process; a <strong>linear scan</strong> over every vector "
+                "returns the <strong>exact</strong> nearest neighbours. Great for learning, prototypes and small data.",
             ))),
             (L("生产向量库 Chroma · FAISS · pgvector", "Production store: Chroma · FAISS · pgvector"), i18n.render(L(
-                "持久化、可扩展，带 ANN 近似索引与元数据过滤；百万级向量仍是毫秒级查询。",
-                "Persistent and scalable, with ANN indexes and metadata filters; still millisecond queries at millions "
-                "of vectors.",
+                "持久化、可扩展，用 <strong>ANN（近似最近邻）</strong>索引和元数据过滤，百万级向量也能毫秒级返回。"
+                "代价是“近似”：用一点召回率换巨大的速度，命中率<strong>可调但并非 100%</strong>。",
+                "Persistent and scalable; an <strong>ANN (approximate nearest-neighbor)</strong> index plus metadata "
+                "filters answer in milliseconds even at millions of vectors. The catch is “approximate”: it trades a "
+                "little recall for huge speed, so hit rate is <strong>tunable, not a guaranteed 100%</strong>.",
             ))),
             caption=L(
                 "同一个 VectorStore 接口，两种实现：上线只是换实现，不是重写",
@@ -941,15 +985,32 @@ LESSON_10 = (
         "(walk every entry to summarize), a knowledge graph (hop by entity relations).",
     ))
     + c.section(
-        L("常见 Index 与适用场景", "Common indexes and when to use them"),
-        c.compare_table(
-            [L("Index", "Index"), L("检索范式", "Retrieval style"), L("适合", "Best for")],
-            [
-                [L("VectorStoreIndex", "VectorStoreIndex"), L("向量近邻 top-k", "vector top-k"), L("相似问答（最常用）", "similarity Q&amp;A (most common)")],
-                [L("SummaryIndex", "SummaryIndex"), L("遍历所有 Node", "iterate all Nodes"), L("整库总结", "summarize a corpus")],
-                [L("DocumentSummaryIndex", "DocumentSummaryIndex"), L("先按文档摘要召回", "recall via doc summaries"), L("多文档路由", "routing across docs")],
-                [L("PropertyGraphIndex", "PropertyGraphIndex"), L("图谱遍历", "graph traversal"), L("实体关系/多跳", "entities / multi-hop")],
-            ],
+        L("同一个问题，两种 Index 两种答案", "One question, two Indexes, two answers"),
+        L(
+            "选错 Index，再好的数据也答非所问。拿同一句问题分别问两种最常见的索引，差别一目了然：",
+            "Pick the wrong Index and even great data answers the wrong question. Put the same question to the two "
+            "most common Indexes and the difference is obvious:",
+        ),
+        d.compare2(
+            (L("VectorStoreIndex", "VectorStoreIndex"), i18n.render(L(
+                "把问题向量化，只<strong>定点召回</strong>最相关的 top-k 段再作答：回答“退款多久到账？”这类具体细节"
+                "又快又准；但问“整份资料讲了什么”时，只看几段容易<strong>以偏概全</strong>。",
+                "Embeds the question and answers from just the <strong>top-k</strong> most similar chunks: fast and "
+                "precise for specifics like “how long do refunds take?”, but asked “what does the whole corpus cover?” "
+                "it sees only a few chunks and tends to <strong>generalize from a fragment</strong>.",
+            ))),
+            (L("SummaryIndex", "SummaryIndex"), i18n.render(L(
+                "不挑不选，<strong>遍历全部</strong> Node 逐步归纳：天生适合“总结全库”“这批文档讲了什么”；"
+                "代价是每次都读全量，问具体细节时既慢又贵。",
+                "Picks nothing — it <strong>walks every</strong> Node and synthesizes: a natural fit for “summarize the "
+                "whole corpus” / “what do these docs cover”; the cost is reading everything each time, so it's slow "
+                "and pricey for narrow questions.",
+            ))),
+            caption=L(
+                "同一句问题，两种 Index 给出不同答案：向量索引定点召回最相关几段，摘要索引遍历全库做归纳",
+                "Same question, two Indexes, two answers: the vector index pinpoints the most relevant chunks; the "
+                "summary index walks the whole corpus to synthesize",
+            ),
         ),
     )
     + c.section(
@@ -1064,11 +1125,13 @@ LESSON_10 = (
 LESSON_11 = (
     c.pipeline("store")
     + c.lead(L(
-        "<strong>IngestionPipeline</strong> 把切块、抽取、向量化串成一条<strong>可缓存、可去重</strong>的管道；"
-        "<strong>StorageContext</strong> + <code>persist</code> / <code>load_index_from_storage</code> 让建好的索引落盘、下次秒开。",
-        "<strong>IngestionPipeline</strong> chains splitting, extraction and embedding into a "
-        "<strong>cacheable, dedup-aware</strong> pipeline; <strong>StorageContext</strong> + <code>persist</code> / "
-        "<code>load_index_from_storage</code> let a built index hit disk and reload instantly next time.",
+        "<strong>IngestionPipeline</strong> 把切块、抽取、向量化串成一条<strong>可缓存、可去重</strong>的管道，"
+        "重复运行只处理变化的部分。索引建好后，再用 <strong>StorageContext</strong> 的 <code>persist</code> / "
+        "<code>load_index_from_storage</code> 把它整体落盘、下次秒开，免去每次重建。",
+        "An <strong>IngestionPipeline</strong> chains splitting, extraction and embedding into a "
+        "<strong>cacheable, dedup-aware</strong> pipeline, so re-runs only touch what changed. Once the index is "
+        "built, <strong>StorageContext</strong>'s <code>persist</code> / <code>load_index_from_storage</code> write "
+        "it to disk as a whole and reload it instantly — no rebuild next time.",
     ))
     + d.flow(
         [
@@ -1123,8 +1186,11 @@ LESSON_11 = (
                 (L("load_index_from_storage", "load_index_from_storage"), L("从三件套重建索引，秒级开门", "rebuilds the index from the three — open in seconds")),
             ],
             caption=L(
-                "persist 把索引拆成磁盘上的三件套，load 再把它们拼回一个可查询的索引",
-                "persist splits the index into three files on disk; load stitches them back into a queryable index",
+                "persist 把索引拆成磁盘上的三件套，load 再把它们拼回可查询的索引；"
+                "不过生产里若向量交给外部库（Chroma / pgvector）托管，向量就不在本地，落盘的往往只剩 docstore 与 index_store",
+                "persist splits the index into three local files; load stitches them back into a queryable index. In "
+                "production, though, if the vectors live in an external store (Chroma / pgvector) they aren't local — "
+                "often only the docstore and index_store hit disk",
             ),
         ),
     )

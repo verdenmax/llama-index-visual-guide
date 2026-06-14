@@ -245,10 +245,14 @@ table.t td.mono, table.t td .mono { font-family: ui-monospace, monospace; font-s
 .legend { display:flex; gap:1.2rem; flex-wrap:wrap; margin-top:1rem; font-size:.8rem; color:var(--muted); }
 .legend span { display:flex; align-items:center; gap:.4rem; }
 .legend i { width:12px; height:12px; border-radius:3px; display:inline-block; }
-.pdf-btn { display:inline-flex; align-items:center; gap:.4rem; padding:.55rem 1.1rem;
-  background:var(--accent); color:#fff; border-radius:10px; font-size:.9rem; font-weight:650;
+.start-btn { display:inline-flex; align-items:center; gap:.4rem; padding:.6rem 1.2rem;
+  background:var(--accent); color:#fff; border-radius:10px; font-size:.95rem; font-weight:700;
   box-shadow:var(--shadow); transition:.15s; }
-.pdf-btn:hover { background:var(--accent-ink); transform:translateY(-1px); }
+.start-btn:hover { background:var(--accent-ink); transform:translateY(-1px); }
+.pdf-btn { display:inline-flex; align-items:center; gap:.4rem; padding:.55rem 1.1rem;
+  background:transparent; color:var(--accent-ink); border:1px solid var(--accent);
+  border-radius:10px; font-size:.9rem; font-weight:650; transition:.15s; }
+.pdf-btn:hover { background:var(--accent-soft); transform:translateY(-1px); }
 
 /* ---- language toggle button ---- */
 .langbtn{font:600 .72rem/1 inherit;color:var(--accent);background:var(--accent-soft);
@@ -360,7 +364,7 @@ Settings.llm = OpenAI(model='gpt-4o-mini')
 
 # B) 换成 Anthropic：只改导入 + 这一行，其余代码原封不动
 from llama_index.llms.anthropic import Anthropic
-Settings.llm = Anthropic(model='claude-3-5-sonnet-latest')</pre></div><div class="card keypts"><div class="tag"><span data-lang="zh">✅ 本课要点</span><span data-lang="en">✅ Key points</span></div><ul><li><span data-lang="zh">导入路径带 <code>core</code> = 核心抽象；不带 = 第三方集成实现。</span><span data-lang="en">Import path with <code>core</code> = core abstraction; without = a third-party integration.</span></li><li><span data-lang="zh">集成是<strong>独立 pip 包</strong>，按需安装，互不绑定版本。</span><span data-lang="en">Integrations are <strong>separate pip packages</strong>, installed à la carte.</span></li><li><span data-lang="zh">换 LLM / Embedding / 向量库只改导入与一行配置，主链路不动。</span><span data-lang="en">Swapping the LLM / embedding / vector store is an import + one config line; the pipeline stays.</span></li></ul></div><div class="card highlight"><div class="tag"><span data-lang="zh">💡 设计亮点</span><span data-lang="en">💡 Design insight</span></div><div data-lang="zh">“接口在 core、实现在 integration”的分层，让生态可以<strong>独立演进</strong>：新增一个向量库只需发一个集成包，core 不必改动也不必发版。</div><div data-lang="en">Putting “interfaces in core, implementations in integrations” lets the ecosystem <strong>evolve independently</strong>: adding a vector store is just a new integration package — core never changes.</div></div><div class="selftest">
+Settings.llm = Anthropic(model='claude-3-5-sonnet-latest')</pre></div><div class="card keypts"><div class="tag"><span data-lang="zh">✅ 本课要点</span><span data-lang="en">✅ Key points</span></div><ul><li><span data-lang="zh">导入路径带 <code>core</code> = 核心抽象；不带 = 第三方集成实现。</span><span data-lang="en">Import path with <code>core</code> = core abstraction; without = a third-party integration.</span></li><li><span data-lang="zh">集成是<strong>独立 pip 包</strong>，按需安装，互不绑定版本。</span><span data-lang="en">Integrations are <strong>separate pip packages</strong>, installed à la carte.</span></li><li><span data-lang="zh">换 <strong>LLM</strong> 只改一行；换 <strong>Embedding</strong> 还得重建索引（向量要重算）；换<strong>向量库</strong>改的是存储注入——三者代价不同。</span><span data-lang="en">Swapping the <strong>LLM</strong> is a one-liner; swapping the <strong>embedding</strong> also forces a re-index (vectors must be recomputed); swapping the <strong>vector store</strong> changes storage wiring — different costs.</span></li></ul></div><div class="card highlight"><div class="tag"><span data-lang="zh">💡 设计亮点</span><span data-lang="en">💡 Design insight</span></div><div data-lang="zh">这套分层的真正红利：本地用 Ollama 把整条 RAG 跑通，上线只把 <code>Settings.llm</code> 换成 OpenAI——retriever / index / query engine 一行都不用改。</div><div data-lang="en">The real dividend of this layering: prototype the whole RAG locally on Ollama, then ship by swapping just <code>Settings.llm</code> to OpenAI — your retriever / index / query engine don't change a line.</div></div><div class="selftest">
 <h2><span data-lang="zh">🧪 自测 · 想一想为什么这么设计</span><span data-lang="en">🧪 Self-check · think about the design</span></h2>
 <div class="quiz">
   <div class="qn">1. <span data-lang="zh">看到 <code>from llama_index.vector_stores.chroma import ...</code>，你能立刻判断什么？</span><span data-lang="en">Seeing <code>from llama_index.vector_stores.chroma import ...</code>, what do you instantly know?</span></div>
@@ -374,6 +378,12 @@ Settings.llm = Anthropic(model='claude-3-5-sonnet-latest')</pre></div><div class
     <summary><span data-lang="zh">看答案与解析</span><span data-lang="en">Show answer &amp; explanation</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
     <div class="acc-body"><div class="qa"><div class="a"><strong><span data-lang="zh">答案：A</span><span data-lang="en">Answer: A</span></strong> <span data-lang="zh">命名约定：路径不含 <code>core</code> 即为具体集成实现；core 只定义接口。</span><span data-lang="en">By convention, a path without <code>core</code> is a concrete integration; core only defines interfaces.</span></div></div></div>
   </details>
+</div>
+<div class="card spark">
+  <div class="tag"><span data-lang="zh">💭 发散思考（没有标准答案）</span><span data-lang="en">💭 Open questions (no single right answer)</span></div>
+  <ul>
+    <li><span data-lang="zh">把接口放在 core、实现放在集成包，这种分层在什么情况下反而会成为负担？</span><span data-lang="en">Putting interfaces in core and implementations in integrations — when might this layering become a burden rather than a benefit?</span></li>
+  </ul>
 </div>
 </div>
   <div class="footnav"><a class="prev" href="01-what-is-llamaindex.html"><div class="dir"><span data-lang="zh">← 上一课</span><span data-lang="en">← Prev</span></div><div class="ttl"><span data-lang="zh">LlamaIndex 与 RAG 是什么</span><span data-lang="en">What is LlamaIndex &amp; RAG</span></div></a><a class="next" href="03-rag-lifecycle.html"><div class="dir"><span data-lang="zh">下一课 →</span><span data-lang="en">Next →</span></div><div class="ttl"><span data-lang="zh">一次 RAG 的生命周期</span><span data-lang="en">Lifecycle of a RAG Query</span></div></a></div>
