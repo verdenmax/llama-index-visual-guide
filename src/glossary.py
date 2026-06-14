@@ -1,5 +1,6 @@
 """Part 6 (reference): lesson 21 glossary. Content filled task-by-task."""
 import components as c
+import diagrams as d
 from i18n import L
 
 
@@ -11,6 +12,15 @@ LESSON_21 = (
     c.lead(L(
         "全书术语一句话速查，点“课”跳到对应讲解。", "One-line lookups for every term; click “Lesson” to jump to it.",
     ))
+    + d.flow([
+        ("load", L("加载", "Load")),
+        ("split", L("切块", "Split")),
+        ("embed", L("向量化", "Embed")),
+        ("index", L("索引", "Index")),
+        ("retrieve", L("检索", "Retrieve")),
+        ("synth", L("合成", "Synthesize")),
+        ("answer", L("回答", "Answer")),
+    ], caption=L("按数据流复习全书术语", "Review the whole guide's terms along the data flow"))
     + c.compare_table(
         [L("术语 Term", "术语 Term"), L("一句话 In a line", "一句话 In a line"), L("课 Lesson", "课 Lesson")],
         [
