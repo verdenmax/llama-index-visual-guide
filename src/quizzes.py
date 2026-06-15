@@ -545,6 +545,27 @@ QUIZZES = {
         "open": [L("你的 RAG 每问成本偏高、p95 延迟也超标。在不明显牺牲答案质量的前提下，你会<strong>按什么顺序</strong>动手，每一步用<strong>什么数字</strong>判断“砍对了”？",
                    "Your RAG has high cost-per-question and an over-budget p95 latency. Without obviously sacrificing answer quality, in <strong>what order</strong> would you act, and <strong>which numbers</strong> tell you each step “cut the right thing”?")],
     },
+    "25-security.html": {
+        "mcq": [{
+            "q": L("多租户 RAG 要保证“A 公司绝不会检索到 B 公司的数据”，这个隔离<strong>最该在哪一层强制</strong>？",
+                   "A multi-tenant RAG must guarantee “company A can never retrieve company B's data”. <strong>Which layer should enforce</strong> this isolation?"),
+            "opts": [
+                L("在 system prompt 里写“只回答本租户的问题”，叮嘱模型别越权",
+                  "write “only answer for this tenant” in the system prompt and trust the model"),
+                L("在<strong>检索层</strong>用 MetadataFilters 按 tenant_id 下推过滤，别租户的数据根本不会被召回",
+                  "at the <strong>retrieval layer</strong>, push a tenant_id MetadataFilters filter down so other tenants' data is never recalled"),
+                L("让前端在请求里自己带上 tenant_id，后端直接信任",
+                  "have the frontend send its own tenant_id and trust it on the backend"),
+                L("答完之后再用一个 LLM 检查答案里有没有混入别租户的信息",
+                  "after answering, use another LLM to check whether the answer mixed in other tenants' info"),
+            ],
+            "answer": 1,
+            "why": L("隔离必须在<strong>检索层</strong>强制：用 MetadataFilters 把 tenant_id 过滤<strong>下推到向量库</strong>，别租户的向量根本不参与打分 / 召回，从源头杜绝越权。靠 prompt 叮嘱不可靠——指令会被忽略、被注入绕过；让前端自带 tenant_id 等于把锁交给访客，必须用<strong>已认证</strong>身份在服务端注入；事后再用 LLM 复查是亡羊补牢，数据已经离开隔离边界、可能进了日志。把“绝不能漏”的隔离放在<strong>数据根本进不来</strong>的那一层，才是结构性保证。",
+                     "Isolation must be enforced at the <strong>retrieval layer</strong>: MetadataFilters push the tenant_id filter <strong>down into the vector store</strong> so other tenants' vectors are never scored or recalled, stopping breaches at the source. A prompt hint is unreliable — instructions get ignored or overridden by injection; letting the frontend supply its own tenant_id hands the lock to the visitor (inject it server-side from an <strong>authenticated</strong> identity); a post-hoc LLM check is too late — the data has already left the boundary and may sit in the logs. Putting “never-leak” isolation at the layer where <strong>data can't even enter</strong> is the only structural guarantee."),
+        }],
+        "open": [L("你的多租户 RAG 还要支持“管理员可跨租户检索”。你会怎么设计 tenant 过滤，既保证普通用户绝不越权、又安全地放开管理员？（提示：过滤条件由谁、在<strong>哪一层</strong>决定？）",
+                   "Your multi-tenant RAG must also let “admins retrieve across tenants”. How would you design the tenant filter so ordinary users can never breach isolation while admins are safely allowed through? (Hint: who decides the filter, and at <strong>which layer</strong>?)")],
+    },
 }
 
 
