@@ -388,31 +388,17 @@ print(engine.query('最新的退款政策？'))</pre></div><div class="card keyp
 </div>
 <h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
 <div class="quiz interview">
-  <div class="qn">🎯 1. <span data-lang="zh">一个 VectorStore 要承担哪三件事？为什么把它抽象成可替换接口很重要？</span><span data-lang="en">What three jobs does a VectorStore do, and why abstract it behind a swappable interface?</span></div>
+  <div class="qn">🎯 1. <span data-lang="zh">你要从内存版 <code>SimpleVectorStore</code> 迁到生产向量库。按什么标准选？“百万级毫秒查询”靠什么、代价是什么？怎么<strong>验证召回没因近似而垮</strong>？</span><span data-lang="en">You're moving from the in-memory <code>SimpleVectorStore</code> to a production store. By what criteria? How do you get 'millisecond queries at million-scale', at what cost, and how do you <strong>verify recall didn't collapse from the approximation</strong>?</span></div>
   <details class="accordion">
     <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
-    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">存向量、存（可过滤的）metadata、做近邻查询（给定查询向量返回 top-k）。统一接口（<code>VectorStoreQuery</code> 契约）让“原型用内存版、生产换 Chroma/pgvector”只是换实现、不改链路——选库变成运维/规模问题而非架构问题。</span><span data-lang="en">Store vectors, store (filterable) metadata, and do nearest-neighbor search (given a query vector, return top-k). A uniform interface (the <code>VectorStoreQuery</code> contract) makes 'prototype in-memory, ship on Chroma/pgvector' a swap of implementation — choosing a store becomes an ops/scale decision, not an architectural one.</span></div></div></div>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">🔑 <strong>重点：靠 ANN(近似最近邻)换速度，召回率可调、并非 100%——要用评测把召回卡在可接受线。</strong>选型标准：规模/持久化、metadata 过滤、库 vs 服务、事务一致性、运维成本(FAISS 快但偏库；pgvector 复用 Postgres+事务；Chroma 开箱)。验证：对一组 gold 查询比较 ANN 与精确扫描的命中率差，调 ANN 参数把召回拉回阈值，再看延迟是否仍达标。</span><span data-lang="en">🔑 <strong>Key: speed comes from ANN (approximate NN); recall is tunable, not 100% — pin it above an acceptable line with evals.</strong> Criteria: scale/persistence, metadata filtering, library-vs-service, transactions, ops (FAISS fast but library-ish; pgvector reuses Postgres + transactions; Chroma batteries-included). Verify by comparing ANN vs exact-scan hit-rate on gold queries, tuning ANN params back to threshold, then checking latency still holds.</span></div></div></div>
   </details>
 </div>
 <div class="quiz interview">
-  <div class="qn">🎯 2. <span data-lang="zh"><code>SimpleVectorStore</code> 和生产向量库（Chroma / FAISS / pgvector）你按什么标准选？</span><span data-lang="en">How do you choose between <code>SimpleVectorStore</code> and a production store (Chroma / FAISS / pgvector)?</span></div>
+  <div class="qn">🎯 2. <span data-lang="zh">既要语义检索、又要“只在某部门 / 某年份里找”，你会怎么实现？</span><span data-lang="en">You need semantic search AND 'only within a dept / year' — how do you implement it?</span></div>
   <details class="accordion">
     <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
-    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">规模与持久化（内存版重启即失、不适合大库）、元数据过滤能力、是“库”还是“服务”、事务/一致性、运维成本。例：FAISS 极快但偏库；pgvector 复用现成 Postgres、便于事务；Chroma 开箱即用。</span><span data-lang="en">Scale and persistence (in-memory dies on restart), metadata filtering, library-vs-service, transactions/consistency, and ops cost. E.g. FAISS is blazing but library-style; pgvector reuses existing Postgres with transactions; Chroma is batteries-included.</span></div></div></div>
-  </details>
-</div>
-<div class="quiz interview">
-  <div class="qn">🎯 3. <span data-lang="zh">生产向量库号称“百万级毫秒查询”，靠的是什么？代价是什么？</span><span data-lang="en">Production stores boast 'millisecond queries at million-scale' — how, and at what cost?</span></div>
-  <details class="accordion">
-    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
-    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">靠<strong>近似最近邻（ANN）</strong>索引（如 HNSW/IVF），用近似换速度——并不保证 100% 召回。召回率可通过参数调（更高召回=更慢/更耗内存）。精确扫描虽 100% 准确，但在大规模下太慢。</span><span data-lang="en">Via <strong>Approximate Nearest Neighbor (ANN)</strong> indexes (HNSW/IVF) that trade exactness for speed — recall isn't guaranteed 100%. Recall is a tunable knob (higher recall = slower/more memory). Exact scan is 100% accurate but too slow at scale.</span></div></div></div>
-  </details>
-</div>
-<div class="quiz interview">
-  <div class="qn">🎯 4. <span data-lang="zh">既要语义检索、又要“只在某部门/某年份里找”，你会怎么实现？</span><span data-lang="en">You need semantic search AND 'only within a dept/year' — how do you implement it?</span></div>
-  <details class="accordion">
-    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
-    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">用 <code>MetadataFilters</code> 把检索先约束到对的子集，再在子集里做向量近邻——即“先按标签筛、再按语义排”。前提是建索引时把这些字段写进 Node 的 metadata。</span><span data-lang="en">Use <code>MetadataFilters</code> to constrain retrieval to the right subset, then do vector nearest-neighbor within it — 'filter by tag, then rank by meaning'. It works only if those fields were written into each Node's metadata at index time.</span></div></div></div>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">🔑 <strong>重点：用 <code>MetadataFilters</code> 先把范围约束到对的子集，再在子集里做向量近邻——“先按标签筛、再按语义排”。</strong>前提是建索引时就把部门/年份写进每个 Node 的 metadata，且所选向量库支持过滤下推(否则要先取再过滤、效率差)。</span><span data-lang="en">🔑 <strong>Key: use <code>MetadataFilters</code> to constrain to the right subset, then do vector NN within it — 'filter by tag, then rank by meaning'.</strong> It requires writing dept/year into each Node's metadata at index time, and a store that supports filter push-down (else you fetch-then-filter, which is inefficient).</span></div></div></div>
   </details>
 </div>
 <div class="card spark">

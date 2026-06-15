@@ -382,24 +382,17 @@ index = VectorStoreIndex.from_documents(docs)</pre></div><div class="card keypts
 </div>
 <h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
 <div class="quiz interview">
-  <div class="qn">🎯 1. <span data-lang="zh">Reader 的统一产出是什么？为什么这层抽象对整条管道很关键？</span><span data-lang="en">What do all Readers output, and why does that abstraction matter for the whole pipeline?</span></div>
+  <div class="qn">🎯 1. <span data-lang="zh">你的数据来自 PDF、网页、Confluence 三种源，还会不断加新源。你怎么设计加载层让“<strong>加新源不影响后面任何一站</strong>”？一个 PDF 常常每页一个 Document，这对你估成本和做引用有什么影响？</span><span data-lang="en">Your data comes from PDFs, web pages and Confluence, with more sources coming. How do you design the loading layer so <strong>adding a source disturbs no later stage</strong>? A PDF often yields one Document per page — what does that do to your cost estimates and citations?</span></div>
   <details class="accordion">
     <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
-    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">统一产出 <code>Document</code> 列表。它把“来源千奇百怪”挡在管道之外——换数据源（PDF→网页→数据库）不影响后续切块/向量化/检索任何一站，是 RAG 可组合性的起点。</span><span data-lang="en">A list of <code>Document</code>s. It keeps source quirks out of the pipeline — changing the source (PDF→web→DB) touches no later stage, which is where RAG composability begins.</span></div></div></div>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">🔑 <strong>重点：Reader 统一产出 Document，把“来源差异”挡在管道之外；加新源 = 再接一个 Reader。</strong>因为下游只认 Document，换/加来源不动切块、向量化、检索任何一站。一个 PDF→多个 Document（每页），<code>len(docs) ≠ 文件数</code>：按 Document/Node 数估 embedding 成本，引用靠每个 Document 的 page metadata。验证：抽样检查每种源加载出的 Document 数与 metadata 是否齐全。</span><span data-lang="en">🔑 <strong>Key: Readers all output Documents, keeping source quirks out of the pipeline; adding a source = plugging in another Reader.</strong> Since downstream only sees Documents, adding/swapping a source touches no later stage. One PDF → many Documents (per page), so <code>len(docs) ≠ file count</code>: estimate embedding cost by Document/Node count and cite via each Document's page metadata. Verify by spot-checking the Document count and metadata per source.</span></div></div></div>
   </details>
 </div>
 <div class="quiz interview">
-  <div class="qn">🎯 2. <span data-lang="zh">一个 PDF 常常每页产出一个 Document，<code>len(docs) ≠ 文件数</code>。这会影响你设计什么？</span><span data-lang="en">A PDF often yields one Document per page, so <code>len(docs) ≠ file count</code>. What design choices does that affect?</span></div>
+  <div class="qn">🎯 2. <span data-lang="zh">自己写一个 Reader vs 用 LlamaHub 现成集成，你怎么定？什么时候<strong>自写更划算</strong>？</span><span data-lang="en">Writing your own Reader vs using a LlamaHub integration — how do you decide, and when is rolling your own <strong>worth it</strong>?</span></div>
   <details class="accordion">
     <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
-    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">影响下游 Node 数量与“引用到第几页”的溯源粒度；做引用脚注/页码定位时要靠每个 Document 的 metadata（page）；估算 embedding 成本也要按 Document/Node 数而非文件数。</span><span data-lang="en">It drives the downstream Node count and page-level citation granularity; footnotes/page anchors rely on each Document's <code>page</code> metadata; and you estimate embedding cost by Document/Node count, not file count.</span></div></div></div>
-  </details>
-</div>
-<div class="quiz interview">
-  <div class="qn">🎯 3. <span data-lang="zh">自己写一个 Reader vs 用 LlamaHub 现成集成，你怎么选？</span><span data-lang="en">Writing your own Reader vs using an off-the-shelf LlamaHub integration — how do you choose?</span></div>
-  <details class="accordion">
-    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
-    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">常见格式/来源（PDF、网页、Notion、S3…）优先用现成集成，省事且久经测试；只有内部专有格式或需要特殊清洗/分块逻辑时才自写——只要实现 <code>BaseReader.load_data</code> 返回 Document 即可接入。</span><span data-lang="en">Prefer existing integrations for common formats/sources (PDF, web, Notion, S3…) — battle-tested and quick; write your own only for proprietary formats or special cleaning/splitting, implementing <code>BaseReader.load_data</code> to return Documents.</span></div></div></div>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">🔑 <strong>重点：常见格式/源优先用现成集成；只有专有格式或要特殊清洗/分块时才自写。</strong>现成集成久经测试、省事；自写只需实现 <code>BaseReader.load_data</code> 返回 Document 即可无缝接入管道。权衡点：维护成本 vs 控制力——别为一个一次性 CSV 重造轮子。</span><span data-lang="en">🔑 <strong>Key: prefer existing integrations for common formats/sources; roll your own only for proprietary formats or special cleaning/splitting.</strong> Existing ones are tested and quick; a custom one just implements <code>BaseReader.load_data</code> to return Documents and plugs straight in. The trade-off is maintenance vs control — don't reinvent a wheel for a one-off CSV.</span></div></div></div>
   </details>
 </div>
 <div class="card spark">

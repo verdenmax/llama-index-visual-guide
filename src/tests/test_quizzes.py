@@ -1,3 +1,4 @@
+import interviews
 import quizzes
 from i18n import L
 
@@ -23,16 +24,14 @@ def test_shuffle_is_deterministic_and_preserves_answer():
 
 
 def test_render_interview_block_with_collapsible_answer():
-    quizzes.QUIZZES["__t-iv.html"] = {
-        "interview": [
-            {"q": L("为什么用 Node 而不是整篇 Document？", "Why Node, not the whole Document?"),
-             "answer": L("要点：① 检索粒度；② 溯源。", "Key points: (1) retrieval granularity; (2) provenance.")},
-        ],
-    }
+    interviews.INTERVIEW["__t-iv.html"] = [
+        {"q": L("为什么用 Node 而不是整篇 Document？", "Why Node, not the whole Document?"),
+         "answer": L("要点：① 检索粒度；② 溯源。", "Key points: (1) retrieval granularity; (2) provenance.")},
+    ]
     try:
         html = quizzes.render("__t-iv.html")
     finally:
-        del quizzes.QUIZZES["__t-iv.html"]
+        del interviews.INTERVIEW["__t-iv.html"]
     assert 'class="quiz interview"' in html              # the interview block
     assert "面试官提问" in html                            # group heading
     assert "为什么用 Node" in html                         # the question
@@ -52,3 +51,18 @@ def test_render_without_interview_omits_block():
     assert 'class="selftest"' in html                     # still renders
     assert 'class="quiz interview"' not in html           # no interview block
     assert "面试官提问" not in html
+
+
+def test_render_interview_optional_fig_inside_collapsible():
+    interviews.INTERVIEW["__t-fig.html"] = [
+        {"q": L("你会怎么设计？", "How would you design it?"),
+         "answer": L("🔑 重点：先评测。", "Key: evaluate first."),
+         "fig": '<div class="fig">DIAGRAM-X</div>'},
+    ]
+    try:
+        html = quizzes.render("__t-fig.html")
+    finally:
+        del interviews.INTERVIEW["__t-fig.html"]
+    assert 'class="fig"' in html and "DIAGRAM-X" in html   # fig rendered
+    assert html.index("DIAGRAM-X") > html.index("先评测")  # fig after the answer text
+    assert html.index("DIAGRAM-X") < html.index("</details>")  # inside the collapsible

@@ -388,31 +388,17 @@ print(src.node_id if src else None)</pre></div><div class="card keypts"><div cla
 </div>
 <h3><span data-lang="zh">🎯 面试官提问 · 试着答出要点</span><span data-lang="en">🎯 Interviewer asks · cover the key points</span></h3>
 <div class="quiz interview">
-  <div class="qn">🎯 1. <span data-lang="zh">为什么 RAG 的检索单位是 <code>Node</code> 而不是整篇 <code>Document</code>？</span><span data-lang="en">Why is the unit of retrieval a <code>Node</code> rather than the whole <code>Document</code>?</span></div>
+  <div class="qn">🎯 1. <span data-lang="zh">你要做一个能“<strong>精确引用到第几页第几段</strong>”的合同问答。为什么检索单位用 Node 而不是整篇 Document？你会怎么设计 Node 的 metadata 与 relationships？怎么<strong>验证引用准确</strong>？</span><span data-lang="en">You're building contract Q&amp;A that must <strong>cite the exact page and paragraph</strong>. Why retrieve Nodes, not whole Documents? How would you design the Node metadata and relationships, and how do you <strong>verify citation accuracy</strong>?</span></div>
   <details class="accordion">
     <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
-    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">整篇文档里通常只有一两段相关，把整篇压成<strong>一个</strong>向量会被无关内容稀释、命中不准；切成 Node 后检索更精准，且 Node 携带 metadata 与 relationships，让下游“说同一种语言”。</span><span data-lang="en">A whole doc is usually relevant only in a paragraph or two; squeezing it into <strong>one</strong> vector dilutes the signal. Nodes make retrieval precise and carry metadata + relationships so everything downstream speaks one language.</span></div></div></div>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">🔑 <strong>重点：Node 让检索精准且可溯源；整篇 Document 的向量会被无关内容稀释、还没法定位。</strong>设计：metadata 存 page / section / contract_id 供过滤与溯源，relationships（PREVIOUS/NEXT）串前后文做上下文扩展。验证：抽一批问题，人工核对引用的 page/段落是否<strong>真的包含答案</strong>，统计引用准确率，而不是只看答案读起来对不对。</span><span data-lang="en">🔑 <strong>Key: Nodes make retrieval precise and citable; a whole-Document vector is diluted by irrelevant text and can't localize.</strong> Design: metadata holds page / section / contract_id for filtering and provenance; relationships (PREVIOUS/NEXT) chain neighbors for context expansion. Verify by manually checking, on a sample, whether the cited page/paragraph <strong>actually contains the answer</strong> — a citation-accuracy rate, not just whether the prose reads right.</span></div></div></div>
   </details>
 </div>
 <div class="quiz interview">
-  <div class="qn">🎯 2. <span data-lang="zh"><code>relationships</code>（SOURCE / PREVIOUS / NEXT）在什么真实需求下派上用场？</span><span data-lang="en">When do <code>relationships</code> (SOURCE / PREVIOUS / NEXT) actually earn their keep?</span></div>
+  <div class="qn">🎯 2. <span data-lang="zh">检索老返回“相关但不对”的段落——查 2024 年退款却返回 2022 年的条款。你会怎么用 Node 的 metadata 解决？</span><span data-lang="en">Retrieval keeps returning related-but-wrong chunks — asking about 2024 refunds returns the 2022 clause. How would you use Node metadata to fix it?</span></div>
   <details class="accordion">
     <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
-    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">溯源（SOURCE 指回原 Document）、前后文扩展（命中一个 Node 时把相邻 Node 一起带上，避免断句）、以及句窗/自动合并等进阶检索的基础。</span><span data-lang="en">Provenance (SOURCE points back to the Document), prev/next context expansion (pull neighbors so a hit isn't a half-sentence), and as the basis for sentence-window / auto-merging retrieval.</span></div></div></div>
-  </details>
-</div>
-<div class="quiz interview">
-  <div class="qn">🎯 3. <span data-lang="zh">如果有人坚持“直接用整篇文档做检索更省事”，你会用什么例子反驳？</span><span data-lang="en">If someone insists 'just retrieve whole documents, it's simpler', how would you push back with an example?</span></div>
-  <details class="accordion">
-    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
-    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">一份 50 页手册里只有半页讲退款：整篇的向量被另外 49.5 页稀释，查“退款”可能根本排不进 top-k；即便命中，也要把 50 页塞进 LLM，既贵又“迷失在中间”。</span><span data-lang="en">A 50-page manual with half a page on refunds: the doc vector is drowned by the other 49.5 pages, so 'refund' may not even rank into top-k; and even if it hits, you'd feed 50 pages to the LLM — costly and 'lost in the middle'.</span></div></div></div>
-  </details>
-</div>
-<div class="quiz interview">
-  <div class="qn">🎯 4. <span data-lang="zh">检索老是返回相关但不对的段落，<code>metadata</code> 能怎样帮你收窄？</span><span data-lang="en">Retrieval keeps returning related-but-wrong chunks — how can <code>metadata</code> help narrow it?</span></div>
-  <details class="accordion">
-    <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
-    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">用 metadata 过滤（如 <code>MetadataFilters</code> 限定 <code>product=&quot;X&quot;</code> 或 <code>year=2024</code>）把检索范围先缩到对的子集，相当于“先按标签筛、再按语义排”，是向量检索的第二通道。</span><span data-lang="en">Filter by metadata (e.g. <code>MetadataFilters</code> for <code>product=&quot;X&quot;</code> or <code>year=2024</code>) to restrict retrieval to the right subset — 'filter by tag, then rank by meaning', the second channel alongside vectors.</span></div></div></div>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">🔑 <strong>重点：把年份/版本写进 metadata，用 <code>MetadataFilters</code> 先过滤、再语义排序（检索第二通道）。</strong>纯向量只懂语义、不懂“限定 2024”这种结构化约束。前提是建索引时就把这些字段抽进每个 Node 的 metadata；否则过滤无从谈起。</span><span data-lang="en">🔑 <strong>Key: put year/version into metadata and use <code>MetadataFilters</code> to filter first, then rank semantically (retrieval's second channel).</strong> Pure vectors capture meaning but not structured constraints like 'restrict to 2024'. It works only if those fields were extracted into each Node's metadata at index time.</span></div></div></div>
   </details>
 </div>
 <div class="card spark">
