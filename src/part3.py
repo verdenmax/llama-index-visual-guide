@@ -649,7 +649,7 @@ LESSON_16 = (
             "要先还原成具体所指；二是<strong>用哪个问题去检索</strong>——是拿用户这轮的原话，还是拿指代消解后补全的独立问题？"
             "两种 ChatMode 正是这第二个问题的两种答案：<code>condense_question</code> 先把“历史 + 新问”压成一个独立问题、再用它检索；"
             "<code>context</code> 直接用原话每轮检索、把片段注入上下文。<strong>注意：两种模式都每轮检索</strong>——"
-            "真正“要不要检索”的按需判断属于 Agent / Router 的范畴（见第 17、18 课）。",
+            "真正“要不要检索”的按需判断属于 Agent / Router 的范畴（见第 18 课）。",
             "Multi-turn chat is not just wrapping a loop around a QueryEngine. Two things are hard: "
             "<strong>coreference</strong> — “it / that / the one above” must be resolved to a concrete referent first; and "
             "<strong>which question to retrieve with</strong> — the user's raw words this turn, or the standalone question "
@@ -657,7 +657,7 @@ LESSON_16 = (
             "<code>condense_question</code> first condenses “history + new question” into one standalone query, then "
             "retrieves with it; <code>context</code> retrieves every turn with the raw words and injects the snippets. "
             "<strong>Note: both modes retrieve on every turn</strong> — truly deciding <em>whether</em> to retrieve at all "
-            "is agent / router behavior (Lessons 17–18).",
+            "is agent / router behavior (Lesson 18).",
         ),
         d.flow([
             ("u", L("“那它呢？”", "“and its …?”"), L("含指代", "has a pronoun")),

@@ -1126,12 +1126,12 @@ LESSON_11 = (
     c.pipeline("store")
     + c.lead(L(
         "<strong>IngestionPipeline</strong> 把切块、抽取、向量化串成一条<strong>可缓存、可去重</strong>的管道，"
-        "重复运行只处理变化的部分。索引建好后，再用 <strong>StorageContext</strong> 的 <code>persist</code> / "
-        "<code>load_index_from_storage</code> 把它整体落盘、下次秒开，免去每次重建。",
+        "重复运行只处理变化的部分。索引建好后，用 <code>storage_context.persist</code> 整体落盘，"
+        "下次用顶层函数 <code>load_index_from_storage</code>（传入 StorageContext）秒开，免去每次重建。",
         "An <strong>IngestionPipeline</strong> chains splitting, extraction and embedding into a "
         "<strong>cacheable, dedup-aware</strong> pipeline, so re-runs only touch what changed. Once the index is "
-        "built, <strong>StorageContext</strong>'s <code>persist</code> / <code>load_index_from_storage</code> write "
-        "it to disk as a whole and reload it instantly — no rebuild next time.",
+        "built, <code>storage_context.persist</code> writes it to disk, and the top-level "
+        "<code>load_index_from_storage</code> (given a StorageContext) reloads it instantly — no rebuild next time.",
     ))
     + d.flow(
         [
@@ -1269,7 +1269,7 @@ LESSON_11 = (
         ")\n\n"
         "docs = [Document(text='退款政策……', doc_id='faq-1')]\n"
         "print(len(pipeline.run(documents=docs)))   # 首次：完整处理\n\n"
-        "docs[0].text = '退款政策（已更新）……'        # 只改这一篇\n"
+        "docs = [Document(text='退款政策（已更新）……', doc_id='faq-1')]   # 同一 doc_id、内容已更新\n"
         "print(len(pipeline.run(documents=docs)))   # 再跑：仅这篇重算，其余命中缓存",
         caption=L("第二次 run 只处理变化的文档，其余命中缓存/去重——这就是增量摄取", "The second run touches only changed docs; the rest hit cache/dedup — that's incremental ingestion"),
     )

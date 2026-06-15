@@ -279,12 +279,12 @@ LESSON_18 = (
             L("⚙️ 内部怎么跑", "⚙️ How it runs inside"),
             L(
                 "<code>num_queries=n</code> 让 LLM 额外生成 <strong>n-1</strong> 个改写（原问题也算一版）；"
-                "融合方式由 <code>FUSION_MODES</code> 决定，默认 <code>reciprocal_rerank</code>——按每条结果在多个"
-                "排名中的倒数位次累加打分，再统一排序。",
+                "融合方式由 <code>FUSION_MODES</code> 决定，<strong>默认 <code>simple</code></strong>，常显式设 "
+                "<code>reciprocal_rerank</code>（RRF）——按每条结果在多个排名中的倒数位次累加打分，再统一排序。",
                 "<code>num_queries=n</code> makes the LLM generate <strong>n-1</strong> extra rewrites (the original "
-                "counts as one); fusion is governed by <code>FUSION_MODES</code>, defaulting to "
-                "<code>reciprocal_rerank</code> — it sums each result's reciprocal rank across the several rankings, "
-                "then sorts once.",
+                "counts as one); fusion is governed by <code>FUSION_MODES</code> (<strong>default <code>simple</code>"
+                "</strong>), and you commonly set <code>reciprocal_rerank</code> (RRF) — it sums each result's reciprocal "
+                "rank across the several rankings, then sorts once.",
             ),
         ),
         c.qa_item(

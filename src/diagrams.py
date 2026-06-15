@@ -99,7 +99,15 @@ def grid(headers, cells, caption=None):
 def scatter(doc_pts, query_pt, k=3, caption=None):
     """Vector-space scatter (inline SVG). doc_pts: (x, y, label) with x,y in 0..100;
     query_pt: (x, y). Draws doc dots, the query dot, and a circle around the k nearest.
-    SVG carries only geometry; readable labels live in the bilingual HTML legend."""
+    Each dot's bilingual label surfaces as an SVG ``<title>`` hover tooltip; the
+    legend names the three roles (query / nearest top-k / doc chunk)."""
+    def _label_text(lab):
+        if isinstance(lab, i18n.L):
+            txt = f"{lab.zh} / {lab.en}" if lab.en != lab.zh else lab.zh
+        else:
+            txt = str(lab)
+        return txt.replace("&", "&amp;").replace("<", "&lt;")
+
     qx, qy = query_pt
     dists = sorted((math.hypot(x - qx, y - qy), i) for i, (x, y, _l) in enumerate(doc_pts))
     near = {i for _d, i in dists[:k]}
@@ -107,10 +115,10 @@ def scatter(doc_pts, query_pt, k=3, caption=None):
     svg = ['<svg viewBox="0 0 100 100" class="fscatter" preserveAspectRatio="xMidYMid meet" role="img">']
     if radius:
         svg.append(f'<circle cx="{qx}" cy="{qy}" r="{radius:.1f}" class="fsknn"/>')
-    for i, (x, y, _lab) in enumerate(doc_pts):
+    for i, (x, y, lab) in enumerate(doc_pts):
         cls = "fsdot near" if i in near else "fsdot"
-        svg.append(f'<circle cx="{x}" cy="{y}" r="2.4" class="{cls}"/>')
-    svg.append(f'<circle cx="{qx}" cy="{qy}" r="3.2" class="fsq"/>')
+        svg.append(f'<circle cx="{x}" cy="{y}" r="2.4" class="{cls}"><title>{_label_text(lab)}</title></circle>')
+    svg.append(f'<circle cx="{qx}" cy="{qy}" r="3.2" class="fsq"><title>查询 / query</title></circle>')
     svg.append("</svg>")
     legend = (
         '<div class="fslegend">'
