@@ -367,15 +367,20 @@ INTERVIEW = {
             caption=L("选 Index = 选检索范式：按“怎么找”而不是“存哪儿”", "Choosing an Index = choosing how you find, not where it lives")),
         },
         {"q": L(
-            "“选 Index = 选检索范式”——给“查某条 FAQ”和“总结整篇合同”两个问题，分别该用哪种 Index，为什么？",
-            "'Choosing an Index = choosing a retrieval paradigm' — for 'look up one FAQ' vs 'summarize a whole contract', "
-            "which Index each, and why?"),
+            "需求从“单库 FAQ”演进到“跨 5 条产品线、还要多跳推理（A 依赖 B、B 依赖 C）”。你会怎么调整 Index 选型？"
+            "为什么纯向量检索在多跳上吃力、怎么<strong>验证</strong>？",
+            "Requirements grow from 'single-base FAQ' to 'across 5 product lines with multi-hop reasoning (A depends on B "
+            "depends on C)'. How do you adjust your Index choice, why does pure vector retrieval struggle with multi-hop, and "
+            "how would you <strong>verify</strong>?"),
          "answer": L(
-            "🔑 <strong>重点：定点用 VectorStoreIndex(按相似度取 top-k，最省最准)；总结用 SummaryIndex + <code>tree_summarize</code>(需看全部、逐层合并)。</strong>"
-            "反过来都会糟：定点检索做总结会漏内容，遍历全部做定点问答既慢又贵。",
-            "🔑 <strong>Key: pinpoint → VectorStoreIndex (top-k by similarity, cheapest and most precise); summary → "
-            "SummaryIndex + <code>tree_summarize</code> (must see everything, merge up).</strong> Swapping them is bad: "
-            "pinpoint retrieval for a summary misses content; walking everything for a lookup is slow and costly."),
+            "🔑 <strong>重点：多跳/关系推理超出“按相似度取 top-k”的能力——考虑 <code>PropertyGraphIndex</code>（实体-关系图）或多 Index + Router 分流。</strong>"
+            "纯向量把每跳当独立检索，难把 A→B→C 串成链路；跨产品线则用 metadata 过滤或按线建多个 Index。"
+            "验证：构造需要 2+ 跳才能答对的问题集，比较向量索引 vs 图索引的<strong>正确率</strong>。",
+            "🔑 <strong>Key: multi-hop/relational reasoning exceeds 'top-k by similarity' — consider a "
+            "<code>PropertyGraphIndex</code> (entity-relation graph) or multiple indices + a Router.</strong> Pure vectors "
+            "treat each hop as independent retrieval and can't chain A→B→C; across product lines, use metadata filters or "
+            "per-line indices. Verify with a question set needing 2+ hops, comparing the <strong>correctness</strong> of the "
+            "vector index vs the graph index."),
         },
     ],
     "11-ingestion-storage.html": [
@@ -493,12 +498,6 @@ INTERVIEW = {
             "merges to cut calls (but a small window limits what fits, risking misses or falling back to refine). Verify by "
             "comparing each mode's <strong>answer quality (Faithfulness/completeness) and cost/latency</strong>, balancing to "
             "budget."),
-         "fig": d.vflow([
-            (L("8 个检索片段", "8 retrieved chunks"), L("装不进一次上下文", "too many for one window")),
-            (L("分组各自总结", "summarize each group"), L("→ 几个小结", "→ partial summaries")),
-            (L("再总结这些小结", "summarize the summaries"), L("→ 更少中间结果", "→ fewer intermediates")),
-            (L("单个最终答案", "one final answer"), None),
-         ], caption=L("tree_summarize：像锦标赛逐层向上合并，适合“看全部再总结”", "tree_summarize merges upward, round by round — for 'see all, then summarize'")),
         },
         {"q": L(
             "“多片段→单答案”的核心矛盾是什么？<code>compact</code> 实际是什么、为什么把它做默认？",
@@ -521,6 +520,12 @@ INTERVIEW = {
             "🔑 <strong>Key: use tree_summarize — it sees <em>all</em> content and merges in layers, exactly fitting a global "
             "summary.</strong> compact aims to pack-and-minimize-calls and, with chunks exceeding the window, can't fit "
             "everything and risks missing parts; for summaries you'd rather pay more calls to cover all."),
+         "fig": d.vflow([
+            (L("8 个检索片段", "8 retrieved chunks"), L("装不进一次上下文", "too many for one window")),
+            (L("分组各自总结", "summarize each group"), L("→ 几个小结", "→ partial summaries")),
+            (L("再总结这些小结", "summarize the summaries"), L("→ 更少中间结果", "→ fewer intermediates")),
+            (L("单个最终答案", "one final answer"), None),
+         ], caption=L("tree_summarize：像锦标赛逐层向上合并，适合“看全部再总结”", "tree_summarize merges upward, round by round — for 'see all, then summarize'")),
         },
     ],
     "15-query-engine.html": [
@@ -654,7 +659,7 @@ INTERVIEW = {
             ("ret", L("各自检索", "retrieve each")),
             ("rrf", L("RRF 融合", "fuse via RRF")),
             ("out", L("更全的候选", "fuller candidate set")),
-         ], active="rrf", caption=L("Query Fusion：改写多版各自检索，再用 reciprocal-rank fusion 融合", "Query Fusion: rewrite, retrieve each, fuse with reciprocal-rank fusion")),
+         ], active="rrf", caption=L("Query Fusion：改写多版各自检索，再把多路结果融合（默认 simple，可选 RRF）", "Query Fusion: rewrite, retrieve each, then fuse the lists (default simple; RRF optional)")),
         },
         {"q": L(
             "AutoMerging 检索和“直接调大 chunk_size”有何不同？什么时候用 Router？",
@@ -675,10 +680,10 @@ INTERVIEW = {
             "You want to turn tuning from 'vibes' into a <strong>measurable loop</strong>. What evaluation do you set up, what "
             "does each of the three rulers measure and need as input, and how do you prevent 'fix one, silently break many'?"),
          "answer": L(
-            "🔑 <strong>重点：Faithfulness(答案是否忠于检索，需 response+source_nodes)、Relevancy(是否切题，需 query+response)、Correctness(对不对，需参考答案，1–5 分)。</strong>"
+            "🔑 <strong>重点：Faithfulness(答案是否忠于检索，需 response+source_nodes)、Relevancy(是否切题，需 query+response+检索上下文)、Correctness(对不对，需参考答案，1–5 分)。</strong>"
             "闭环：改一处→重测→对比→保留/回退；防回归靠一个固定<strong>回归集</strong>，每次改动都重跑、看趋势而非单点。",
             "🔑 <strong>Key: Faithfulness (is the answer grounded in retrieval — needs response + source_nodes), Relevancy (is "
-            "it on-topic — needs query + response), Correctness (is it right — needs a reference answer, 1–5).</strong> The "
+            "it on-topic — needs query + response + the retrieved contexts), Correctness (is it right — needs a reference answer, 1–5).</strong> The "
             "loop: change one thing → re-test → compare → keep/revert; prevent regressions with a fixed <strong>regression "
             "set</strong> re-run on every change, watching trends over single points."),
          "fig": d.flow([

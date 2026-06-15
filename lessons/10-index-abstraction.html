@@ -391,10 +391,10 @@ print(engine.query('全文主要讲了什么？'))</pre></div><div class="card k
   </details>
 </div>
 <div class="quiz interview">
-  <div class="qn">🎯 2. <span data-lang="zh">“选 Index = 选检索范式”——给“查某条 FAQ”和“总结整篇合同”两个问题，分别该用哪种 Index，为什么？</span><span data-lang="en">'Choosing an Index = choosing a retrieval paradigm' — for 'look up one FAQ' vs 'summarize a whole contract', which Index each, and why?</span></div>
+  <div class="qn">🎯 2. <span data-lang="zh">需求从“单库 FAQ”演进到“跨 5 条产品线、还要多跳推理（A 依赖 B、B 依赖 C）”。你会怎么调整 Index 选型？为什么纯向量检索在多跳上吃力、怎么<strong>验证</strong>？</span><span data-lang="en">Requirements grow from 'single-base FAQ' to 'across 5 product lines with multi-hop reasoning (A depends on B depends on C)'. How do you adjust your Index choice, why does pure vector retrieval struggle with multi-hop, and how would you <strong>verify</strong>?</span></div>
   <details class="accordion">
     <summary><span data-lang="zh">看参考要点</span><span data-lang="en">Show key points</span> <span class="hint"><span data-lang="zh">点击展开</span><span data-lang="en">expand</span></span></summary>
-    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">🔑 <strong>重点：定点用 VectorStoreIndex(按相似度取 top-k，最省最准)；总结用 SummaryIndex + <code>tree_summarize</code>(需看全部、逐层合并)。</strong>反过来都会糟：定点检索做总结会漏内容，遍历全部做定点问答既慢又贵。</span><span data-lang="en">🔑 <strong>Key: pinpoint → VectorStoreIndex (top-k by similarity, cheapest and most precise); summary → SummaryIndex + <code>tree_summarize</code> (must see everything, merge up).</strong> Swapping them is bad: pinpoint retrieval for a summary misses content; walking everything for a lookup is slow and costly.</span></div></div></div>
+    <div class="acc-body"><div class="qa"><div class="a"><span data-lang="zh">🔑 <strong>重点：多跳/关系推理超出“按相似度取 top-k”的能力——考虑 <code>PropertyGraphIndex</code>（实体-关系图）或多 Index + Router 分流。</strong>纯向量把每跳当独立检索，难把 A→B→C 串成链路；跨产品线则用 metadata 过滤或按线建多个 Index。验证：构造需要 2+ 跳才能答对的问题集，比较向量索引 vs 图索引的<strong>正确率</strong>。</span><span data-lang="en">🔑 <strong>Key: multi-hop/relational reasoning exceeds 'top-k by similarity' — consider a <code>PropertyGraphIndex</code> (entity-relation graph) or multiple indices + a Router.</strong> Pure vectors treat each hop as independent retrieval and can't chain A→B→C; across product lines, use metadata filters or per-line indices. Verify with a question set needing 2+ hops, comparing the <strong>correctness</strong> of the vector index vs the graph index.</span></div></div></div>
   </details>
 </div>
 <div class="card spark">
