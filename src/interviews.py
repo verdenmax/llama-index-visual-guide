@@ -768,4 +768,74 @@ INTERVIEW = {
             "(change the vector store / add a reranker / attach chat) to show the composability."),
         },
     ],
+    "21-production-retrieval.html": [
+        {"q": L(
+            "线上客服 RAG 要加一道 <strong>rerank 精排</strong>。你会在 <strong>Cohere 托管</strong>、"
+            "<strong>本地 SentenceTransformer 交叉编码器</strong>、<strong>LLMRerank</strong> 之间怎么选？"
+            "数据合规、延迟、成本各自怎么权衡，又怎么<strong>验证 rerank 真的有用</strong>？",
+            "Your live support RAG needs a <strong>rerank</strong> step. How do you choose among <strong>hosted "
+            "Cohere</strong>, a <strong>local SentenceTransformer cross-encoder</strong>, and <strong>LLMRerank</strong>? "
+            "How do you weigh data compliance, latency and cost, and how do you <strong>verify rerank actually "
+            "helps</strong>?"),
+         "answer": L(
+            "🔑 <strong>重点：三者是“准确 / 成本 / 是否本地”的取舍——Cohere 最省事最准，但数据出网且按调用计费；"
+            "本地 SentenceTransformer 数据不出网、免调用费，但要 GPU；LLMRerank 最灵活却最慢最贵。</strong>"
+            "合规敏感（医疗/金融）优先本地；要开箱即用且数据可外发选 Cohere；只在高价值、可容忍延迟的少量查询上才考虑 "
+            "LLMRerank。验证：固定一组 gold 查询，比较“仅向量 / 混合 / 混合+rerank”三档的命中率与端到端答案质量，"
+            "再核对每条新增的延迟与单价是否值得。",
+            "🔑 <strong>Key: the three trade off accuracy / cost / on-prem — Cohere is easiest and most accurate but data "
+            "leaves the network and is billed per call; a local SentenceTransformer keeps data in and is fee-free but "
+            "needs a GPU; LLMRerank is most flexible yet slowest and priciest.</strong> For compliance-sensitive domains "
+            "(health/finance) prefer local; for plug-and-play with data allowed to egress pick Cohere; reserve LLMRerank "
+            "for a few high-value, latency-tolerant queries. Verify on a fixed gold set: compare hit-rate and end-to-end "
+            "answer quality across vector-only / hybrid / hybrid+rerank, then check whether the added latency and "
+            "per-call cost are worth it."),
+         "fig": d.grid(
+            [L("Rerank 方案", "Reranker"), L("准确", "Accuracy"), L("成本", "Cost"), L("是否本地", "On-prem?")],
+            [
+                [L("CohereRerank（托管 API）", "CohereRerank (hosted API)"), L("高", "high"),
+                 L("按调用计费", "per-call fee"), L("否（数据出网）", "no (data egress)")],
+                [L("SentenceTransformer 交叉编码器", "SentenceTransformer cross-encoder"), L("中–高", "mid–high"),
+                 L("免调用费 · 需 GPU", "no fee · needs GPU"), L("是", "yes")],
+                [L("LLMRerank", "LLMRerank"), L("高（看模型）", "high (model-dependent)"),
+                 L("最贵 · 最慢", "priciest · slowest"), L("可本地（用本地 LLM）", "can be (local LLM)")],
+            ],
+            caption=L("三种 rerank 的取舍：准确 / 成本 / 是否本地——按数据合规与延迟预算选",
+                      "Three rerankers traded off on accuracy / cost / on-prem — choose by data compliance and latency budget")),
+        },
+        {"q": L(
+            "用户报“问产品编号 <code>X-2000</code> 的保修期，答得驴唇不对马嘴”。纯向量为什么会漏？你会怎么修，"
+            "<strong>为什么不是直接把 top_k 调大</strong>？",
+            "Users report “asking the warranty for product id <code>X-2000</code> gives a nonsense answer”. Why does "
+            "pure vector miss it, how would you fix it, and <strong>why not just raise top_k</strong>?"),
+         "answer": L(
+            "🔑 <strong>重点：embedding 偏语义，对精确符号/罕见 token（如 <code>X-2000</code>）不敏感，相关条款可能排在"
+            "很后面、进不了 top-k——这是“字面匹配”问题，不是“召回量”问题。</strong>调大 top_k 只是把噪声一起拉进来、"
+            "更慢更贵，真正该补的是<strong>字面那一路</strong>：加 BM25 做混合检索，让精确编号被直接命中，再用 RRF 融合 + "
+            "rerank 精排；或把编号写进 metadata 做精确过滤。验证：在含编号的 gold 查询上比较修复前后的命中率。",
+            "🔑 <strong>Key: embeddings capture meaning and are weak on exact symbols/rare tokens (like "
+            "<code>X-2000</code>), so the right clause can rank far down and never enter top-k — a literal-match "
+            "problem, not a recall-volume one.</strong> Raising top_k just drags in noise, slower and pricier; the real "
+            "fix is the <strong>literal path</strong>: add BM25 for hybrid retrieval so the exact id is hit directly, "
+            "fuse via RRF and rerank; or write the id into metadata for exact filtering. Verify by comparing hit-rate "
+            "before/after on id-bearing gold queries."),
+        },
+        {"q": L(
+            "有人提议给检索加 <strong>HyDE</strong>。它的原理是什么、什么场景最有效、又有什么<strong>风险</strong>？"
+            "你怎么决定上不上？",
+            "Someone proposes adding <strong>HyDE</strong> to retrieval. How does it work, when does it help most, "
+            "what's the <strong>risk</strong>, and how do you decide whether to adopt it?"),
+         "answer": L(
+            "🔑 <strong>重点：HyDE 先让 LLM 写一个“假设答案”，用这段更像文档的文本的向量去检索——当问句很短、措辞和"
+            "文档差距大时，召回往往明显变好。</strong>风险：多一次 LLM 调用（更慢更贵），且假设答案若跑偏会把检索带偏"
+            "（垃圾进、垃圾出）；所以 <code>include_original=True</code> 保留原问句一起检索更稳。决定上不上：在 gold 集上"
+            "对比 HyDE 前后的命中率与端到端质量，再权衡多出的延迟/成本是否值得。",
+            "🔑 <strong>Key: HyDE first has the LLM draft a “hypothetical answer”, then retrieves with that doc-like "
+            "text's vector — when questions are terse and worded unlike the documents, recall often improves "
+            "clearly.</strong> Risks: an extra LLM call (slower, pricier) and, if the hypothetical drifts, it can steer "
+            "retrieval astray (garbage in, garbage out) — so <code>include_original=True</code> keeps the raw question "
+            "in the mix for safety. Decide by comparing hit-rate and end-to-end quality with/without HyDE on a gold "
+            "set, then weigh the added latency/cost."),
+        },
+    ],
 }

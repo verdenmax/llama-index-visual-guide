@@ -472,6 +472,24 @@ QUIZZES = {
               "With millions of documents, what's the first bottleneck on the write path vs the query path?"),
         ],
     },
+    "21-production-retrieval.html": {
+        "mcq": [{
+            "q": L("纯向量检索为什么会漏掉精确编号“X-2000”这样的查询？",
+                   "Why can pure vector search miss an exact id like 'X-2000'?"),
+            "opts": [
+                L("向量库坏了", "the vector store is broken"),
+                L("embedding 偏语义，对精确符号/罕见 token 不敏感，可能排不进 top-k",
+                  "embeddings capture meaning and are weak on exact symbols/rare tokens, so it may miss top-k"),
+                L("必须重建索引", "you must re-index"),
+                L("top_k 一定太小", "top_k is always too small"),
+            ],
+            "answer": 1,
+            "why": L("解决靠混合检索(向量 + BM25/关键词)或把编号写进 metadata 精确过滤。",
+                     "Fix with hybrid retrieval (vector + BM25) or exact metadata filtering."),
+        }],
+        "open": [L("你的查询里既有自然语言问题也有精确产品编号，你会怎么配比向量与关键词两路的权重？",
+                   "With both natural-language questions and exact product ids in your queries, how would you weight the vector vs keyword paths?")],
+    },
 }
 
 
