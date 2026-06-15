@@ -5,21 +5,6 @@ import i18n
 from i18n import L
 
 
-def _skeleton(zh_topic, en_topic):
-    return (
-        c.pipeline(None)
-        + c.lead(L(f"本课讲生产阶段的 <strong>{zh_topic}</strong>（内容完善中）。",
-                   f"This lesson covers <strong>{en_topic}</strong> for production (being written)."))
-        + d.flow([("a", L("场景", "Scenario")), ("b", L("做法", "Approach")), ("c", L("评测", "Evaluate"))],
-                 caption=L("占位流程图", "placeholder flow"))
-        + d.compare2((L("不做", "Without"), i18n.render(L("有什么问题", "what breaks"))),
-                     (L("做了", "With"), i18n.render(L("解决什么", "what it fixes"))),
-                     caption=L("占位对照", "placeholder compare"))
-        + c.analogy(L("占位类比。", "Placeholder analogy."))
-        + c.key_points([L("本课要点占位。", "Key-points placeholder.")])
-    )
-
-
 LESSON_21 = (
     c.pipeline("retrieve")
     + c.lead(L(
@@ -106,6 +91,18 @@ LESSON_21 = (
                 "同一个查询：纯向量漏掉精确编号，混合用 BM25 补回字面匹配再精排",
                 "Same query: vector-only misses the exact id; hybrid adds BM25's literal match, then reranks",
             ),
+        ),
+    )
+    + d.grid(
+        [L("候选块", "Candidate"), L("向量排名", "Vector rank"), L("BM25 排名", "BM25 rank"), L("RRF 融合", "Fused")],
+        [
+            [L("含“X-2000”型号的条款", "clause with id “X-2000”"), "#8", "#1", L("#1 ✓", "#1 ✓")],
+            [L("语义最贴近的段落", "most semantically similar"), "#1", "#15", L("#2 ✓", "#2 ✓")],
+            [L("话题相关的噪声块", "topical-noise chunk"), "#3", "#20", "#6"],
+        ],
+        caption=L(
+            "RRF 用 1/(k+rank) 累加两路排名——只在一路强的条款也能浮上来（✓ = 进入最终 top-k）",
+            "RRF sums 1/(k+rank) across both paths — a clause strong in only one path still surfaces (✓ = kept in the final top-k)",
         ),
     )
     + c.section(
@@ -387,8 +384,12 @@ LESSON_22 = (
     )
     + c.source_ref(
         "evaluation/dataset_generation.py", "DatasetGenerator",
-        L("从文档自动生成 QA 金标问题，作为回归集的起点（再人工策展）",
-          "auto-generates gold QA questions from documents as a starting regression set (then human-curated)"),
+        L("从文档自动生成 QA 金标问题，作为回归集的起点（再人工策展）。注：本版 core(0.14.22) 中 <code>DatasetGenerator</code> 已标记 deprecated"
+          "（源码提示用 <code>RagDatasetGenerator</code> 替代），但该后继类此版 core 尚未内置；这里仍用它，因为它是 core 内唯一的数据集生成器。",
+          "auto-generates gold QA questions from documents as a starting regression set (then human-curated). "
+          "Note: in this core build (0.14.22) <code>DatasetGenerator</code> is marked deprecated (the source points to "
+          "<code>RagDatasetGenerator</code> as its replacement), but that successor isn't shipped in this core build; we still "
+          "use it here because it is the only dataset generator in core."),
     )
     + c.accordion(
         L("深入：造金标集、批量评估与 CI 闸的取舍", "Deep dive: building the gold set, batch eval and the CI-gate trade-offs"),
@@ -601,6 +602,18 @@ LESSON_23 = (
                 "同一次答错：没有 trace 只能蒙着眼乱改；有 trace 一眼看出是检索没召到、还顺带定位了延迟大头",
                 "Same wrong answer: without a trace you tweak blindfolded; with a trace you see at a glance it was a retrieval miss — and spot the latency hog too",
             ),
+        ),
+    )
+    + d.layers(
+        [
+            (L("检索", "Retrieve"), "200ms · 9%"),
+            (L("精排 Rerank", "Rerank"), "220ms · 10%"),
+            (L("组 prompt", "Build prompt"), "30ms · 1%"),
+            (L("LLM 生成", "LLM generate"), "1800ms · 80%"),
+        ],
+        caption=L(
+            "一条 trace 的耗时分解：LLM 生成占了约八成——先优化它，别瞎猜",
+            "One trace's latency split: LLM generation is ~80% — optimize it first, don't guess",
         ),
     )
     + c.section(
@@ -1404,6 +1417,17 @@ LESSON_26 = (
             "decides which tools, how many retrievals, and whether to reflect and re-retrieve",
         ),
     )
+    + d.flow(
+        [
+            ("q1", L("固定管道够吗？", "Fixed pipeline enough?"), L("够 → 就用它（最快最稳）", "yes → ship it (fastest, safest)")),
+            ("q2", L("否 → Router 够吗？", "No → is a Router enough?"), L("从几条预设路径里选一条", "pick one of a few preset paths")),
+            ("agent", L("还不够 → 才上 Agent", "Still not → only then Agent"), L("让它自己决定工具与步数", "let it decide tools &amp; steps")),
+        ],
+        caption=L(
+            "升级决策：每一步先问“更便宜的够不够”，不够才往上爬——别张口就上 Agent",
+            "Escalation decision: at each rung ask “is the cheaper tier enough?”; climb only when it isn't — don't reach for an agent by default",
+        ),
+    )
     + c.analogy(L(
         "固定管道像<strong>按固定流程办事的自助机</strong>：无论你问什么，它都用“检索 → 合成”同一套动作吐出结果。"
         "Agent 像一位<strong>会查资料的专家助理</strong>：先听懂你要什么，<strong>自己决定</strong>翻哪本手册、查几遍，"
@@ -1463,6 +1487,20 @@ LESSON_26 = (
                  L("较确定（路径有限）", "fairly predictable (limited routes)"),
                  L("不确定，步数随问题变", "nondeterministic, steps vary by question")],
             ],
+        ),
+    )
+    + d.flow(
+        [
+            ("read", L("看懂问题", "Read the question")),
+            ("pick", L("选工具", "Pick a tool"), L("由工具 description 决定调谁", "chosen by tool description")),
+            ("run", L("执行工具（检索）", "Run tool (retrieve)")),
+            ("check", L("够答了吗？", "Enough to answer?"), L("不够 → 回到“选工具”再来一轮", "if not → back to “Pick a tool”")),
+            ("answer", L("作答", "Answer")),
+        ],
+        active="check",
+        caption=L(
+            "Agent 的决策循环：不够就回到“选工具”再跑一轮——这条回边正是它比固定管道强的地方",
+            "The agent's decision loop: if not enough, loop back to “Pick a tool” — that back-edge is exactly why it beats a fixed pipeline",
         ),
     )
     + c.source_ref(
