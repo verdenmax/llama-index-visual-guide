@@ -508,6 +508,24 @@ QUIZZES = {
         "open": [L("你只有 200 条无标准答案的历史问答，想搭一个最小可用的回归评估闸，你会怎么做？（提示：哪几把尺子不需要参考答案？）",
                    "You have 200 historical Q&amp;A pairs with no reference answers and want a minimal usable regression gate. How would you build it? (Hint: which rulers need no reference?)")],
     },
+    "23-observability.html": {
+        "mcq": [{
+            "q": L("线上一条问答答错了，你打开它的 trace。<strong>最该先看</strong>哪一项来判断“是检索还是生成的问题”？",
+                   "A production answer is wrong and you open its trace. <strong>What should you look at first</strong> to decide “retrieval problem or generation problem”?"),
+            "opts": [
+                L("LLM 这步花了多少毫秒", "how many ms the LLM step took"),
+                L("检索到的 node 里有没有正确依据、相似度高不高",
+                  "whether the retrieved nodes contain the right evidence and their similarity"),
+                L("这次请求一共烧了多少钱", "the total cost of this request"),
+                L("用的是哪个 embedding 模型", "which embedding model was used"),
+            ],
+            "answer": 1,
+            "why": L("先看检索召回的 node：若正确依据<strong>压根没召到</strong>，那是检索问题（调 chunk / 加 BM25 / 调 top_k），改 prompt 没用；只有在“召到了却答错”时才是生成问题。耗时和成本是<strong>性能 / 费用</strong>维度，不用来判断答案对错的归因。",
+                     "Read the retrieved nodes first: if the right evidence <strong>was never recalled</strong>, it's a retrieval problem (tune chunking / add BM25 / adjust top_k) and editing the prompt won't help; only when it “was recalled yet still wrong” is it a generation problem. Latency and cost are <strong>performance / spend</strong> axes, not for attributing correctness."),
+        }],
+        "open": [L("你只能在<strong>本地零依赖</strong>（不接任何外部后端）的前提下排查一条“答得慢又不准”的查询，你会用 <code>LlamaDebugHandler</code> 看哪些信息、按什么顺序定位问题？",
+                   "Restricted to a <strong>local, zero-dependency</strong> setup (no external backend), how would you use <code>LlamaDebugHandler</code> to debug one “slow and inaccurate” query — which signals would you read, and in what order?")],
+    },
 }
 
 

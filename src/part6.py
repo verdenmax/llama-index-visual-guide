@@ -495,7 +495,270 @@ LESSON_22 = (
         "“below the bar, it can't get in”.",
     ))
 )
-LESSON_23 = _skeleton("可观测与追踪", "observability &amp; tracing")
+LESSON_23 = (
+    c.pipeline(None)
+    + c.lead(L(
+        "一次生产 RAG 查询要走<strong>检索 → rerank → LLM 合成</strong>好几步，但你通常只看到<strong>最后那句"
+        "答案</strong>——答错、答慢、答贵时，根本分不清是<strong>哪一步</strong>出的问题。<strong>可观测"
+        "（observability）/ 追踪（tracing）</strong>把每一步的<strong>耗时 / token / 检索到的 node / 成本</strong>都"
+        "记录下来，把<strong>黑盒</strong>变成一条<strong>逐步可见的时间线</strong>。LlamaIndex 几乎零成本就能接上："
+        "一行 <code>set_global_handler('arize_phoenix')</code> 接到追踪后端，或用零依赖的 "
+        "<code>LlamaDebugHandler</code> 在本地直接看内部。一句话：把“靠猜”换成“看 trace”。",
+        "A production RAG query runs several steps — <strong>retrieve → rerank → LLM synthesis</strong> — yet you "
+        "usually see only the <strong>final answer</strong>; when it's wrong, slow, or expensive you can't tell "
+        "<strong>which step</strong> is to blame. <strong>Observability / tracing</strong> records every step's "
+        "<strong>latency / tokens / retrieved nodes / cost</strong>, turning a <strong>black box</strong> into a "
+        "<strong>step-by-step timeline</strong>. LlamaIndex makes this nearly free: one line of "
+        "<code>set_global_handler('arize_phoenix')</code> wires a tracing backend, or the zero-dependency "
+        "<code>LlamaDebugHandler</code> shows the internals locally. In a line: replace “guessing” with “reading the "
+        "trace”.",
+    ))
+    + d.flow([
+        ("ask", L("一次 query", "One query"), L("你只看到最后的答案", "you see only the final answer")),
+        ("steps", L("隐藏的内部多步", "Hidden internal steps"), L("检索 · rerank · LLM 合成", "retrieve · rerank · LLM")),
+        ("trace", L("trace 暴露每一步", "Trace exposes each step"), L("每步记一个 span", "one span per step")),
+        ("signal", L("耗时 / token / node / 成本", "latency / tokens / nodes / cost"), L("慢/贵/错都看得见", "slow/pricey/wrong all show")),
+        ("locate", L("定位到那一步", "Pinpoint the step"), L("是检索还是生成", "retrieval or generation")),
+    ], active="trace", caption=L(
+        "一次 query 的隐藏内部 → trace 把检索 · rerank · LLM 每步的 耗时 / token / node / 成本 摊开，定位慢/贵/错在哪一步",
+        "A query's hidden internals → trace lays out each step's (retrieve · rerank · LLM) latency / tokens / nodes / cost, pinpointing where it's slow/pricey/wrong",
+    ))
+    + c.analogy(L(
+        "像<strong>查快递物流</strong>：没有单号追踪，你只知道“包裹还没到”（答案不对 / 很慢），却不知卡在哪个环节；"
+        "接上<strong>物流轨迹</strong>后，每个中转站的<strong>到达时间</strong>一目了然，立刻看出是<strong>分拣慢了</strong>"
+        "还是<strong>派送堵了</strong>——trace 之于 RAG，就是物流轨迹之于包裹。",
+        "Like <strong>tracking a parcel</strong>: with no tracking number you only know “it hasn't arrived” (the answer "
+        "is wrong or slow) but not where it's stuck; turn on the <strong>shipping trace</strong> and every hub's "
+        "<strong>arrival time</strong> is laid bare, so you instantly see whether <strong>sorting was slow</strong> or "
+        "<strong>delivery was jammed</strong> — a trace is to a RAG query what shipment tracking is to a parcel.",
+    ))
+    + d.grid(
+        [L("trace 里的信号", "Signal in the trace"), L("这一步暴露什么", "What it exposes"),
+         L("帮你定位什么问题", "Which problem it pinpoints")],
+        [
+            [L("检索到的 node", "Retrieved nodes"),
+             L("实际召回了哪些块、相似度分、命中没命中", "which chunks came back, similarity scores, hit or miss"),
+             L("答案没依据 → 多半是<strong>检索</strong>错（块没召到 / 召错）", "answer ungrounded → usually a <strong>retrieval</strong> miss (wrong/missing chunk)")],
+            [L("各步耗时", "Per-step latency"),
+             L("retrieve · rerank · LLM 每段各花多少毫秒", "ms spent in retrieve · rerank · LLM each"),
+             L("慢在哪一步 → 该优化检索、精排还是生成", "where it's slow → optimize retrieval, rerank or generation")],
+            [L("token 与成本", "Tokens and cost"),
+             L("prompt / completion 各多少 token、折算单价", "prompt / completion token counts and the cost they convert to"),
+             L("贵在哪 → context 太长还是输出太长", "where it's pricey → context too long or output too long")],
+        ],
+        caption=L(
+            "trace 里最该看的三类信号：检索到的 node 看“答得对不对”，各步耗时看“慢在哪”，token / 成本看“贵在哪”",
+            "The three signals worth reading in a trace: retrieved nodes for “is it right”, per-step latency for “where it's slow”, tokens/cost for “where it's pricey”",
+        ),
+    )
+    + c.section(
+        L("RAG 多步、中间结果隐藏：可观测是生产调试的地基", "RAG is multi-step with hidden intermediates: observability is the bedrock of production debugging"),
+        L(
+            "RAG 的答案是<strong>一条多步流水线</strong>跑出来的：查询改写 → 检索 → rerank → 组 prompt → LLM 合成，"
+            "每一步都可能出错，而你<strong>默认只看到最后那句话</strong>。答案不对，可能是<strong>检索</strong>没召到对的块，"
+            "也可能是块召到了但 <strong>LLM</strong> 没用好；答案太慢，可能慢在 rerank 的交叉编码器，也可能慢在 LLM 生成；"
+            "账单太贵，可能是 context 塞太长、也可能是输出太啰嗦。<strong>不打开中间结果，这些都只能靠猜</strong>——而猜的"
+            "代价是一版版乱改、还可能“修好一个、碰坏一批”。可观测就是把这条隐藏流水线<strong>摊开成数据</strong>：每一步记"
+            "一个 span，带上<strong>检索到的 node、相似度、各步耗时、prompt / completion 的 token 与成本</strong>。有了它，"
+            "调试从“凭直觉试”变成“看着证据改”——先定位<strong>是检索还是生成</strong>的问题，再对症下药。这就是为什么生产 "
+            "RAG 上线前，可观测往往是要<strong>第一个补齐的地基</strong>：没有它，后面的评估、调优、降本都是盲飞。",
+            "A RAG answer comes out of a <strong>multi-step pipeline</strong>: query rewrite → retrieve → rerank → build "
+            "prompt → LLM synthesis, and every step can go wrong while you <strong>see only the final sentence by "
+            "default</strong>. A wrong answer might be <strong>retrieval</strong> missing the right chunk, or the chunk "
+            "being retrieved but the <strong>LLM</strong> using it poorly; a slow answer might be slow in the rerank "
+            "cross-encoder or in LLM generation; an expensive bill might be an over-long context or an over-verbose "
+            "output. <strong>Without opening the intermediates, all of this is guesswork</strong> — and guessing costs "
+            "you version-after-version flailing, with a real risk of “fix one, break many”. Observability <strong>lays "
+            "this hidden pipeline out as data</strong>: each step emits a span carrying the <strong>retrieved nodes, "
+            "similarity scores, per-step latency, and prompt / completion tokens and cost</strong>. With it, debugging "
+            "shifts from “try on a hunch” to “change on evidence” — first pinpoint whether it's a <strong>retrieval or a "
+            "generation</strong> problem, then treat the right one. That's why, before a production RAG ships, "
+            "observability is usually the <strong>first foundation to put in place</strong>: without it, the later "
+            "evaluation, tuning and cost work is all flying blind.",
+        ),
+        d.compare2(
+            (L("没有 trace（黑盒、靠猜）", "No trace (black box, guessing)"), i18n.render(L(
+                "用户问“<code>退款多久到账？</code>”答错了。你看不到内部：检索到的是哪几个块？rerank 后留下谁？"
+                "prompt 里到底塞了什么？只能<strong>凭猜</strong>改——调 top_k、换 prompt、改 chunk_size，改一版试一版，"
+                "像<strong>蒙着眼修车</strong>，可能折腾半天问题根本在另一头。",
+                "A user asks “<code>how long until my refund arrives?</code>” and the answer is wrong. You can't see "
+                "inside: which chunks were retrieved? what survived rerank? what actually went into the prompt? You can "
+                "only <strong>guess</strong> — bump top_k, swap the prompt, change chunk_size, one version at a time, "
+                "like <strong>fixing a car blindfolded</strong> — and may burn hours while the real cause sits at the "
+                "other end.",
+            ))),
+            (L("有 trace（每步可见、可定位）", "With a trace (every step visible)"), i18n.render(L(
+                "同一个问题，trace 一摊开：<strong>检索</strong>这步召回的 5 个 node 里压根没有“退款时效”那条"
+                "（相似度全偏低）——问题在<strong>检索</strong>，不在生成。于是直接去补该文档、加 BM25 或调检索，"
+                "而不是瞎改 prompt；顺带还看到 <strong>LLM 这步耗时 1.8s、占了八成延迟</strong>，慢在哪也一并清楚。",
+                "Same question, trace laid open: the 5 nodes from the <strong>retrieval</strong> step don't even contain "
+                "the “refund timing” clause (all low similarity) — the problem is <strong>retrieval</strong>, not "
+                "generation. So you go fix that document, add BM25 or tune retrieval instead of randomly editing the "
+                "prompt; you also notice the <strong>LLM step took 1.8s, ~80% of the latency</strong>, so where it's "
+                "slow is clear too.",
+            ))),
+            caption=L(
+                "同一次答错：没有 trace 只能蒙着眼乱改；有 trace 一眼看出是检索没召到、还顺带定位了延迟大头",
+                "Same wrong answer: without a trace you tweak blindfolded; with a trace you see at a glance it was a retrieval miss — and spot the latency hog too",
+            ),
+        ),
+    )
+    + c.section(
+        L("把内部接出来：三种常用追踪接法", "Surfacing the internals: three common ways to trace"),
+        c.compare_table(
+            [L("对比项", "Aspect"), L("<code>LlamaDebugHandler</code>（本地零依赖）", "<code>LlamaDebugHandler</code> (local, zero-dep)"),
+             L("Arize Phoenix（本地可视化）", "Arize Phoenix (local UI)"), L("Langfuse（自托管 / 托管）", "Langfuse (self-host / hosted)")],
+            [
+                [L("怎么接", "How to plug in"), L("<code>CallbackManager</code> 手动挂", "attach via <code>CallbackManager</code>"),
+                 L("<code>set_global_handler('arize_phoenix')</code> 一行", "one line: <code>set_global_handler('arize_phoenix')</code>"),
+                 L("<code>set_global_handler('langfuse')</code> 一行", "one line: <code>set_global_handler('langfuse')</code>")],
+                [L("看到什么", "What you see"), L("事件对 + 各步耗时（<code>get_event_pairs()</code>）", "event pairs + per-step latency (<code>get_event_pairs()</code>)"),
+                 L("可视化 span 时间线、检索 node、token", "visual span timeline, retrieved nodes, tokens"),
+                 L("同上 + 团队留存、数据集、标注", "the above + team retention, datasets, annotations")],
+                [L("数据在哪", "Where data lives"), L("只在内存 / 控制台，跑完即弃", "in memory / console only, gone after the run"),
+                 L("本地进程 / 浏览器，开发期排查", "local process / browser, for dev triage"),
+                 L("自托管或云端，<strong>长期留存</strong>", "self-hosted or cloud, <strong>long-term retention</strong>")],
+                [L("最适合", "Best for"), L("本地快速 debug、CI / 单测里<strong>断言</strong>各步", "quick local debug, <strong>asserting</strong> steps in CI/tests"),
+                 L("本地 / 开发期<strong>可视化</strong>排查", "local / dev-time <strong>visual</strong> triage"),
+                 L("<strong>线上</strong>团队协作、长期回放与监控", "<strong>production</strong> team collaboration, long-term replay and monitoring")],
+            ],
+        ),
+    )
+    + c.source_ref(
+        "callbacks/global_handlers.py", "set_global_handler",
+        L("一行切换全局追踪后端（Phoenix / Langfuse 等都走它），core 内置",
+          "one line to switch the global tracing backend (Phoenix / Langfuse all go through it), built into core"),
+    )
+    + c.source_ref(
+        "llama-index-callbacks-arize-phoenix", "arize_phoenix",
+        L("把 trace 接到 Arize Phoenix 可视化的集成包（独立安装）",
+          "the integration package that wires traces into the Arize Phoenix UI (installed separately)"),
+    )
+    + c.accordion(
+        L("深入：一行接 Phoenix、instrumentation 事件 / span 与后端取舍", "Deep dive: one-line Phoenix, instrumentation events/spans, and backend trade-offs"),
+        c.qa_item(
+            L("🧪 示例：一行接上 Phoenix 看 trace", "🧪 Example: one line to trace into Phoenix"),
+            L(
+                "本地 <code>pip install llama-index-callbacks-arize-phoenix</code> 并启动 Phoenix"
+                "（<code>px.launch_app()</code> 或独立进程），然后 <code>set_global_handler('arize_phoenix')</code> 一行接上。"
+                "之后<strong>任意 query 无需改代码</strong>都会被记录：浏览器里能看到一条 query 的 span 时间线——检索召回了"
+                "哪些 node、rerank 留下谁、LLM 这步多少 token / 耗时 / 成本，逐层点开。",
+                "Locally <code>pip install llama-index-callbacks-arize-phoenix</code> and start Phoenix "
+                "(<code>px.launch_app()</code> or a standalone process), then one line: "
+                "<code>set_global_handler('arize_phoenix')</code>. After that <strong>any query records itself with no "
+                "code changes</strong>: in the browser you get a span timeline for a query — which nodes retrieval "
+                "returned, what rerank kept, and the LLM step's tokens / latency / cost, expandable layer by layer.",
+            ),
+        ),
+        c.qa_item(
+            L("❓ 为什么生产 RAG 必须可观测", "❓ Why production RAG must be observable"),
+            L(
+                "因为 RAG 是<strong>多步且中间结果默认隐藏</strong>：你只拿到最后一句答案，却看不到检索召回了什么、各步"
+                "花了多久、烧了多少 token。答错时，分不清<strong>是检索没召到</strong>还是<strong>生成没用好</strong>，"
+                "只能一版版瞎改、还可能“修一个坏一批”。可观测把每步<strong>摊成证据</strong>，让调试、评估、降本都有据可依"
+                "——它是其他生产能力（评估闸、成本优化、告警）的<strong>地基</strong>，没有它后面全是盲飞。",
+                "Because RAG is <strong>multi-step with intermediates hidden by default</strong>: you get only the final "
+                "sentence, not what retrieval returned, how long each step took, or how many tokens it burned. On a "
+                "wrong answer you can't tell <strong>a retrieval miss</strong> from <strong>poor generation</strong>, so "
+                "you flail version by version and risk “fix one, break many”. Observability <strong>turns each step "
+                "into evidence</strong>, giving debugging, evaluation and cost work something to stand on — it's the "
+                "<strong>foundation</strong> under other production capabilities (eval gates, cost tuning, alerting); "
+                "without it the rest is flying blind.",
+            ),
+        ),
+        c.qa_item(
+            L("⚙️ 内部怎么跑：事件 / span 与 CallbackManager", "⚙️ How it runs inside: events / spans and the CallbackManager"),
+            L(
+                "LlamaIndex 在每个关键环节（检索、rerank、LLM、embedding、合成）<strong>发出成对的事件</strong>："
+                "<code>CBEventType</code> 的 start / end 各一条，配对起来就是<strong>一个 span</strong>，带上耗时与 payload"
+                "（检索到的 node、prompt、token 等）。这些事件由挂在 <code>Settings.callback_manager</code> 上的各个 "
+                "<strong>handler</strong> 接收：<code>LlamaDebugHandler</code> 把它们打印 / 存成 event pairs，"
+                "Phoenix / Langfuse 的 handler 则把同样的 span 转成 OpenTelemetry 上报后端。新版还有更细的 "
+                "<code>instrumentation</code>（<code>dispatcher</code> + span / event）体系，但对使用者而言核心不变："
+                "<strong>一处挂 handler，全链路自动埋点</strong>。",
+                "At each key stage (retrieve, rerank, LLM, embedding, synthesis) LlamaIndex <strong>emits paired "
+                "events</strong>: a start and an end of a <code>CBEventType</code> that pair into <strong>one "
+                "span</strong> carrying duration and a payload (retrieved nodes, prompt, tokens, etc.). These events are "
+                "received by the <strong>handlers</strong> attached to <code>Settings.callback_manager</code>: "
+                "<code>LlamaDebugHandler</code> prints/stores them as event pairs, while the Phoenix / Langfuse handlers "
+                "turn the same spans into OpenTelemetry sent to a backend. Newer versions add a finer "
+                "<code>instrumentation</code> system (a <code>dispatcher</code> + spans/events), but for users the core "
+                "is unchanged: <strong>attach a handler in one place and the whole chain is auto-instrumented</strong>.",
+            ),
+        ),
+        c.qa_item(
+            L("🔀 后端取舍：Phoenix vs Langfuse vs 纯 OTel", "🔀 Backend trade-offs: Phoenix vs Langfuse vs raw OTel"),
+            L(
+                "三条常见路：<strong>Arize Phoenix</strong>——本地一行起步、可视化强，最适合<strong>开发期</strong>排查检索 / "
+                "延迟，但默认偏单机、非长期留存；<strong>Langfuse</strong>——可自托管或托管，带<strong>团队留存、数据集、"
+                "标注、线上监控</strong>，适合<strong>生产</strong>长期回放与协作；<strong>纯 OpenTelemetry</strong>——不绑某个 "
+                "UI，直接把 span 上报到你已有的可观测栈（Jaeger / Grafana / Datadog 等），最适合<strong>已有 OTel 基建"
+                "</strong>、要把 LLM trace 和服务 trace 拼在一起的团队。按<strong>开发期 vs 线上、是否要长期留存、是否已有 "
+                "OTel 栈</strong>三点来选。",
+                "Three common paths: <strong>Arize Phoenix</strong> — one-line local start, strong visualization, best "
+                "for <strong>dev-time</strong> triage of retrieval / latency, but defaults to single-machine and isn't "
+                "for long-term retention; <strong>Langfuse</strong> — self-hosted or hosted, with <strong>team "
+                "retention, datasets, annotations and production monitoring</strong>, suited to <strong>production"
+                "</strong> replay and collaboration; <strong>raw OpenTelemetry</strong> — not tied to one UI, exporting "
+                "spans straight into your existing observability stack (Jaeger / Grafana / Datadog), best for teams that "
+                "<strong>already run OTel</strong> and want LLM traces stitched together with service traces. Choose "
+                "along three axes: <strong>dev vs production, long-term retention or not, and whether you already run "
+                "OTel</strong>.",
+            ),
+        ),
+    )
+    + c.code(
+        "from llama_index.core import set_global_handler\n"
+        "\n"
+        "# 一行接入追踪后端（需 pip install llama-index-callbacks-arize-phoenix 并本地启动 Phoenix）\n"
+        "set_global_handler('arize_phoenix')\n"
+        "\n"
+        "# 之后任意 query 都会被记录：检索到的 node、各步耗时、token、成本\n"
+        "index.as_query_engine().query('退款多久到账？')",
+        caption=L("一行接入：set_global_handler('arize_phoenix') 之后，任意 query 自动记录到 Phoenix",
+                  "One line: after set_global_handler('arize_phoenix'), any query auto-records into Phoenix"),
+    )
+    + c.code(
+        "from llama_index.core import Settings\n"
+        "from llama_index.core.callbacks import CallbackManager, LlamaDebugHandler\n"
+        "\n"
+        "# 本地零依赖看内部：每个事件的耗时与中间结果\n"
+        "debug = LlamaDebugHandler(print_trace_on_end=True)\n"
+        "Settings.callback_manager = CallbackManager([debug])\n"
+        "\n"
+        "index.as_query_engine().query('保修期多久？')\n"
+        "print(debug.get_event_pairs())   # 取检索/LLM 等事件对，看各步耗时",
+        caption=L("零依赖看内部：LlamaDebugHandler + CallbackManager 打印每个事件对的耗时与中间结果",
+                  "Zero-dep internals: LlamaDebugHandler + CallbackManager prints each event pair's latency and intermediate results"),
+    )
+    + c.key_points([
+        L("RAG 是<strong>多步、中间结果隐藏</strong>的流水线：可观测把检索 · rerank · LLM 每步的"
+          "<strong>耗时 / token / node / 成本</strong>摊成证据。",
+          "RAG is a <strong>multi-step pipeline with hidden intermediates</strong>: observability lays each step's "
+          "(retrieve · rerank · LLM) <strong>latency / tokens / nodes / cost</strong> out as evidence."),
+        L("答错先看 trace：<strong>检索到的 node</strong> 对不对——分清是<strong>检索</strong>没召到还是"
+          "<strong>生成</strong>没用好，再对症下药。",
+          "On a wrong answer, read the trace first: are the <strong>retrieved nodes</strong> right — separate a "
+          "<strong>retrieval</strong> miss from poor <strong>generation</strong>, then treat the right one."),
+        L("一行接入：<code>set_global_handler('arize_phoenix')</code> 接可视化后端；零依赖用 "
+          "<code>LlamaDebugHandler</code> + <code>CallbackManager</code> 本地看事件对。",
+          "Plug in with one line: <code>set_global_handler('arize_phoenix')</code> for a visual backend; zero-dep, use "
+          "<code>LlamaDebugHandler</code> + <code>CallbackManager</code> to read event pairs locally."),
+        L("后端按场景选：<strong>Phoenix</strong> 开发期可视化、<strong>Langfuse</strong> 线上长期留存、"
+          "<strong>纯 OTel</strong> 并入已有可观测栈。",
+          "Pick the backend by use: <strong>Phoenix</strong> for dev-time visualization, <strong>Langfuse</strong> for "
+          "long-term production retention, <strong>raw OTel</strong> to merge into an existing observability stack."),
+    ])
+    + c.design_highlight(L(
+        "可观测的精髓是把 RAG 这条<strong>隐藏的多步流水线</strong>变成<strong>可读的证据</strong>：每步一个带 "
+        "耗时 / token / node 的 span，让调试从“凭感觉一版版试”升级成“看着 trace 定位是哪一步”——它是评估、调优、"
+        "降本一切生产能力的<strong>地基</strong>。",
+        "The essence of observability is turning RAG's <strong>hidden multi-step pipeline</strong> into <strong>readable "
+        "evidence</strong>: one span per step with latency / tokens / nodes, upgrading debugging from “try version after "
+        "version on feel” to “read the trace and pinpoint the step” — the <strong>foundation</strong> beneath "
+        "evaluation, tuning and cost work, every production capability.",
+    ))
+)
 LESSON_24 = _skeleton("成本与延迟工程", "cost &amp; latency engineering")
 LESSON_25 = _skeleton("安全与防护", "security &amp; guardrails")
 LESSON_26 = _skeleton("Agent 与 Workflows", "agents &amp; workflows")

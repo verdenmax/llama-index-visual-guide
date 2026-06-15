@@ -926,4 +926,105 @@ INTERVIEW = {
             "the tolerance band."),
         },
     ],
+    "23-observability.html": [
+        {"q": L(
+            "线上反馈“某些问答特别慢，要等好几秒”。你怎么用 <strong>trace</strong> 定位慢在<strong>检索、rerank 还是 "
+            "LLM</strong>？定位到之后又分别怎么治？你怎么<strong>验证</strong>真的快了、而不是把准确率换走了？",
+            "Production reports “some Q&amp;A is very slow, several seconds”. How do you use a <strong>trace</strong> to "
+            "localize whether it's slow in <strong>retrieval, rerank or the LLM</strong>? Once localized, how do you "
+            "treat each — and how do you <strong>verify</strong> it actually got faster without trading away "
+            "accuracy?"),
+         "answer": L(
+            "🔑 <strong>重点：先用 trace 把端到端延迟按 span 拆开，看每步各占多少毫秒，找到耗时大头那一步再对症治，"
+            "最后用“延迟分位 + 质量分数”一起验证别只换不赚。</strong>① 定位：打开慢请求的 span 时间线——若<strong>检索"
+            "</strong>占大头，多半是向量库慢 / top_k 过大 / 索引没建好；若 <strong>rerank</strong> 占大头，是交叉编码器在"
+            "大候选集上太慢；若 <strong>LLM</strong> 占大头（最常见），看 prompt 是不是太长、输出是不是太啰嗦。② 对症："
+            "检索慢 → 建索引 / 降 top_k / 换更快的库；rerank 慢 → 先缩小候选集再精排、或换更轻的 reranker；LLM 慢 → "
+            "压缩 context、限制 <code>max_tokens</code>、必要时换更快模型或上流式。③ 验证：固定一组真实查询，比较改前后的 "
+            "<strong>p50 / p95 延迟</strong>，同时跑评估确认<strong>忠实度 / 命中率没有下降</strong>——只有“更快且不更差”"
+            "才算数。",
+            "🔑 <strong>Key: use the trace to split end-to-end latency by span, see how many ms each step costs, fix the "
+            "biggest hog first, then verify with “latency percentiles + quality scores” so you don't trade speed for "
+            "accuracy.</strong> (1) Localize: open the slow request's span timeline — if <strong>retrieval</strong> "
+            "dominates, it's usually a slow vector store / too-large top_k / a missing index; if <strong>rerank</strong> "
+            "dominates, the cross-encoder is slow over a big candidate set; if the <strong>LLM</strong> dominates (most "
+            "common), check whether the prompt is too long or the output too verbose. (2) Treat: slow retrieval → build "
+            "an index / lower top_k / a faster store; slow rerank → shrink the candidate set before reranking or use a "
+            "lighter reranker; slow LLM → compress context, cap <code>max_tokens</code>, switch to a faster model or "
+            "stream. (3) Verify: on a fixed set of real queries compare <strong>p50 / p95 latency</strong> before/after "
+            "while running evals to confirm <strong>faithfulness / hit-rate didn't drop</strong> — only “faster and no "
+            "worse” counts."),
+         "fig": d.flow([
+            ("slow", L("慢请求", "Slow request"), L("端到端 3.2s", "3.2s end-to-end")),
+            ("split", L("trace 按 span 拆", "Trace splits by span"), L("检索 / rerank / LLM 各计时", "time retrieve/rerank/LLM")),
+            ("find", L("找耗时大头", "Find the hog"), L("LLM 占 2.4s", "LLM takes 2.4s")),
+            ("fix", L("对症优化", "Treat the cause"), L("压 context · 控输出", "trim context · cap output")),
+            ("verify", L("验证 p95 与质量", "Verify p95 and quality"), L("更快且不更差", "faster, no worse")),
+         ], active="find", caption=L(
+            "一次延迟定位：trace 把 3.2s 拆开 → LLM 占大头 → 压 context / 控输出 → 比 p95 与质量",
+            "One latency hunt: trace splits 3.2s → LLM is the hog → trim context/cap output → compare p95 and quality")),
+        },
+        {"q": L(
+            "一条投诉：“问‘<code>保修期多久</code>’，答得驴唇不对马嘴。”只给你线上 trace，你<strong>按什么顺序</strong>看、"
+            "怎么判断是<strong>检索</strong>的错还是<strong>生成</strong>的错？两种情况的<strong>修法完全不同</strong>，"
+            "你怎么避免一上来就瞎调 prompt？",
+            "A complaint: “asking ‘<code>how long is the warranty</code>’ gives a nonsense answer.” Given only the "
+            "production trace, <strong>in what order</strong> do you read it, and how do you decide it's a "
+            "<strong>retrieval</strong> fault vs a <strong>generation</strong> fault? The fixes differ completely — how "
+            "do you avoid blindly tweaking the prompt first?"),
+         "answer": L(
+            "🔑 <strong>重点：先看检索这步的 node，再看 prompt 与输出——证据顺序是“召回对不对 → 喂进去对不对 → LLM "
+            "用没用好”，据此把锅分给检索还是生成，别一上来改 prompt。</strong>① 看<strong>检索到的 node</strong>：trace "
+            "里那几条 node 里<strong>有没有</strong>“保修期”的原文、相似度高不高？如果压根没召到 → 是<strong>检索</strong>"
+            "问题（块没切好 / 向量漏了精确词 / top_k 太小），该去补文档、加 BM25、调 chunk，而不是改 prompt。② 若"
+            "<strong>召到了但答错</strong>：看进 LLM 的 <strong>prompt</strong>（那条 node 是否真的拼进了 context）和"
+            "<strong>输出</strong>——可能是 context 被截断、prompt 模板把它埋没、或模型没遵循——这才是<strong>生成</strong>"
+            "问题，改 prompt / 模型 / 重排上下文才对路。③ 验证：把这条做成<strong>金标题</strong>加进回归集，修完重跑确认"
+            "这题过、且没拖垮别的题（防“修一个坏一批”）。",
+            "🔑 <strong>Key: read the retrieval step's nodes first, then the prompt and output — the evidence order is "
+            "“was recall right → was it fed in right → did the LLM use it”, and assign blame to retrieval vs generation "
+            "accordingly instead of editing the prompt first.</strong> (1) Read the <strong>retrieved nodes</strong>: do "
+            "those nodes <strong>contain</strong> the warranty clause, and is the similarity high? If it was never "
+            "retrieved → a <strong>retrieval</strong> problem (bad chunking / vectors missing an exact term / too-small "
+            "top_k); go fix docs, add BM25, tune chunking — not the prompt. (2) If it <strong>was retrieved but the "
+            "answer is wrong</strong>: inspect the <strong>prompt</strong> actually sent to the LLM (did that node really "
+            "make it into the context?) and the <strong>output</strong> — maybe the context was truncated, the template "
+            "buried it, or the model didn't follow — that's a <strong>generation</strong> problem, where fixing prompt / "
+            "model / context ordering is right. (3) Verify: turn this case into a <strong>gold question</strong> in the "
+            "regression set, re-run after the fix to confirm it passes without dragging others down (guarding “fix one, "
+            "break many”)."),
+        },
+        {"q": L(
+            "你要给一套已上线的 RAG 从零<strong>落地可观测</strong>。<strong>Phoenix、Langfuse、纯 OpenTelemetry</strong> "
+            "你怎么选？线上全量 trace 又涉及<strong>采样、脱敏(PII)、存储成本</strong>，你怎么权衡？最后怎么<strong>证明这套"
+            "可观测确实带来了价值</strong>，而不是只多了一堆图表？",
+            "You must <strong>roll out observability</strong> from scratch on a live RAG. How do you choose among "
+            "<strong>Phoenix, Langfuse and raw OpenTelemetry</strong>? Full production tracing also raises "
+            "<strong>sampling, PII redaction and storage cost</strong> — how do you weigh them? Finally, how do you "
+            "<strong>prove the observability actually delivered value</strong> rather than just adding charts?"),
+         "answer": L(
+            "🔑 <strong>重点：开发期先用 Phoenix 一行看可视化，线上长期留存上 Langfuse、已有 OTel 栈就走纯 OTel；线上 "
+            "trace 要采样 + 脱敏 + 控存储；价值用“定位时间缩短、回归被拦住”这类结果指标来证明。</strong>① 选型：开发 / "
+            "排查阶段 <strong>Phoenix</strong>（一行、可视化强）；要团队协作、长期回放、监控告警上 <strong>Langfuse</strong>"
+            "（自托管可控数据）；公司已有 Jaeger / Grafana / Datadog 则用<strong>纯 OTel</strong> 把 LLM trace 并进去。"
+            "② 落地权衡：线上不必<strong>全量</strong>——按比例<strong>采样</strong> + 对慢 / 错请求<strong>必采</strong>；"
+            "prompt / 检索内容可能含 <strong>PII</strong>，上报前<strong>脱敏 / 哈希</strong>；trace 体量大，设<strong>留存期"
+            "与降采样</strong>控成本。③ 证明价值：用结果指标——平均<strong>故障定位时间 (MTTR) 是否下降</strong>、有没有靠 "
+            "trace 抓到“检索没召到”这类真问题、线上慢请求 p95 是否随之改善——可观测的价值是<strong>让其他改进变快变稳"
+            "</strong>，不是图表本身。",
+            "🔑 <strong>Key: use Phoenix for one-line dev visualization, Langfuse for long-term production retention, raw "
+            "OTel if you already run an OTel stack; production traces need sampling + PII redaction + storage control; "
+            "and prove value with outcome metrics like shorter time-to-localize and regressions caught.</strong> "
+            "(1) Choice: for dev/triage use <strong>Phoenix</strong> (one line, strong UI); for team collaboration, "
+            "long-term replay and alerting use <strong>Langfuse</strong> (self-hostable, data under control); if the "
+            "company already runs Jaeger / Grafana / Datadog, use <strong>raw OTel</strong> to fold LLM traces in. "
+            "(2) Roll-out trade-offs: don't trace <strong>everything</strong> in production — <strong>sample</strong> by "
+            "ratio while <strong>always capturing</strong> slow/failed requests; prompts and retrieved content may "
+            "contain <strong>PII</strong>, so <strong>redact / hash</strong> before export; traces are bulky, so set "
+            "<strong>retention and down-sampling</strong> to control cost. (3) Prove value with outcomes: did mean "
+            "<strong>time-to-localize (MTTR) drop</strong>, did traces catch real issues like “retrieval never recalled "
+            "it”, did slow-request p95 improve — observability's value is <strong>making other improvements faster and "
+            "safer</strong>, not the charts themselves."),
+        },
+    ],
 }
