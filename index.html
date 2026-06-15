@@ -3,13 +3,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LlamaIndex RAG 图解教程 · 从数据流理解 RAG</title>
-<meta name="description" content="跟着写入路径与查询路径，一步步理解 LlamaIndex 的 RAG：21 课，每课配真实源码对应、可运行代码与设计亮点。">
+<meta name="description" content="跟着写入路径与查询路径，一步步理解 LlamaIndex 的 RAG：27 课，每课配真实源码对应、可运行代码与设计亮点。">
 <meta name="theme-color" content="#1a7f64">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAzMiAzMic+PHJlY3Qgd2lkdGg9JzMyJyBoZWlnaHQ9JzMyJyByeD0nNycgZmlsbD0nIzFhN2Y2NCcvPjx0ZXh0IHg9JzE2JyB5PScyMycgZm9udC1mYW1pbHk9J3N5c3RlbS11aSxzYW5zLXNlcmlmJyBmb250LXNpemU9JzE3JyBmb250LXdlaWdodD0nNzAwJyBmaWxsPScjZmZmJyB0ZXh0LWFuY2hvcj0nbWlkZGxlJz5MaTwvdGV4dD48L3N2Zz4=">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="LlamaIndex RAG 图解教程">
 <meta property="og:title" content="LlamaIndex RAG 图解教程 · 从数据流理解 RAG">
-<meta property="og:description" content="跟着写入路径与查询路径，一步步理解 LlamaIndex 的 RAG：21 课，每课配真实源码对应、可运行代码与设计亮点。">
+<meta property="og:description" content="跟着写入路径与查询路径，一步步理解 LlamaIndex 的 RAG：27 课，每课配真实源码对应、可运行代码与设计亮点。">
 <meta name="twitter:card" content="summary">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -337,7 +337,7 @@ html[data-uilang="en"] [data-lang="en"]{display:revert}
 <div class="topbar">
   <div class="topbar-inner">
     <span class="home"><span data-lang="zh">🦙 LlamaIndex RAG 图解教程</span><span data-lang="en">🦙 LlamaIndex RAG Visual Guide</span></span>
-    <span class="pill"><span data-lang="zh">共 21 课 · 6 个部分</span><span data-lang="en">21 lessons · 6 parts</span></span>
+    <span class="pill"><span data-lang="zh">共 27 课 · 7 个部分</span><span data-lang="en">27 lessons · 7 parts</span></span>
     <button class="langbtn" type="button" data-lang-toggle aria-label="Switch to English">EN</button>
   </div>
   <div class="progress"><span style="width:100%"></span></div>
@@ -349,7 +349,7 @@ html[data-uilang="en"] [data-lang="en"]{display:revert}
     <p class="lead"><div data-lang="zh">这套教程跟着<strong>两条数据流</strong>带你走：先看一份文档如何<strong>写入索引</strong>（加载→切块→Embedding→存储→索引），再看一个问题如何<strong>查出答案</strong>（检索→后处理→合成→回答）。每课都配真实源码对应、可运行代码与设计亮点。</div><div data-lang="en">This guide follows <strong>two data flows</strong>: how a document gets <strong>written into an index</strong> (load→split→embed→store→index), then how a question gets <strong>answered</strong> (retrieve→post-process→synthesize→answer). Every lesson maps to real source, runnable code and a design insight.</div></p>
     <div style="margin-top:1.1rem; display:flex; gap:.6rem; flex-wrap:wrap">
       <a href="lessons/01-what-is-llamaindex.html" class="start-btn"><span data-lang="zh">从第 01 课开始 →</span><span data-lang="en">Start with Lesson 01 →</span></a>
-      <a href="llama-index-visual-guide.pdf" class="pdf-btn"><span data-lang="zh">📄 下载完整 PDF（全 21 课）</span><span data-lang="en">📄 Download full PDF (21 lessons)</span></a>
+      <a href="llama-index-visual-guide.pdf" class="pdf-btn"><span data-lang="zh">📄 下载完整 PDF（全 27 课）</span><span data-lang="en">📄 Download full PDF (27 lessons)</span></a>
     </div>
     <p style="margin:.8rem 0 0;color:var(--faint);font-size:.8rem"><div data-lang="zh">📌 对照 <strong>llama-index-core 0.14.22</strong> / Python 3.10+ · 最后核验 2026-06 · 源码引用以「文件 + 符号名」为主（行号随上游更新而变）</div><div data-lang="en">📌 Anchored to <strong>llama-index-core 0.14.22</strong> / Python 3.10+ · verified 2026-06 · source cited as “file · symbol” (line numbers drift upstream)</div></p>
   </div>
@@ -378,8 +378,15 @@ html[data-uilang="en"] [data-lang="en"]{display:revert}
 <a href="lessons/19-evaluation.html"><span class="n">19</span><span class="tt"><span data-lang="zh">评估 Evaluation</span><span data-lang="en">Evaluation</span></span><span class="ts"><span data-lang="zh">Faithfulness / Relevancy / Correctness</span><span data-lang="en">Faithfulness / Relevancy / Correctness</span></span></a>
 <div class="toc-part"><span data-lang="zh">第五部分 · 实战</span><span data-lang="en">Part 5 · Capstone</span></div>
 <a href="lessons/20-capstone.html"><span class="n">20</span><span class="tt"><span data-lang="zh">端到端 Capstone</span><span data-lang="en">End-to-End Capstone</span></span><span class="ts"><span data-lang="zh">把所有阶段拼成可跑的 RAG 应用</span><span data-lang="en">assemble every stage into a runnable app</span></span></a>
-<div class="toc-part"><span data-lang="zh">第六部分 · 速查</span><span data-lang="en">Part 6 · Reference</span></div>
-<a href="lessons/21-glossary.html"><span class="n">21</span><span class="tt"><span data-lang="zh">术语表 · 概念索引</span><span data-lang="en">Glossary &amp; Concept Index</span></span><span class="ts"><span data-lang="zh">术语一句话查 + 跳转</span><span data-lang="en">one-line term lookup + jump</span></span></a></div>
+<div class="toc-part"><span data-lang="zh">第六部分 · 生产进阶</span><span data-lang="en">Part 6 · Production</span></div>
+<a href="lessons/21-production-retrieval.html"><span class="n">21</span><span class="tt"><span data-lang="zh">生产级检索</span><span data-lang="en">Production Retrieval</span></span><span class="ts"><span data-lang="zh">混合检索 · Rerank · HyDE</span><span data-lang="en">hybrid · rerank · HyDE</span></span></a>
+<a href="lessons/22-eval-scale.html"><span class="n">22</span><span class="tt"><span data-lang="zh">规模化评估与 CI 闸</span><span data-lang="en">Evaluation at Scale</span></span><span class="ts"><span data-lang="zh">数据集 · BatchEvalRunner · CI 闸</span><span data-lang="en">datasets · BatchEvalRunner · CI gate</span></span></a>
+<a href="lessons/23-observability.html"><span class="n">23</span><span class="tt"><span data-lang="zh">可观测与追踪</span><span data-lang="en">Observability &amp; Tracing</span></span><span class="ts"><span data-lang="zh">instrumentation · Phoenix / Langfuse</span><span data-lang="en">instrumentation · Phoenix / Langfuse</span></span></a>
+<a href="lessons/24-cost-latency.html"><span class="n">24</span><span class="tt"><span data-lang="zh">成本与延迟工程</span><span data-lang="en">Cost &amp; Latency</span></span><span class="ts"><span data-lang="zh">缓存 · 异步 · 流式</span><span data-lang="en">caching · async · streaming</span></span></a>
+<a href="lessons/25-security.html"><span class="n">25</span><span class="tt"><span data-lang="zh">安全与防护</span><span data-lang="en">Security &amp; Guardrails</span></span><span class="ts"><span data-lang="zh">多租户隔离 · PII · 注入</span><span data-lang="en">multi-tenant · PII · injection</span></span></a>
+<a href="lessons/26-agents-workflows.html"><span class="n">26</span><span class="tt"><span data-lang="zh">Agent 与 Workflows</span><span data-lang="en">Agents &amp; Workflows</span></span><span class="ts"><span data-lang="zh">Workflow · FunctionAgent · 工具</span><span data-lang="en">Workflow · FunctionAgent · tools</span></span></a>
+<div class="toc-part"><span data-lang="zh">第七部分 · 速查</span><span data-lang="en">Part 7 · Reference</span></div>
+<a href="lessons/27-glossary.html"><span class="n">27</span><span class="tt"><span data-lang="zh">术语表 · 概念索引</span><span data-lang="en">Glossary &amp; Concept Index</span></span><span class="ts"><span data-lang="zh">术语一句话查 + 跳转</span><span data-lang="en">one-line term lookup + jump</span></span></a></div>
 </div>
 <script>
 (function () {

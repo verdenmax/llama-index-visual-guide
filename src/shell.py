@@ -41,7 +41,8 @@ P2 = L("第二部分 · 写入路径", "Part 2 · Write Path")
 P3 = L("第三部分 · 查询路径", "Part 3 · Query Path")
 P4 = L("第四部分 · 进阶", "Part 4 · Advanced")
 P5 = L("第五部分 · 实战", "Part 5 · Capstone")
-P6 = L("第六部分 · 速查", "Part 6 · Reference")
+P6PROD = L("第六部分 · 生产进阶", "Part 6 · Production")
+P7REF = L("第七部分 · 速查", "Part 7 · Reference")
 
 PAGES = [
     ("01-what-is-llamaindex.html", L("LlamaIndex 与 RAG 是什么", "What is LlamaIndex &amp; RAG"), P1),
@@ -64,7 +65,13 @@ PAGES = [
     ("18-advanced-retrieval.html", L("进阶检索", "Advanced Retrieval"), P4),
     ("19-evaluation.html", L("评估 Evaluation", "Evaluation"), P4),
     ("20-capstone.html", L("端到端 Capstone", "End-to-End Capstone"), P5),
-    ("21-glossary.html", L("术语表 · 概念索引", "Glossary &amp; Concept Index"), P6),
+    ("21-production-retrieval.html", L("生产级检索", "Production Retrieval"), P6PROD),
+    ("22-eval-scale.html", L("规模化评估与 CI 闸", "Evaluation at Scale"), P6PROD),
+    ("23-observability.html", L("可观测与追踪", "Observability &amp; Tracing"), P6PROD),
+    ("24-cost-latency.html", L("成本与延迟工程", "Cost &amp; Latency"), P6PROD),
+    ("25-security.html", L("安全与防护", "Security &amp; Guardrails"), P6PROD),
+    ("26-agents-workflows.html", L("Agent 与 Workflows", "Agents &amp; Workflows"), P6PROD),
+    ("27-glossary.html", L("术语表 · 概念索引", "Glossary &amp; Concept Index"), P7REF),
 ]
 
 INDEX_FILE = "index.html"
@@ -90,7 +97,13 @@ SUBTITLES = {
     "18-advanced-retrieval.html": L("Fusion / AutoMerging / Router", "Fusion / AutoMerging / Router"),
     "19-evaluation.html": L("Faithfulness / Relevancy / Correctness", "Faithfulness / Relevancy / Correctness"),
     "20-capstone.html": L("把所有阶段拼成可跑的 RAG 应用", "assemble every stage into a runnable app"),
-    "21-glossary.html": L("术语一句话查 + 跳转", "one-line term lookup + jump"),
+    "21-production-retrieval.html": L("混合检索 · Rerank · HyDE", "hybrid · rerank · HyDE"),
+    "22-eval-scale.html": L("数据集 · BatchEvalRunner · CI 闸", "datasets · BatchEvalRunner · CI gate"),
+    "23-observability.html": L("instrumentation · Phoenix / Langfuse", "instrumentation · Phoenix / Langfuse"),
+    "24-cost-latency.html": L("缓存 · 异步 · 流式", "caching · async · streaming"),
+    "25-security.html": L("多租户隔离 · PII · 注入", "multi-tenant · PII · injection"),
+    "26-agents-workflows.html": L("Workflow · FunctionAgent · 工具", "Workflow · FunctionAgent · tools"),
+    "27-glossary.html": L("术语一句话查 + 跳转", "one-line term lookup + jump"),
 }
 
 CSS = r"""
@@ -463,7 +476,7 @@ def index_page(lesson_prefix=""):
         "📌 Anchored to <strong>llama-index-core 0.14.22</strong> / Python 3.10+ · verified 2026-06 · "
         "source cited as “file · symbol” (line numbers drift upstream)",
     ))
-    desc = "跟着写入路径与查询路径，一步步理解 LlamaIndex 的 RAG：21 课，每课配真实源码对应、可运行代码与设计亮点。"
+    desc = "跟着写入路径与查询路径，一步步理解 LlamaIndex 的 RAG：27 课，每课配真实源码对应、可运行代码与设计亮点。"
     return f"""<!DOCTYPE html>
 <html lang="zh-CN" data-uilang="zh" data-title-zh="{_attr(SITE + ' · 从数据流理解 RAG')}" data-title-en="{_attr('LlamaIndex RAG Visual Guide')}"><head>
 <meta charset="utf-8">

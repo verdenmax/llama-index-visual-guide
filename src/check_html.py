@@ -30,7 +30,7 @@ ORDER = [p[0] for p in PAGES]
 TOTAL = len(PAGES)
 
 STALE = []
-SOFT_EXEMPT = {"21-glossary.html"}
+SOFT_EXEMPT = {"27-glossary.html"}
 
 
 def check_lesson(fname, html):

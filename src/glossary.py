@@ -1,4 +1,4 @@
-"""Part 6 (reference): lesson 21 glossary. Content filled task-by-task."""
+"""Part 7 (reference): lesson 27 glossary. Content filled task-by-task."""
 import components as c
 import diagrams as d
 from i18n import L

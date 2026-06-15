@@ -3,15 +3,15 @@ from i18n import L
 
 
 def test_pages_count_and_endpoints():
-    assert len(shell.PAGES) == 21
+    assert len(shell.PAGES) == 27
     assert shell.PAGES[0][0] == "01-what-is-llamaindex.html"
-    assert shell.PAGES[-1][0] == "21-glossary.html"
+    assert shell.PAGES[-1][0] == "27-glossary.html"
 
 
 def test_pages_titles_and_parts_are_bilingual():
     for fname, title, part in shell.PAGES:
         assert isinstance(title, L) and isinstance(part, L)
-    assert len({p[2].zh for p in shell.PAGES}) == 6  # six parts
+    assert len({p[2].zh for p in shell.PAGES}) == 7  # seven parts
 
 
 def test_page_has_language_toggle_and_assets():
@@ -36,7 +36,7 @@ def test_page_nav_chain_links_siblings():
 
 def test_first_page_prev_goes_home_last_page_next_goes_home():
     first = shell.page("01-what-is-llamaindex.html", "x")
-    last = shell.page("21-glossary.html", "x")
+    last = shell.page("27-glossary.html", "x")
     assert 'href="../index.html"' in first
     assert 'href="../index.html"' in last
 
@@ -45,5 +45,5 @@ def test_index_lists_all_pages_and_counts():
     html = shell.index_page(lesson_prefix="lessons/")
     for fname, _t, _p in shell.PAGES:
         assert f'href="lessons/{fname}"' in html
-    assert "共 21 课 · 6 个部分" in html
+    assert "共 27 课 · 7 个部分" in html
     assert "data-lang-toggle" in html

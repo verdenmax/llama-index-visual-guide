@@ -25,4 +25,4 @@ def test_built_index_lists_every_lesson():
     idx = open(os.path.join(build.ROOT, "index.html"), encoding="utf-8").read()
     for fname, _t, _p in shell.PAGES:
         assert f'href="lessons/{fname}"' in idx
-    assert "共 21 课 · 6 个部分" in idx
+    assert "共 27 课 · 7 个部分" in idx

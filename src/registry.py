@@ -8,6 +8,7 @@ import part2
 import part3
 import part4
 import part5
+import part6
 import glossary
 
 CONTENT = {
@@ -31,5 +32,11 @@ CONTENT = {
     "18-advanced-retrieval.html": part4.LESSON_18,
     "19-evaluation.html": part4.LESSON_19,
     "20-capstone.html": part5.LESSON_20,
-    "21-glossary.html": glossary.LESSON_21,
+    "21-production-retrieval.html": part6.LESSON_21,
+    "22-eval-scale.html": part6.LESSON_22,
+    "23-observability.html": part6.LESSON_23,
+    "24-cost-latency.html": part6.LESSON_24,
+    "25-security.html": part6.LESSON_25,
+    "26-agents-workflows.html": part6.LESSON_26,
+    "27-glossary.html": glossary.LESSON_21,
 }
