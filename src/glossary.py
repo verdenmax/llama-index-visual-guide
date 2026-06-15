@@ -71,4 +71,16 @@ LESSON_21 = (
             _row("Evaluation", "忠实/相关/正确三类打分", "faithful/relevant/correct scoring", "19", "19-evaluation.html"),
         ]),
     )
+    + c.section(
+        L("生产进阶", "Production"),
+        c.compare_table(_H, [
+            _row("混合检索 Hybrid Retrieval", "向量 + 关键词(BM25)融合检索", "fuse vector + keyword (BM25) retrieval", "21", "21-production-retrieval.html", term_en="Hybrid Retrieval"),
+            _row("精排 Rerank", "用更强模型对召回结果精排", "re-score recall with a stronger model", "21", "21-production-retrieval.html", term_en="Rerank"),
+            _row("回归闸 Regression Gate", "评估分数低于阈值则拦截上线", "block release when eval scores drop below a threshold", "22", "22-eval-scale.html", term_en="Regression Gate"),
+            _row("可观测 Observability", "追踪每步耗时 / token / 检索结果", "trace per-step latency / tokens / retrieved nodes", "23", "23-observability.html", term_en="Observability"),
+            _row("缓存 Caching", "复用 embedding / 响应以省成本降延迟", "reuse embeddings / responses to cut cost &amp; latency", "24", "24-cost-latency.html", term_en="Caching"),
+            _row("多租户隔离 Multi-tenant Isolation", "强制按 tenant 过滤防越权", "enforce per-tenant filtering to prevent leakage", "25", "25-security.html", term_en="Multi-tenant Isolation"),
+            _row("Agent / Workflow", "会决策的循环，按需用工具 / 多步", "a deciding loop that uses tools / multi-step on demand", "26", "26-agents-workflows.html"),
+        ]),
+    )
 )
