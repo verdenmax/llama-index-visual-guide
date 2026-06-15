@@ -566,6 +566,26 @@ QUIZZES = {
         "open": [L("你的多租户 RAG 还要支持“管理员可跨租户检索”。你会怎么设计 tenant 过滤，既保证普通用户绝不越权、又安全地放开管理员？（提示：过滤条件由谁、在<strong>哪一层</strong>决定？）",
                    "Your multi-tenant RAG must also let “admins retrieve across tenants”. How would you design the tenant filter so ordinary users can never breach isolation while admins are safely allowed through? (Hint: who decides the filter, and at <strong>which layer</strong>?)")],
     },
+    "26-agents-workflows.html": {
+        "mcq": [{
+            "q": L("下面哪种情况<strong>最该</strong>从固定管道升级成 agent（而不是继续用一次性检索）？",
+                   "Which situation <strong>most warrants</strong> upgrading from a fixed pipeline to an agent (rather than sticking with one-shot retrieval)?"),
+            "opts": [
+                L("问题简单、单一知识源，每次问法都差不多",
+                  "the question is simple, single-source, and phrased about the same every time"),
+                L("一个问题要跨多个库分多步查、还可能要看中间结果再决定补查",
+                  "one question needs several steps across multiple stores and may re-retrieve based on intermediate results"),
+                L("只是想让答案输出更快（首字延迟更低）",
+                  "you just want the answer to start streaming faster (lower time-to-first-token)"),
+                L("想降低每问的 token 成本", "you want to cut the token cost per question"),
+            ],
+            "answer": 1,
+            "why": L("agent 的价值在于<strong>会决策的多步循环</strong>：当一个问题需要<strong>多源 / 多步 / 看中间结果再自我纠错</strong>（比如“对比退款和换货政策”要分别查两次再综合）时，固定的一次性检索就答不全，才值得上 agent。而“问得简单稳定”恰恰应该留在固定管道（更快更好调）；“想更快出字”是<strong>流式（streaming）</strong>的范畴；agent <strong>反而增加</strong> LLM 调用、抬高 token 成本和延迟，绝不是降本手段。一句话：<strong>为多步决策付费，别为简单问题买单</strong>。",
+                     "An agent's value is its <strong>deciding, multi-step loop</strong>: when a question needs <strong>multiple sources / steps / self-correction from intermediate results</strong> (e.g. “compare the refund and exchange policies” needs two lookups then a synthesis), a fixed one-shot retrieval can't answer fully — that's when an agent earns its keep. A “simple, stable” question should stay on a fixed pipeline (faster, easier to debug); “answer faster” is what <strong>streaming</strong> is for; and an agent <strong>adds</strong> LLM calls, raising token cost and latency — never a cost-cutting move. In a line: <strong>pay for multi-step decisions, not for simple questions</strong>."),
+        }],
+        "open": [L("你有两类查询：① “X-2000 的保修期是多久”（单库、一步能答）；② “把 A、B、C 三款机型的保修与退换政策做个对比表”（要多次检索再综合）。你会让<strong>哪一类</strong>走固定管道、哪一类上 agent？为什么？又怎么<strong>用数据</strong>证明给 ② 上 agent 是划算的（对比固定管道，看哪些指标）？",
+                   "You have two query types: (1) “what's the warranty of X-2000” (single store, one step); (2) “build a comparison table of the warranty and return policies for models A, B and C” (needs several retrievals then a synthesis). <strong>Which</strong> goes on a fixed pipeline and which on an agent — and why? And how would you <strong>use data</strong> to prove the agent pays off for (2) versus a fixed pipeline (which metrics would you compare)?")],
+    },
 }
 
 

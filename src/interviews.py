@@ -1263,4 +1263,113 @@ INTERVIEW = {
                 "Each face has its layer and tool: access → retrieval MetadataFilters, PII → post-processing redaction, injection → handle as “data” at the prompt layer")),
         },
     ],
+    "26-agents-workflows.html": [
+        {"q": L(
+            "你给客服 RAG 加了 agent，能力变强但也更慢、更难控。你怎么<strong>权衡</strong>到底要不要上 agent？"
+            "上线后又怎么<strong>评测</strong>一个 agentic RAG——既看答得对不对，也看它会不会乱用工具、多花钱？",
+            "You added an agent to your support RAG: more capable, but also slower and harder to control. How do you "
+            "<strong>weigh</strong> whether to use an agent at all? And after launch, how do you <strong>evaluate</strong> "
+            "an agentic RAG — both whether answers are correct and whether it misuses tools or overspends?"),
+         "answer": L(
+            "🔑 <strong>重点：只为“多步决策”付费——能用固定管道 / Router 解决就别上 agent；评测要同时盯"
+            "“结果质量 + 过程行为 + 成本延迟”三类指标，并靠 L23 的 trace 看它每一步在干嘛。</strong>"
+            "① <strong>怎么权衡</strong>：按需选<strong>最低自主度</strong>——单源单步用固定管道，几个明确子库二选一用 "
+            "Router，<strong>多源 / 多步 / 需自我纠错</strong>才上 agent。② <strong>评测结果对不对</strong>：用 L22 的"
+            "金标集 + <code>Faithfulness</code> / <code>Correctness</code> 看答案质量。③ <strong>评测过程行为</strong>："
+            "看 agent 轨迹——工具<strong>选对没</strong>（错误工具调用率）、检索了<strong>几次</strong>（步数分布）、有没有"
+            "<strong>反复重试 / 死循环</strong>。④ <strong>评测成本</strong>：每问 LLM 调用次数、token、p95 延迟，和固定"
+            "管道<strong>基线</strong>对比。⑤ <strong>靠什么看</strong>：agent 是黑箱，必须靠 trace 把“决策 → 工具 → "
+            "结果”每步记录下来，否则无从评测、无从止损。",
+            "🔑 <strong>Key: pay only for “multi-step decisions” — if a fixed pipeline / Router can solve it, don't reach "
+            "for an agent; evaluate three metric families at once — “answer quality + process behavior + cost &amp; "
+            "latency” — and use L23's traces to see what it does at each step.</strong> (1) <strong>How to weigh"
+            "</strong>: pick the <strong>lowest autonomy</strong> that works — fixed pipeline for single-step, Router to "
+            "choose among a few clear sub-indexes, and an agent only for <strong>multi-source / multi-step / "
+            "self-correction</strong>. (2) <strong>Is the answer right</strong>: use L22's gold set + "
+            "<code>Faithfulness</code> / <code>Correctness</code>. (3) <strong>Process behavior</strong>: inspect the "
+            "trajectory — did it <strong>pick the right tool</strong> (wrong-tool-call rate), <strong>how many"
+            "</strong> retrievals (step distribution), any <strong>retry storms / loops</strong>. (4) <strong>Cost"
+            "</strong>: LLM calls per question, tokens, p95 latency, compared against the fixed-pipeline "
+            "<strong>baseline</strong>. (5) <strong>How you see it</strong>: an agent is a black box, so traces must "
+            "record “decision → tool → result” at every step — otherwise you can neither evaluate nor stop the "
+            "bleeding."),
+         "fig": d.flow([
+            ("fixed", L("固定管道", "Fixed pipeline"), L("单源单步 · 最快最好调", "single-step · fastest, easiest")),
+            ("router", L("Router 路由", "Router"), L("几个子库二选一 · 多一次路由", "pick a sub-index · one routing call")),
+            ("agent", L("Agent 循环", "Agent loop"), L("多源多步自纠错 · 更慢更贵", "multi-step, self-correct · slower, pricier")),
+            ("eval", L("trace + 评测", "trace + eval"), L("质量 + 行为 + 成本三类指标", "quality + behavior + cost metrics")),
+         ], active="agent", caption=L(
+            "按需选最低自主度：固定 → Router → Agent，越自主越要靠 trace 与评测兜住",
+            "Pick the lowest autonomy that works: fixed → Router → Agent; the more autonomous, the more tracing and eval must back it up")),
+        },
+        {"q": L(
+            "agent 自己调用工具时，可能<strong>选错工具、反复重试、甚至陷入死循环</strong>，把延迟和成本打爆。"
+            "你在设计和上线时会怎么<strong>防</strong>？又怎么<strong>验证</strong>它真的不会失控？",
+            "When an agent calls tools on its own, it may <strong>pick the wrong tool, retry endlessly, or even loop "
+            "forever</strong>, blowing up latency and cost. How would you <strong>defend</strong> against this in design "
+            "and at launch — and how do you <strong>verify</strong> it really won't run away?"),
+         "answer": L(
+            "🔑 <strong>重点：给 agent 设“护栏”——精准的工具 description、最大步数 / 超时、循环检测、成本预算、高危动作"
+            "隔离；上线靠 trace + 一组“刁钻用例”回归来验证它不乱来。</strong>① <strong>工具描述要准</strong>："
+            "<code>description</code> 写清“什么时候该用我”，agent 全靠它选工具，写得模糊就会选错。② <strong>硬性上限"
+            "</strong>：<code>max_iterations</code> / 超时 / token 预算，超了就停，并<strong>降级</strong>到固定管道或"
+            "礼貌拒答。③ <strong>循环检测</strong>：同一工具同一参数反复调就熔断。④ <strong>高危动作隔离</strong>"
+            "（呼应 L25）：删除 / 发信 / 下单等<strong>绝不</strong>由检索内容或 agent 自动触发，必须人工确认。"
+            "⑤ <strong>怎么验证</strong>：维护一组<strong>容易诱发多步 / 重试</strong>的刁钻用例纳入回归，断言步数、"
+            "成本、是否答对都在阈值内；线上监控每问<strong>步数与成本的 p95</strong>，越界即告警。",
+            "🔑 <strong>Key: give the agent “guardrails” — precise tool descriptions, a max-step / timeout cap, loop "
+            "detection, a cost budget, and high-risk-action isolation; verify with traces plus a regression suite of "
+            "“tricky” cases.</strong> (1) <strong>Precise descriptions</strong>: the <code>description</code> must spell "
+            "out “when to use me” — the agent picks tools entirely from it, so vagueness causes wrong picks. (2) "
+            "<strong>Hard caps</strong>: <code>max_iterations</code> / timeout / token budget; on exceed, stop and "
+            "<strong>fall back</strong> to a fixed pipeline or a polite refusal. (3) <strong>Loop detection</strong>: "
+            "trip a breaker when the same tool is called with the same args repeatedly. (4) <strong>High-risk-action "
+            "isolation</strong> (echoing L25): deletion / sending mail / placing orders must <strong>never</strong> be "
+            "triggered automatically by retrieved content or the agent — require human confirmation. (5) <strong>How to "
+            "verify</strong>: keep a regression suite of <strong>step/retry-inducing</strong> tricky cases, asserting "
+            "step count, cost and correctness stay within thresholds; in production, monitor the <strong>p95 of steps "
+            "and cost per question</strong> and alert on breaches."),
+        },
+        {"q": L(
+            "把“对比退款和换货政策”这种问题，分别用<strong>固定管道</strong>和 <strong>Workflow / agent</strong> 实现，"
+            "会有什么不同？为什么 Workflow 要用“事件驱动的 <code>@step</code>”而不是直接写一个大函数？你又怎么"
+            "<strong>验证</strong> agent 版“确实多查了一次、且答得更全”？",
+            "Implement “compare the refund and exchange policies” first with a <strong>fixed pipeline</strong> and then "
+            "with a <strong>Workflow / agent</strong> — what differs? Why does a Workflow use “event-driven "
+            "<code>@step</code>” instead of just one big function? And how do you <strong>verify</strong> the agent "
+            "version “really retrieved an extra time and answered more completely”?"),
+         "answer": L(
+            "🔑 <strong>重点：固定管道一次检索就合成、容易只命中一半；Workflow / agent 把“查两次再综合”拆成可观测的"
+            "步骤，事件驱动让每步解耦、可单测、可插入 / 重排 / 并行；验证靠 trace 数检索次数 + 金标对比答案完整度。"
+            "</strong>① <strong>差异</strong>：固定管道<strong>盲检一次</strong>，往往只召回退款<strong>或</strong>换货之"
+            "一→答不全；agent <strong>规划两次检索</strong>（先退款、再换货）再综合→更完整。② <strong>为什么用事件驱动 "
+            "@step</strong>：每个 step 只声明“我吃什么事件、产出什么事件”，框架按依赖<strong>自动连图</strong>——天然"
+            "<strong>解耦、可单独测试、易插入新步骤</strong>（如加一步校验 / 重排），还能<strong>并行 / 分支</strong>，"
+            "比一个大函数更好维护、更可观测。③ <strong>怎么验证</strong>：用 trace 数 agent <strong>实际检索次数"
+            "</strong>（应 ≥ 2），再用 L22 金标集比“固定管道 vs agent”的答案<strong>覆盖度 / Correctness</strong>，"
+            "证明多查那一次<strong>换来了更全的答案</strong>、且延迟 / 成本的增量在可接受范围内。",
+            "🔑 <strong>Key: a fixed pipeline retrieves once then synthesizes and easily catches only half; a Workflow / "
+            "agent splits “retrieve twice then synthesize” into observable steps, and event-driven steps stay decoupled, "
+            "unit-testable, insertable / reorderable / parallelizable; verify by counting retrievals in the trace and "
+            "comparing answer completeness against the gold set.</strong> (1) <strong>Difference</strong>: a fixed "
+            "pipeline <strong>blind-retrieves once</strong> and often recalls refunds <strong>or</strong> exchanges, not "
+            "both → incomplete; the agent <strong>plans two retrievals</strong> (refunds, then exchanges) then "
+            "synthesizes → more complete. (2) <strong>Why event-driven @step</strong>: each step only declares “what "
+            "event I consume, what event I emit”, and the framework <strong>auto-wires the graph</strong> by "
+            "dependency — naturally <strong>decoupled, unit-testable, easy to insert new steps</strong> (e.g. a "
+            "validation / re-rank step) and to <strong>parallelize / branch</strong>, more maintainable and observable "
+            "than one big function. (3) <strong>How to verify</strong>: count the agent's <strong>actual retrievals"
+            "</strong> in the trace (should be ≥ 2), then compare “fixed vs agent” answer <strong>coverage / "
+            "Correctness</strong> on the L22 gold set, proving the extra lookup <strong>buys a more complete "
+            "answer</strong> while the added latency / cost stays acceptable."),
+         "fig": d.vflow([
+            (L("问题：对比退款 vs 换货", "Q: compare refund vs exchange"), L("固定管道只会盲检一次", "a fixed pipeline blind-retrieves once")),
+            (L("agent 第 1 步：查退款政策", "agent step 1: look up refunds"), L("→ 命中退款条款", "→ hits the refund clause")),
+            (L("agent 第 2 步：查换货政策", "agent step 2: look up exchanges"), L("→ 命中换货条款", "→ hits the exchange clause")),
+            (L("综合两次结果作答", "synthesize both results"), L("→ 答得更全（trace 里可见 2 次检索）", "→ more complete (the trace shows 2 retrievals)")),
+         ], caption=L(
+            "agentic RAG 把“对比类”问题拆成多次检索再综合——trace 里能看到它确实查了 2 次",
+            "Agentic RAG splits a “compare” question into several retrievals then a synthesis — the trace shows it really queried twice")),
+        },
+    ],
 }

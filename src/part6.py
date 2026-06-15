@@ -1360,4 +1360,260 @@ LESSON_25 = (
         "the data layer, don't rely on the model to behave</strong>.",
     ))
 )
-LESSON_26 = _skeleton("Agent 与 Workflows", "agents &amp; workflows")
+LESSON_26 = (
+    c.pipeline(None)
+    + c.lead(L(
+        "前面 25 课搭的都是<strong>固定管道</strong>：每个问题都走同样的“检索 → 合成”，问法再不同，步骤也"
+        "一模一样。但真实问题常常需要<strong>会决策的循环</strong>——先看懂问题，<strong>自己决定</strong>用哪个"
+        "工具、要不要检索、检索几次，发现不够还能<strong>反思后重检索</strong>。这就是 <strong>Agent</strong>：把 "
+        "QueryEngine 包成<strong>工具</strong>交给它，它自行决定何时、调用几次。而 <strong>Workflow</strong> 是把这种"
+        "多步、<strong>事件驱动</strong>的流程显式写出来的底层框架——用 <code>@step</code> 方法 + 事件"
+        "（<code>StartEvent → … → StopEvent</code>）串成图。一句话：从“写死的链”升级到“会决策的循环”。",
+        "The first 25 lessons all built a <strong>fixed pipeline</strong>: every question runs the same “retrieve → "
+        "synthesize”, identical steps no matter how it's phrased. But real questions often need a <strong>deciding "
+        "loop</strong> — read the question first, then <strong>decide for itself</strong> which tool to use, whether "
+        "to retrieve, how many times, and if that's not enough, <strong>reflect and re-retrieve</strong>. That's an "
+        "<strong>Agent</strong>: wrap a QueryEngine as a <strong>tool</strong> and hand it over, and it decides when "
+        "and how often to call it. A <strong>Workflow</strong> is the lower-level framework that writes such "
+        "multi-step, <strong>event-driven</strong> flows out explicitly — <code>@step</code> methods joined by events "
+        "(<code>StartEvent → … → StopEvent</code>) into a graph. In a line: upgrade from a “hard-wired chain” to a "
+        "“deciding loop”.",
+    ))
+    + d.compare2(
+        (L("固定管道", "Fixed pipeline"), i18n.render(L(
+            "每个问题都走<strong>同一条链</strong>：检索 top-k → 合成 → 回答。步骤<strong>写死</strong>——不看问题"
+            "内容、不会多检一次、也不会换工具。<strong>快、便宜、好调</strong>，但遇到多源 / 多步 / 要自我纠错的"
+            "问题就力不从心。",
+            "Every question runs the <strong>same chain</strong>: retrieve top-k → synthesize → answer. The steps are "
+            "<strong>hard-wired</strong> — it ignores the question's content, never retrieves twice, never switches "
+            "tools. <strong>Fast, cheap, easy to debug</strong>, but it falls short on multi-source / multi-step / "
+            "self-correcting questions.",
+        ))),
+        (L("Agent 循环", "Agent loop"), i18n.render(L(
+            "<strong>看懂问题</strong> → 决定<strong>用哪个工具</strong>、<strong>要不要检索</strong> → 可<strong>多步"
+            "</strong>执行 → 结果不满意还能<strong>反思后重检索</strong>，直到够答才停。<strong>更强</strong>，但每多"
+            "一轮就多一次 LLM 调用——<strong>更慢、更贵、更难调</strong>。",
+            "<strong>Understand the question</strong> → decide <strong>which tool</strong> to use and <strong>whether "
+            "to retrieve</strong> → run <strong>multiple steps</strong> → if unsatisfied, <strong>reflect and "
+            "re-retrieve</strong>, stopping only when it has enough to answer. <strong>More capable</strong>, but each "
+            "extra turn is another LLM call — <strong>slower, pricier, harder to debug</strong>.",
+        ))),
+        caption=L(
+            "固定管道每问都同样地检索；Agent 循环先看问题，再决定用哪个工具、检索几次、要不要反思重检索",
+            "A fixed pipeline retrieves the same way for every question; an agent loop reads the question first, then "
+            "decides which tools, how many retrievals, and whether to reflect and re-retrieve",
+        ),
+    )
+    + c.analogy(L(
+        "固定管道像<strong>按固定流程办事的自助机</strong>：无论你问什么，它都用“检索 → 合成”同一套动作吐出结果。"
+        "Agent 像一位<strong>会查资料的专家助理</strong>：先听懂你要什么，<strong>自己决定</strong>翻哪本手册、查几遍，"
+        "发现答不全还会<strong>再查一次</strong>，确认够了才开口——更靠谱，但也更慢、更费时。",
+        "A fixed pipeline is like a <strong>self-service kiosk</strong> that runs the same “retrieve → synthesize” "
+        "motion for every question. An agent is like a <strong>research-savvy assistant</strong>: it first grasps what "
+        "you need, <strong>decides on its own</strong> which manual to open and how many times to check, and if the "
+        "answer is incomplete it <strong>looks again</strong>, speaking only once it's sure — more reliable, but also "
+        "slower and more effortful.",
+    ))
+    + d.vflow([
+        (L("StartEvent", "StartEvent"), L("携带 query 进入流程", "carries the query in")),
+        (L("@step retrieve", "@step retrieve"), L("收 StartEvent → 检索 → 发出 Retrieved 事件",
+                                                  "takes StartEvent → retrieves → emits a Retrieved event")),
+        (L("@step synthesize", "@step synthesize"), L("收 Retrieved → 合成答案 → 发出 StopEvent",
+                                                      "takes Retrieved → synthesizes → emits StopEvent")),
+        (L("StopEvent", "StopEvent"), L("携带 result 结束流程", "carries result out, ends the flow")),
+    ], caption=L(
+        "最小 Workflow 时序：事件驱动——每个 @step 收一种事件、产出下一种，StartEvent 进、StopEvent 出",
+        "A minimal Workflow timeline: event-driven — each @step consumes one event and emits the next; StartEvent in, "
+        "StopEvent out",
+    ))
+    + c.section(
+        L("从“写死的链”到“会决策的循环”", "From a “hard-wired chain” to a “deciding loop”"),
+        L(
+            "什么时候该从固定管道<strong>升级到 agent</strong>？三个信号：① <strong>多源</strong>——答案要跨多个库 / "
+            "工具（文档 + 数据库 + 计算），需要<strong>按问题选工具</strong>；② <strong>多步</strong>——一个问题要拆成"
+            "几步、后一步依赖前一步的结果；③ <strong>需自我纠错</strong>——第一次检索不够好，要能<strong>看结果再决定"
+            "重检索</strong>。但升级有代价：每多一轮决策就多一次 LLM 调用，<strong>更慢、更贵</strong>；执行路径随问题"
+            "而变、不再确定，<strong>更难调试</strong>——这正呼应 L23 的可观测性：agent 越自主，<strong>trace 与评测"
+            "就越不可少</strong>。所以不是越 agentic 越好，<strong>能用固定管道解决的，就别上 agent</strong>。",
+            "When should you <strong>upgrade</strong> from a fixed pipeline to an agent? Three signals: (1) "
+            "<strong>multi-source</strong> — the answer spans several stores / tools (docs + database + computation) "
+            "and you must <strong>pick the tool per question</strong>; (2) <strong>multi-step</strong> — the question "
+            "breaks into steps where each depends on the previous result; (3) <strong>self-correction</strong> — the "
+            "first retrieval isn't good enough and it must <strong>look at the result and decide to re-retrieve</strong>. "
+            "But the upgrade has a cost: each extra decision turn is another LLM call — <strong>slower and pricier"
+            "</strong> — and the execution path now varies per question, no longer deterministic, so it's <strong>harder "
+            "to debug</strong>. This echoes L23's observability: the more autonomous the agent, the more <strong>tracing "
+            "and evaluation become indispensable</strong>. So more agentic isn't always better — <strong>if a fixed "
+            "pipeline can solve it, don't reach for an agent</strong>.",
+        ),
+        c.compare_table(
+            [L("对比项", "Aspect"), L("固定管道", "Fixed pipeline"), L("Router 路由", "Router"),
+             L("Agent 循环", "Agent loop")],
+            [
+                [L("决策方式", "Decision"), L("每问都同样地检索 → 合成", "same retrieve → synthesize every time"),
+                 L("LLM 从几条预设路径选一条", "LLM picks one of a few preset routes"),
+                 L("LLM 循环决定用哪个工具、几步", "LLM loops: which tool, how many steps")],
+                [L("适合", "Best for"), L("单源、单步、问法稳定", "single source, single step, stable phrasing"),
+                 L("几个明确子库 / 引擎二选一", "choose among a few clear sub-indexes / engines"),
+                 L("多源、多步、需自我纠错", "multi-source, multi-step, self-correction")],
+                [L("代价", "Cost"), L("最快、最便宜、最好调", "fastest, cheapest, easiest to debug"),
+                 L("多一次路由 LLM 调用", "one extra routing LLM call"),
+                 L("多轮 LLM：更慢、更贵、更难调", "multiple LLM turns: slower, pricier, harder to debug")],
+                [L("可预测性", "Predictability"), L("完全确定，路径写死", "fully deterministic, fixed path"),
+                 L("较确定（路径有限）", "fairly predictable (limited routes)"),
+                 L("不确定，步数随问题变", "nondeterministic, steps vary by question")],
+            ],
+        ),
+    )
+    + c.source_ref(
+        "workflow/workflow.py", "Workflow",
+        L("事件驱动的多步编排：@step 方法订阅 / 发出事件，自动串成流程图",
+          "event-driven multi-step orchestration: @step methods subscribe to / emit events, auto-wired into a flow graph"),
+    )
+    + c.source_ref(
+        "agent/workflow/function_agent.py", "FunctionAgent",
+        L("会用工具自主决策的 agent：拿到工具列表，自行决定何时、调哪个（其实是内置工具循环的 Workflow）",
+          "a tool-using, self-deciding agent: given a tool list it decides when and which to call (a Workflow with a built-in tool loop)"),
+    )
+    + c.accordion(
+        L("深入：Agent、工具与 Workflow 的取舍", "Deep dive: agents, tools and Workflow trade-offs"),
+        c.qa_item(
+            L("🧪 示例：把 QueryEngine 包成工具交给 agent", "🧪 Example: wrap a QueryEngine as a tool for an agent"),
+            L(
+                "<code>QueryEngineTool.from_defaults(query_engine=index.as_query_engine(), name='company_docs', "
+                "description='回答公司制度 / 合同问题')</code> 把一个查询引擎包成<strong>工具</strong>；关键是 "
+                "<code>description</code>——agent <strong>靠它判断</strong>该不该调这个工具。再把工具列表交给 "
+                "<code>FunctionAgent(tools=[rag_tool], llm=...)</code>，<code>await agent.run('…')</code> 时它"
+                "<strong>自行决定</strong>要不要查、查几次。",
+                "<code>QueryEngineTool.from_defaults(query_engine=index.as_query_engine(), name='company_docs', "
+                "description='answers company-policy / contract questions')</code> wraps a query engine as a "
+                "<strong>tool</strong>; the key is the <code>description</code> — the agent <strong>uses it to "
+                "decide</strong> whether to call this tool. Hand the tool list to <code>FunctionAgent(tools=[rag_tool], "
+                "llm=...)</code>, and on <code>await agent.run('…')</code> it <strong>decides for itself</strong> "
+                "whether and how many times to query.",
+            ),
+        ),
+        c.qa_item(
+            L("❓ agentic RAG 到底解决什么", "❓ What does agentic RAG actually solve"),
+            L(
+                "普通 RAG 每问都<strong>盲检一次</strong>就合成，遇到“对比退款和换货政策”这种需要<strong>查两次再综合"
+                "</strong>的问题就容易答不全。<strong>agentic RAG</strong> 让模型<strong>自己规划</strong>：先查退款、"
+                "再查换货，必要时补查，最后综合——把“一次性检索”变成“按需多次检索 + 推理”，解决<strong>多源 / 多步 / "
+                "要自我纠错</strong>的问题。代价是更多 LLM 调用、更慢更贵。",
+                "Plain RAG <strong>blind-retrieves once</strong> per question and synthesizes, so a question like "
+                "“compare the refund and exchange policies” that needs <strong>two lookups then a synthesis</strong> "
+                "often comes out incomplete. <strong>Agentic RAG</strong> lets the model <strong>plan for itself"
+                "</strong>: look up refunds, then exchanges, fetch more if needed, then combine — turning “one-shot "
+                "retrieval” into “on-demand multiple retrievals + reasoning”, solving <strong>multi-source / "
+                "multi-step / self-correcting</strong> questions. The cost is more LLM calls — slower and pricier.",
+            ),
+        ),
+        c.qa_item(
+            L("⚙️ 内部怎么跑：@step 事件 vs 工具循环", "⚙️ How it runs inside: @step events vs the tool loop"),
+            L(
+                "<strong>Workflow</strong> 是<strong>事件驱动</strong>的：每个 <code>@step</code> 方法<strong>订阅</strong>"
+                "一种输入事件、<strong>返回</strong>一种输出事件，框架按“谁产出、谁消费”自动把它们连成图——"
+                "<code>StartEvent</code> 触发第一个 step，某个 step 返回 <code>StopEvent</code> 就结束。"
+                "<strong>FunctionAgent</strong> 则是更高层的封装：内部跑一个“<strong>调 LLM → 看它要不要调工具 → 执行"
+                "工具 → 把结果回喂</strong>”的循环，直到 LLM 认为够了。本质上 agent 就是一个内置了工具调用循环的 "
+                "Workflow。",
+                "A <strong>Workflow</strong> is <strong>event-driven</strong>: each <code>@step</code> method "
+                "<strong>subscribes</strong> to one input event and <strong>returns</strong> an output event, and the "
+                "framework wires them into a graph by “who produces what, who consumes it” — <code>StartEvent</code> "
+                "triggers the first step, and a step returning <code>StopEvent</code> ends it. A "
+                "<strong>FunctionAgent</strong> is a higher-level wrapper: inside it runs a loop of “<strong>call the "
+                "LLM → see if it wants a tool → run the tool → feed the result back</strong>” until the LLM decides it "
+                "has enough. An agent is essentially a Workflow with a built-in tool-calling loop.",
+            ),
+        ),
+        c.qa_item(
+            L("🔀 取舍：固定管道 vs Router vs Agent", "🔀 Trade-off: fixed pipeline vs Router vs Agent"),
+            L(
+                "三档<strong>自主度</strong>递增：<strong>固定管道</strong>每问都同样检索，最快最好调，适合单源单步；"
+                "<strong>Router</strong>（L18）让 LLM 从<strong>几条预设路径选一条</strong>，多一次路由调用，适合“几个"
+                "明确子库二选一”；<strong>Agent</strong> 让 LLM <strong>循环决定</strong>用什么工具、几步、要不要重检索，"
+                "最强但最慢最贵最难调。<strong>按需选最低档</strong>：能固定就别路由，能路由就别上 agent——自主度是"
+                "<strong>有代价</strong>的能力。",
+                "Three rising levels of <strong>autonomy</strong>: a <strong>fixed pipeline</strong> retrieves the same "
+                "way every time — fastest and easiest to debug, fit for single-source single-step; a <strong>Router"
+                "</strong> (L18) lets the LLM <strong>pick one of a few preset routes</strong>, one extra routing call, "
+                "fit for “choose among a few clear sub-indexes”; an <strong>Agent</strong> lets the LLM <strong>loop to "
+                "decide</strong> which tools, how many steps, whether to re-retrieve — most capable but slowest, "
+                "priciest, hardest to debug. <strong>Pick the lowest level that works</strong>: if fixed suffices don't "
+                "route, if routing suffices don't reach for an agent — autonomy is a capability with a <strong>cost"
+                "</strong>.",
+            ),
+        ),
+    )
+    + c.code(
+        "from llama_index.core import Settings\n"
+        "from llama_index.core.agent import FunctionAgent\n"
+        "from llama_index.core.tools import QueryEngineTool\n\n"
+        "# 把 RAG 查询引擎包成“工具”，交给会决策的 agent（它自行决定何时/调用几次）\n"
+        "rag_tool = QueryEngineTool.from_defaults(\n"
+        "    query_engine=index.as_query_engine(), name='company_docs',\n"
+        "    description='回答公司制度 / 合同相关问题')\n"
+        "agent = FunctionAgent(tools=[rag_tool], llm=Settings.llm,\n"
+        "                      system_prompt='需要事实时调用 company_docs 工具，并给出处。')\n"
+        "print(await agent.run('对比一下退款政策和换货政策'))",
+        caption=L("把查询引擎包成工具：FunctionAgent 自行决定何时、调用几次",
+                  "Wrap the query engine as a tool: FunctionAgent decides when and how many times to call it"),
+    )
+    + c.code(
+        "from llama_index.core import Settings\n"
+        "from llama_index.core.workflow import Workflow, step, StartEvent, StopEvent, Event\n\n"
+        "class Retrieved(Event):\n"
+        "    nodes: list\n\n"
+        "class RAGFlow(Workflow):\n"
+        "    @step\n"
+        "    async def retrieve(self, ev: StartEvent) -&gt; Retrieved:\n"
+        "        return Retrieved(nodes=index.as_retriever(similarity_top_k=3).retrieve(ev.query))\n\n"
+        "    @step\n"
+        "    async def synthesize(self, ev: Retrieved) -&gt; StopEvent:\n"
+        "        return StopEvent(result=str(Settings.llm.complete(f'据此作答：{ev.nodes}')))\n\n"
+        "# result = await RAGFlow().run(query='退款多久到账？')",
+        caption=L("最小 Workflow：用 @step + 事件把“检索 → 合成”显式串起来，StartEvent 进、StopEvent 出",
+                  "A minimal Workflow: wire “retrieve → synthesize” explicitly with @step + events; StartEvent in, StopEvent out"),
+    )
+    + c.key_points([
+        L("固定管道每问<strong>同样地检索</strong>；agent 先看问题再<strong>决定</strong>用哪个工具、检索几次、要不要"
+          "反思重检索。",
+          "A fixed pipeline <strong>retrieves the same way</strong> every time; an agent reads the question first, then "
+          "<strong>decides</strong> which tool, how many retrievals, and whether to reflect and re-retrieve."),
+        L("把 <code>QueryEngine</code> 用 <strong>QueryEngineTool</strong> 包成工具交给 <strong>FunctionAgent</strong>，"
+          "<code>description</code> 决定 agent 何时调用它。",
+          "Wrap a <code>QueryEngine</code> as a tool via <strong>QueryEngineTool</strong> and give it to a "
+          "<strong>FunctionAgent</strong>; the <code>description</code> tells the agent when to call it."),
+        L("<strong>Workflow</strong> 是<strong>事件驱动</strong>的底层框架：每个 <code>@step</code> 收一种事件、发出"
+          "下一种，<code>StartEvent</code> 进、<code>StopEvent</code> 出。",
+          "<strong>Workflow</strong> is the <strong>event-driven</strong> base framework: each <code>@step</code> "
+          "consumes one event and emits the next; <code>StartEvent</code> in, <code>StopEvent</code> out."),
+        L("升级到 agent 的信号是<strong>多源 / 多步 / 需自我纠错</strong>；代价是<strong>更慢、更贵、更难调</strong>"
+          "（更依赖 L23 的可观测）。",
+          "Signals to upgrade to an agent are <strong>multi-source / multi-step / self-correction</strong>; the cost "
+          "is <strong>slower, pricier, harder to debug</strong> (leaning harder on L23's observability)."),
+        L("自主度<strong>有代价</strong>：能用<strong>固定管道</strong>就别上 Router，能 <strong>Router</strong> 就别"
+          "上 Agent。",
+          "Autonomy has a <strong>cost</strong>: if a <strong>fixed pipeline</strong> works don't add a Router, if a "
+          "<strong>Router</strong> works don't reach for an Agent."),
+    ])
+    + c.design_highlight(L(
+        "Agent 与 Workflows 的精髓，是把 RAG 从<strong>“写死的链”升级成“会决策的循环”</strong>：<strong>Workflow"
+        "</strong> 用 <code>@step</code> + 事件把多步流程<strong>显式化</strong>，<strong>FunctionAgent</strong> 在其上"
+        "内置“调 LLM → 选工具 → 执行 → 回喂”的循环，让模型<strong>按问题自己规划</strong>检索几次、用什么工具、要不要"
+        "重检索。这把能力上限抬高了——多源、多步、自我纠错都能做——但每多一轮自主就多一次 LLM 调用，<strong>更慢、"
+        "更贵、执行路径不再确定、更难调</strong>，因此越 agentic 越<strong>离不开 L23 的 trace 与 L22 的评测</strong>。"
+        "所以真正的工程判断不是“能不能上 agent”，而是<strong>“这个问题配不配得上 agent 的代价”</strong>——能用固定"
+        "管道解决的，就别上 agent。",
+        "The essence of agents &amp; workflows is upgrading RAG from a <strong>“hard-wired chain” to a “deciding "
+        "loop”</strong>: a <strong>Workflow</strong> makes multi-step flows <strong>explicit</strong> with "
+        "<code>@step</code> + events, and a <strong>FunctionAgent</strong> builds a “call the LLM → pick a tool → run "
+        "→ feed back” loop on top, letting the model <strong>plan for itself</strong> how many retrievals, which "
+        "tools, and whether to re-retrieve. That raises the ceiling — multi-source, multi-step, self-correction all "
+        "become possible — but each extra turn of autonomy is another LLM call: <strong>slower, pricier, with a "
+        "no-longer-deterministic path that's harder to debug</strong>, so the more agentic you go, the more you "
+        "<strong>depend on L23's tracing and L22's evaluation</strong>. The real engineering judgment isn't “can we "
+        "use an agent” but <strong>“is this question worth an agent's cost”</strong> — if a fixed pipeline can solve "
+        "it, don't reach for an agent.",
+    ))
+)
