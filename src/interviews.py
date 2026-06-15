@@ -838,4 +838,92 @@ INTERVIEW = {
             "set, then weigh the added latency/cost."),
         },
     ],
+    "22-eval-scale.html": [
+        {"q": L(
+            "你要给一套上线的 RAG 建 <strong>CI 质量闸</strong>。金标集<strong>怎么造</strong>、阈值<strong>怎么定</strong>、"
+            "judge <strong>误判</strong>了怎么办？又怎么<strong>验证这道闸本身有效</strong>（不是摆设、也不会动不动误杀）？",
+            "You're building a <strong>CI quality gate</strong> for a live RAG. How do you <strong>build the gold "
+            "set</strong>, <strong>set the threshold</strong>, handle <strong>judge misfires</strong>, and how do you "
+            "<strong>verify the gate itself works</strong> (neither a rubber stamp nor a flaky blocker)?"),
+         "answer": L(
+            "🔑 <strong>重点：金标集先自动生成起量、再人工策展高价值子集；阈值用基线分布定、且只卡“相对回退”；"
+            "judge 误判靠固定 judge+rubric、看趋势、留容忍带；闸的有效性要拿“已知好/坏改动”去回归测试它。</strong>"
+            "① 造集：<code>DatasetGenerator</code> 自动铺几十上百题，人工挑高价值、易回归的场景补参考答案，沉淀成固定回归集；"
+            "② 定阈值：先跑基线得到通过率分布，阈值卡在“比基线明显下降”（如低于基线 5 个点就 fail），而非拍一个绝对数；"
+            "③ 误判：固定 judge 模型与 prompt、用二值 rubric、对边界样本人评校准，关注<strong>整体通过率趋势</strong>而非单题抖动；"
+            "④ 验证闸本身：故意提交一个<strong>已知会变差</strong>的改动（把 chunk 改坏 / 砍掉 rerank），闸必须变红；"
+            "再提交一个<strong>已知无害</strong>的改动，闸必须放行——闸也要回归测试，否则它只是个绿灯摆设。",
+            "🔑 <strong>Key: auto-generate the gold set for volume then human-curate a high-value subset; set the threshold "
+            "from the baseline distribution and gate on <em>relative</em> regression; tame judge misfires with a pinned "
+            "judge+rubric, trends and a tolerance band; and prove the gate works by regression-testing it with "
+            "known-good/known-bad changes.</strong> (1) Build: <code>DatasetGenerator</code> lays down dozens-to-hundreds, "
+            "then hand-pick high-value, regression-prone cases and add reference answers, hardening a fixed regression set; "
+            "(2) threshold: run a baseline for the pass-rate distribution and gate on “clearly below baseline” (e.g. fail "
+            "if it drops 5 points), not an arbitrary absolute number; (3) misfires: pin the judge model and prompt, use a "
+            "binary rubric, calibrate edge cases with human review, and watch the <strong>overall pass-rate trend</strong> "
+            "rather than single-question jitter; (4) verify the gate: deliberately submit a <strong>known-bad</strong> "
+            "change (break chunking / drop the reranker) and the gate must go red, then a <strong>known-harmless</strong> "
+            "one and it must pass — the gate itself needs regression testing, or it's just a green rubber stamp."),
+         "fig": d.flow([
+            ("pr", L("提 PR", "Open PR"), L("改了切块/检索", "changed chunking/retrieval")),
+            ("rerun", L("CI 重跑金标集", "CI re-runs gold set"), L("50 题并发", "50 Qs, concurrent")),
+            ("rate", L("通过率 0.86", "pass-rate 0.86"), L("基线 0.93", "baseline 0.93")),
+            ("gate", L("跌破阈值 0.90", "below the 0.90 bar"), L("闸变红", "gate goes red")),
+            ("block", L("拦回 / 回退", "block / revert"), L("合不进主干", "can't reach main")),
+         ], active="gate", caption=L(
+            "一次 CI 闸触发：通过率从基线 0.93 跌到 0.86、低于 0.90 阈值，PR 被自动拦回",
+            "One gate trip: pass-rate falls from baseline 0.93 to 0.86, under the 0.90 bar — the PR is auto-blocked")),
+        },
+        {"q": L(
+            "有同事说“金标集直接用 <code>DatasetGenerator</code> 自动生成就行，省得人工标注”。你<strong>同意吗</strong>？"
+            "自动题有什么<strong>坑</strong>，你会怎么把这套金标做得<strong>可信、可长期当闸用</strong>？",
+            "A teammate says “just auto-generate the gold set with <code>DatasetGenerator</code> — skip human labeling”. Do "
+            "you <strong>agree</strong>? What are the <strong>pitfalls</strong> of auto-generated gold, and how would you "
+            "make the set <strong>trustworthy enough to gate on long-term</strong>?"),
+         "answer": L(
+            "🔑 <strong>重点：自动生成适合“快速起量”，但不能直接当唯一金标——它问得浅、可能脱离真实分布，"
+            "还无法支撑需要参考答案的 Correctness。</strong>坑：① 题目多是“文档里直接抄得到”的浅问，测不出真实难例；"
+            "② 分布偏向文档密集处，真实高频问法反而漏；③ 没有人工核对的参考答案，Correctness 用不了，"
+            "且自动题里混着噪声会让闸“误判”。做可信：自动生成只当<strong>草稿池</strong>，人工<strong>挑选 + 改写 + 标注</strong>"
+            "出一个高价值子集，再掺入<strong>线上真实问题</strong>（点踩/转人工的会话）补真实长尾；CI 闸主要用免参考的忠实/相关"
+            "跑全量草稿、用人工金标子集跑 Correctness。怎么验证金标本身够好：让它能<strong>区分</strong>已知的好坏配置"
+            "（好配置分明显更高），区分不出就说明题目没区分度，得继续提纯。",
+            "🔑 <strong>Key: auto-generation is great for fast volume but can't be the sole gold — it asks shallow "
+            "questions, can drift from the real distribution, and can't support reference-needing Correctness.</strong> "
+            "Pitfalls: (1) questions are mostly “copy-able straight from the doc”, missing real hard cases; (2) the "
+            "distribution skews to doc-dense areas while real high-frequency phrasings are missed; (3) without "
+            "human-checked references Correctness is unusable, and noise in auto questions makes the gate “misfire”. To "
+            "make it trustworthy: treat auto-generation as a <strong>draft pool</strong>, have humans <strong>select + "
+            "rewrite + label</strong> a high-value subset, and mix in <strong>real production questions</strong> "
+            "(thumbs-down / handed-off chats) for the true long tail; the CI gate runs reference-free faithfulness/relevancy "
+            "over the full draft and Correctness over the human subset. How to check the gold itself is good: it should "
+            "<strong>discriminate</strong> known good vs bad configs (good scores clearly higher); if it can't, the "
+            "questions lack discriminative power and need more curation."),
+        },
+        {"q": L(
+            "评估是 <strong>LLM-as-judge</strong>，搬进 CI 后同一个 PR 重跑两次<strong>分数会抖</strong>，"
+            "构建一会儿红一会儿绿（flaky）。这种“闸不稳定”你怎么<strong>定位和治理</strong>？还要不要把它当硬性合并条件？",
+            "Evaluation is <strong>LLM-as-judge</strong>; in CI the same PR re-run twice gives <strong>jittery "
+            "scores</strong> and a flaky red/green build. How do you <strong>diagnose and tame</strong> this instability — "
+            "and should it still be a hard merge requirement?"),
+         "answer": L(
+            "🔑 <strong>重点：抖动来自 judge 的随机性和小样本噪声；靠“降随机 + 增样本 + 留容忍带 + 看趋势”治理，"
+            "硬闸只卡明显回退、细微抖动转为告警。</strong>① 降随机：judge 用 <code>temperature=0</code>、固定模型版本与评判 prompt、"
+            "二值 rubric，减少不确定性；② 增样本：题太少则单题翻转就让通过率大跳，扩大回归集让比例稳定；"
+            "③ 容忍带：阈值不卡“等于基线”，而是“低于基线一个明显幅度”才 fail，给噪声留缓冲；"
+            "④ 分层：把昂贵/不稳的 Correctness 放夜间离线跑，CI 硬闸只用稳定、免参考的忠实/相关；"
+            "⑤ 看趋势：连续多次低于阈值才阻断，单点抖动只告警。验证治理是否见效：固定一个不动的 PR 重跑 N 次，"
+            "统计通过率方差，方差落进容忍带以内才算稳。",
+            "🔑 <strong>Key: jitter comes from judge randomness and small-sample noise; tame it with “less randomness + more "
+            "samples + a tolerance band + trend-watching”, and let the hard gate fire only on clear regressions while small "
+            "jitter becomes a warning.</strong> (1) Less randomness: run the judge at <code>temperature=0</code>, pin the "
+            "model version and judging prompt, use a binary rubric; (2) more samples: with too few questions one flip "
+            "swings the pass-rate, so enlarge the regression set to stabilize the ratio; (3) tolerance band: gate on "
+            "“clearly below baseline”, not “equal to baseline”, leaving room for noise; (4) tiering: run the "
+            "costly/unstable Correctness offline nightly and keep only stable, reference-free faithfulness/relevancy as the "
+            "hard CI gate; (5) trend: block only after several consecutive sub-threshold runs, warn on a single dip. Verify "
+            "the fix by re-running one unchanged PR N times and measuring pass-rate variance — stable once it falls within "
+            "the tolerance band."),
+        },
+    ],
 }

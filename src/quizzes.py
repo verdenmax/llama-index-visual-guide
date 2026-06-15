@@ -490,6 +490,24 @@ QUIZZES = {
         "open": [L("你的查询里既有自然语言问题也有精确产品编号，你会怎么配比向量与关键词两路的权重？",
                    "With both natural-language questions and exact product ids in your queries, how would you weight the vector vs keyword paths?")],
     },
+    "22-eval-scale.html": {
+        "mcq": [{
+            "q": L("把固定的<strong>回归金标集</strong>接进 CI 闸，最关键的作用是？",
+                   "Wiring a fixed <strong>regression gold set</strong> into a CI gate matters most because it…"),
+            "opts": [
+                L("让单次回答的分数更高", "makes a single answer score higher"),
+                L("用同一批题重跑，挡住“修好一个却悄悄弄坏一批”的回归",
+                  "re-runs the same questions to block “fix one, silently break many” regressions"),
+                L("彻底取代人工标注", "fully replaces human labeling"),
+                L("让评估不再需要 LLM", "removes the need for an LLM in evaluation"),
+            ],
+            "answer": 1,
+            "why": L("回归集的价值在“同一批题、每次重跑、比趋势”：你盯的那题修好了，分数还能告诉你别的题有没有悄悄退化；达不到阈值就 fail，坏改动合不进主干。",
+                     "A regression set's value is “same questions, re-run every time, watch the trend”: the case you fixed may pass while others quietly regress, and the score reveals it; below threshold it fails, so the bad change can't reach main."),
+        }],
+        "open": [L("你只有 200 条无标准答案的历史问答，想搭一个最小可用的回归评估闸，你会怎么做？（提示：哪几把尺子不需要参考答案？）",
+                   "You have 200 historical Q&amp;A pairs with no reference answers and want a minimal usable regression gate. How would you build it? (Hint: which rulers need no reference?)")],
+    },
 }
 
 

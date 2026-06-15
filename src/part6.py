@@ -242,7 +242,259 @@ LESSON_21 = (
         "completeness, one for correctness, beating a single similarity score on both speed and reliability.",
     ))
 )
-LESSON_22 = _skeleton("规模化评估与 CI 回归闸", "evaluation at scale &amp; CI gating")
+LESSON_22 = (
+    c.pipeline(None)
+    + c.lead(L(
+        "L19 学会了给单个答案打分；到了生产和团队协作，<strong>评估必须规模化、还要自动守门</strong>。"
+        "三件事：① 用 <strong>DatasetGenerator</strong> 从文档<strong>自动造一批金标问题</strong>（再人工挑高价值子集标注）；"
+        "② 用 <strong>BatchEvalRunner</strong> <strong>并发批量</strong>跑几十上百题、聚合成一个通过率；"
+        "③ 把通过率接进 CI 做<strong>回归闸</strong>——低于阈值就 fail，坏改动<strong>合不进主干</strong>。"
+        "一句话：把“凭感觉调”升级成“分数门槛守门”。",
+        "L19 taught you to score a single answer; in production and on a team, <strong>evaluation must scale and gate "
+        "automatically</strong>. Three moves: (1) use <strong>DatasetGenerator</strong> to <strong>auto-build a batch of "
+        "gold questions</strong> from your docs (then hand-label a high-value subset); (2) use <strong>BatchEvalRunner"
+        "</strong> to run dozens-to-hundreds of them <strong>concurrently</strong> and aggregate into one pass-rate; "
+        "(3) wire that pass-rate into CI as a <strong>regression gate</strong> — below threshold the build fails and the "
+        "bad change <strong>can't reach main</strong>. In a line: upgrade “tune by feel” into “a score threshold guards "
+        "the door”.",
+    ))
+    + d.flow([
+        ("docs", L("文档", "Docs"), L("现有知识库", "your corpus")),
+        ("gen", L("自动生成 QA 金标", "Auto-gen gold QA"), L("DatasetGenerator + 人工挑选", "DatasetGenerator + human pick")),
+        ("batch", L("批量评估器", "Batch evaluator"), L("BatchEvalRunner 并发跑", "BatchEvalRunner, concurrent")),
+        ("agg", L("聚合分数", "Aggregate score"), L("通过率 / 趋势", "pass-rate / trend")),
+        ("gate", L("CI 闸", "CI gate"), L("达标→合并 · 不达→回退", "pass→merge · fail→revert")),
+    ], active="gate", caption=L(
+        "金标集 → 批量评估 → 聚合 → 守门：分数达标才让改动进主干，不达标自动拦回",
+        "Gold set → batch eval → aggregate → gate: only a passing score lets a change into main; a failing one is blocked automatically",
+    ))
+    + c.analogy(L(
+        "像工厂出货前的<strong>自动质检关</strong>：每批货（每次改动）都要过<strong>同一组固定抽检</strong>（回归金标集），"
+        "合格才放行上线（合并主干），不合格当场拦下（回退）。检验标准事先定死、机器自动判，"
+        "没人能靠“感觉还行”把次品偷偷放出去。",
+        "Like an <strong>automated QC gate</strong> before shipping: every batch (each change) must pass the <strong>same "
+        "fixed sample inspection</strong> (the regression gold set); only a pass ships (merges to main), a fail is stopped "
+        "on the spot (revert). The spec is fixed in advance and a machine rules on it — nobody can sneak a defect through "
+        "on “feels fine”.",
+    ))
+    + d.grid(
+        [L("尺子", "Ruler"), L("查什么（要什么输入）", "Checks what (inputs)"),
+         L("在哪跑：开发 · CI · 线上抽样", "Where: dev · CI · prod-sampling")],
+        [
+            [L("<code>Faithfulness</code> 忠实度", "<code>Faithfulness</code>"),
+             L("答案是否忠于检索（防幻觉）· 需 response + source_nodes，<strong>免参考答案</strong>",
+               "is the answer grounded in retrieval (anti-hallucination) · needs response + source_nodes, <strong>no reference</strong>"),
+             L("CI 回归闸<strong>主力</strong>：免标注、可全自动", "<strong>the CI gate's workhorse</strong>: label-free, fully automatable")],
+            [L("<code>Relevancy</code> 相关性", "<code>Relevancy</code>"),
+             L("检索与答案是否切题 · 需 query + response + source_nodes，<strong>免参考答案</strong>",
+               "are context + answer on-topic · needs query + response + source_nodes, <strong>no reference</strong>"),
+             L("CI 闸 + 线上抽样：同样免标注", "CI gate + prod-sampling: also label-free")],
+            [L("<code>Correctness</code> 正确性", "<code>Correctness</code>"),
+             L("对照参考答案对不对（1–5 分）· <strong>需 reference</strong>",
+               "right vs a reference (1–5) · <strong>needs a reference</strong>"),
+             L("人工金标子集 · 离线/夜间跑（较贵）", "human gold subset · offline/nightly (pricier)")],
+        ],
+        caption=L(
+            "同样三把尺子，关键看“在哪跑”：免参考的忠实/相关当 CI 闸主力，需参考答案的正确性留给人工金标子集离线跑",
+            "Same three rulers — what matters is “where they run”: reference-free faithfulness/relevancy power the CI gate, while reference-needing correctness runs offline over a human gold subset",
+        ),
+    )
+    + c.section(
+        L("从“手动评一次”到“自动守门”", "From “evaluate once by hand” to “gate automatically”"),
+        c.compare_table(
+            [L("对比项", "Aspect"), L("手动评一次（L19）", "Evaluate once, by hand (L19)"),
+             L("规模化 + CI 回归闸（本课）", "At scale + CI gate (this lesson)")],
+            [
+                [L("跑多少", "How many"), L("手挑几道题、看一眼分数", "a few hand-picked Qs, eyeball the score"),
+                 L("几十上百题<strong>并发批量</strong>、聚合成通过率", "dozens-to-hundreds run <strong>concurrently</strong>, aggregated into a pass-rate")],
+                [L("金标从哪来", "Where gold comes from"), L("临时想几个问题", "invent a few questions on the spot"),
+                 L("<code>DatasetGenerator</code> 自动造 + 人工标注高价值子集，沉淀为固定回归集",
+                   "<code>DatasetGenerator</code> auto-builds + a human-labeled high-value subset, hardened into a fixed regression set")],
+                [L("何时触发", "When it runs"), L("改完想起来才跑一次", "run once, if you remember"),
+                 L("每次 PR/提交在 <strong>CI 自动</strong>跑（pytest 脚本）", "every PR/commit, <strong>automatically in CI</strong> (a pytest script)")],
+                [L("不达标怎样", "On a miss"), L("自己看一眼、容易忘", "you glance at it, easy to forget"),
+                 L("<code>assert</code> 失败、构建变红、<strong>挡住合并</strong>", "<code>assert</code> fails, the build goes red, <strong>merge blocked</strong>")],
+                [L("防的风险", "Risk it guards"), L("只知这次改动好不好", "only whether this one change is OK"),
+                 L("“修一个<strong>坏一批</strong>”的悄悄回归", "the silent “fix one, <strong>break many</strong>” regression")],
+            ],
+        ),
+    )
+    + c.section(
+        L("把“凭感觉调”变成“分数门槛守门”", "Turning “tune by feel” into “a score threshold guards the door”"),
+        L(
+            "评估要当“闸”用，前提是有一套<strong>稳定、可复跑的金标集</strong>。从零造太慢，所以<strong>先自动起步</strong>："
+            "<code>DatasetGenerator</code> 按文档块批量生成问题，几分钟就能铺出几十上百题的基线。但自动题<strong>良莠不齐</strong>，"
+            "于是再做一层<strong>人工策展</strong>：挑出高价值、易回归的场景，补上人工核对的参考答案，沉淀成一个"
+            "<strong>越用越准的回归子集</strong>。有了固定金标集，每次改动都对<strong>同一批题</strong>重跑、比<strong>趋势</strong>"
+            "——这正是挡住“修一个坏一批”的关键：你盯着的那道题修好了，分数却告诉你另外十道悄悄退化了。最后把“低于阈值就 fail”"
+            "写进 CI，<strong>守门这件事就不再依赖人的自觉</strong>。",
+            "Using evaluation as a <strong>gate</strong> requires a <strong>stable, re-runnable gold set</strong>. Building "
+            "one from scratch is slow, so <strong>start automatically</strong>: <code>DatasetGenerator</code> mass-produces "
+            "questions per document chunk, laying down a dozens-to-hundreds baseline in minutes. But auto-generated "
+            "questions are <strong>uneven</strong>, so add a layer of <strong>human curation</strong>: pick the high-value, "
+            "regression-prone scenarios, attach human-checked reference answers, and let them harden into a <strong>"
+            "regression subset that grows more trustworthy with use</strong>. With a fixed gold set, every change re-runs "
+            "against the <strong>same questions</strong> and you watch the <strong>trend</strong> — exactly what blocks "
+            "“fix one, break many”: the case you were staring at got fixed, but the score tells you ten others quietly "
+            "regressed. Finally write “below threshold → fail” into CI, and <strong>gatekeeping no longer depends on "
+            "anyone's discipline</strong>.",
+        ),
+        d.flow([
+            ("auto", L("自动生成草稿", "Auto-gen drafts"), L("DatasetGenerator 批量出题", "DatasetGenerator, in bulk")),
+            ("pick", L("人工挑高价值", "Human-pick high-value"), L("易回归/高频场景", "regression-prone/high-freq")),
+            ("label", L("补参考答案", "Add references"), L("支撑 Correctness", "unlocks Correctness")),
+            ("freeze", L("固化为回归集", "Freeze as regression set"), L("每次改动都重跑", "re-run on every change")),
+            ("feed", L("线上反馈回灌", "Feed back from prod"), L("点踩/转人工补长尾", "thumbs-down/escalations → long tail")),
+        ], caption=L(
+            "金标集的造与养：自动起量 → 人工提纯 → 补参考答案 → 固化回归集 → 线上真实问题持续回灌",
+            "Building and maintaining the gold set: auto for volume → human refine → add references → freeze a regression set → keep feeding real production questions",
+        )),
+    )
+    + c.section(
+        L("一道闸怎么挡住“修一个坏一批”", "How one gate blocks “fix one, break many”"),
+        L(
+            "回归闸的价值不在“这次改得好不好”，而在“别处有没有被悄悄带坏”。把同一套金标接进 CI，"
+            "单题的局部改进再也盖不住整体的退化——分数跌破阈值，改动就进不了主干。",
+            "A regression gate's value isn't “is this change good?” but “did it quietly break something elsewhere?”. Wire "
+            "the same gold set into CI and a local single-question win can no longer mask an overall regression — break the "
+            "threshold and the change can't reach main.",
+        ),
+        d.compare2(
+            (L("没有回归闸（手动）", "No gate (manual)"), i18n.render(L(
+                "为修好“退款多久到账”这道投诉，把 <code>chunk_size</code> 从 512 调到 1024。本地一看那题确实顺了就合并"
+                "——可“保修期”“发票抬头”等十几道题的忠实度悄悄从 0.92 掉到 0.78，没人察觉，线上开始答非所问。",
+                "To fix one complaint — “how long do refunds take” — you bump <code>chunk_size</code> from 512 to 1024. "
+                "Locally that one reads fine, so you merge — but a dozen others (“warranty period”, “invoice title”) "
+                "quietly drop in faithfulness from 0.92 to 0.78, unnoticed, and production starts answering off-topic.",
+            ))),
+            (L("有 CI 回归闸", "With a CI gate"), i18n.render(L(
+                "同样的改动推上 PR，CI 用 50 题金标集并发重跑：那道题虽好，但<strong>整体通过率 0.92 → 0.78</strong>、"
+                "跌破 0.90 阈值，<code>assert</code> 失败、构建变红，PR <strong>合不进主干</strong>——“修一个坏一批”当场被拦。",
+                "Push the same change as a PR and CI re-runs the 50-question gold set concurrently: that one improved, but "
+                "the <strong>overall pass-rate 0.92 → 0.78</strong> breaks the 0.90 bar, <code>assert</code> fails, the "
+                "build goes red, and the PR <strong>can't reach main</strong> — “fix one, break many” is caught on the spot.",
+            ))),
+            caption=L(
+                "同一次改动：没有闸，单题修好却悄悄拖垮十几题；有 CI 闸，整体通过率跌破阈值就当场拦回",
+                "Same change: without a gate one fix silently drags down a dozen others; with a CI gate, the overall pass-rate breaking the bar blocks it on the spot",
+            ),
+        ),
+    )
+    + c.source_ref(
+        "evaluation/batch_runner.py", "BatchEvalRunner",
+        L("把多个评估器、多道问题<strong>并发</strong>批量跑，聚合成可对比的分数（规模化评估的核心）",
+          "runs many evaluators over many questions <strong>concurrently</strong>, aggregating comparable scores (the heart of evaluation at scale)"),
+    )
+    + c.source_ref(
+        "evaluation/dataset_generation.py", "DatasetGenerator",
+        L("从文档自动生成 QA 金标问题，作为回归集的起点（再人工策展）",
+          "auto-generates gold QA questions from documents as a starting regression set (then human-curated)"),
+    )
+    + c.accordion(
+        L("深入：造金标集、批量评估与 CI 闸的取舍", "Deep dive: building the gold set, batch eval and the CI-gate trade-offs"),
+        c.qa_item(
+            L("🧪 示例：造一批金标、并发批量评", "🧪 Example: build a gold batch, evaluate concurrently"),
+            L(
+                "<code>DatasetGenerator.from_documents(docs, num_questions_per_chunk=2)</code> 先按块批量出题，"
+                "<code>.generate_questions_from_nodes()</code> 拿到一串问题；再交给 "
+                "<code>BatchEvalRunner({'faithfulness': ..., 'relevancy': ...}, workers=8)</code> 的 "
+                "<code>aevaluate_queries(engine, queries=...)</code> 并发跑完，结果按指标名分组、每题一个 <code>EvaluationResult</code>。",
+                "<code>DatasetGenerator.from_documents(docs, num_questions_per_chunk=2)</code> mass-produces questions per "
+                "chunk, <code>.generate_questions_from_nodes()</code> yields the list; hand them to "
+                "<code>BatchEvalRunner({'faithfulness': ..., 'relevancy': ...}, workers=8)</code>'s "
+                "<code>aevaluate_queries(engine, queries=...)</code> to run concurrently — results grouped by metric name, "
+                "one <code>EvaluationResult</code> per question.",
+            ),
+        ),
+        c.qa_item(
+            L("❓ 为什么这么设计（可度量闭环）", "❓ Why designed this way (a measurable loop)"),
+            L(
+                "L19 把单次改动变得“可度量”，生产要的是让度量<strong>自动守门</strong>。把通过率接进 CI，"
+                "<strong>坏改动在合并前就被分数拦下</strong>，质量不再依赖谁记得手动跑评估——“修一个坏一批”的回归"
+                "被一道常态化的闸挡住。免参考的忠实度/相关性最适合当这道闸（不需要参考答案、能完全自动化）。",
+                "L19 made one change “measurable”; production wants the measurement to <strong>gate automatically</strong>. "
+                "Wire pass-rate into CI and <strong>a bad change is blocked by the score before merge</strong> — quality no "
+                "longer depends on who remembers to run evals by hand, and the “fix one, break many” regression is held "
+                "back by a standing gate. Reference-free faithfulness/relevancy fit this gate best (no gold answers needed, "
+                "fully automatable).",
+            ),
+        ),
+        c.qa_item(
+            L("⚙️ 内部怎么跑（并发 · EvaluationResult.passing）", "⚙️ How it runs inside (concurrency · EvaluationResult.passing)"),
+            L(
+                "<code>BatchEvalRunner</code> 用 <code>workers</code> 控制<strong>并发度</strong>，底层走 async：先用 "
+                "QueryEngine 批量产生答案，再把每个 (query, response, source_nodes) 喂给各评估器（多为 LLM-as-judge）。"
+                "返回是 <code>dict[str, list[EvaluationResult]]</code>，每个 <code>EvaluationResult</code> 带 "
+                "<code>passing</code>（是否达标）与 <code>score</code>；把一列 <code>passing</code> 求平均就是<strong>通过率</strong>，"
+                "CI 闸比的就是它。",
+                "<code>BatchEvalRunner</code> uses <code>workers</code> to set <strong>concurrency</strong>, async under the "
+                "hood: it first batch-produces answers via the QueryEngine, then feeds each (query, response, source_nodes) "
+                "to the evaluators (mostly LLM-as-judge). It returns a <code>dict[str, list[EvaluationResult]]</code>; each "
+                "<code>EvaluationResult</code> carries <code>passing</code> (met the bar) and <code>score</code> — averaging "
+                "a column of <code>passing</code> gives the <strong>pass-rate</strong> the CI gate compares against.",
+            ),
+        ),
+        c.qa_item(
+            L("🔀 替代方案（自动生成 vs 人工标注 vs 线上反馈）", "🔀 Alternatives (auto-gen vs human labeling vs prod feedback)"),
+            L(
+                "金标从哪来，有三条路：<strong>自动生成</strong>（<code>DatasetGenerator</code>，最快铺量，但题目参差、可能问得很浅）；"
+                "<strong>人工标注</strong>（最准、能给参考答案支撑 Correctness，但慢且贵，只配给高价值子集）；"
+                "<strong>线上真实反馈</strong>（用户点踩、人工申诉、客服转人工的会话——最贴近真实分布，但要脱敏与清洗）。"
+                "生产里三者<strong>叠用</strong>：自动起量、人工提纯、线上补真实长尾。",
+                "Gold data comes from three sources: <strong>auto-generation</strong> (<code>DatasetGenerator</code> — "
+                "fastest to scale, but uneven and often shallow questions); <strong>human labeling</strong> (most accurate, "
+                "supplies the reference answers Correctness needs, but slow and costly — reserve it for a high-value "
+                "subset); and <strong>real production feedback</strong> (thumbs-down, escalations, handed-off chats — "
+                "closest to the true distribution, but needs redaction and cleanup). Production <strong>stacks all "
+                "three</strong>: auto for volume, humans for purity, production for the real long tail.",
+            ),
+        ),
+    )
+    + c.code(
+        "from llama_index.core.evaluation import (DatasetGenerator, BatchEvalRunner,\n"
+        "                                         FaithfulnessEvaluator, RelevancyEvaluator)\n\n"
+        "# 1) 自动造金标问题（生产里再人工挑选/标注更可靠的子集）\n"
+        "questions = DatasetGenerator.from_documents(\n"
+        "    docs, num_questions_per_chunk=2).generate_questions_from_nodes()\n\n"
+        "# 2) 并发批量评估：忠实度 + 相关性\n"
+        "runner = BatchEvalRunner(\n"
+        "    {'faithfulness': FaithfulnessEvaluator(), 'relevancy': RelevancyEvaluator()}, workers=8)\n"
+        "results = await runner.aevaluate_queries(index.as_query_engine(), queries=questions[:50])",
+        caption=L("造集 + 并发批量评估：DatasetGenerator 自动出题 → BatchEvalRunner（workers=8）并发跑 50 题",
+                  "Build the set + batch-evaluate concurrently: DatasetGenerator drafts questions → BatchEvalRunner (workers=8) runs 50 in parallel"),
+    )
+    + c.code(
+        "# 把评估变成 CI 回归闸：均通过率低于阈值就 fail（放进 pytest / CI 脚本）\n"
+        "def pass_rate(rs):\n"
+        "    return sum(r.passing for r in rs) / len(rs)\n\n"
+        "faith = pass_rate(results['faithfulness'])\n"
+        "print(f'faithfulness pass-rate: {faith:.0%}')\n"
+        "assert faith >= 0.9, '忠实度回退，拦截本次变更'   # 守门：不达标就别合并",
+        caption=L("把通过率变成 CI 回归闸：低于阈值就 assert 失败、挡住合并",
+                  "Turn pass-rate into a CI regression gate: below threshold, assert fails and the merge is blocked"),
+    )
+    + c.key_points([
+        L("规模化评估 = <strong>自动造金标</strong>（DatasetGenerator）+ <strong>并发批量评</strong>（BatchEvalRunner）+ "
+          "<strong>CI 回归闸</strong>（通过率阈值），把评估从手动升级成自动守门。",
+          "Evaluation at scale = <strong>auto-built gold</strong> (DatasetGenerator) + <strong>concurrent batch eval</strong> "
+          "(BatchEvalRunner) + a <strong>CI regression gate</strong> (pass-rate threshold) — manual evaluation upgraded to automatic gatekeeping."),
+        L("固定<strong>回归金标集</strong>是闸的前提：自动生成起量、人工标注高价值子集，挡住“修一个坏一批”。",
+          "A fixed <strong>regression gold set</strong> is the gate's prerequisite: auto-generate for volume, hand-label a high-value subset — blocking “fix one, break many”."),
+        L("<code>BatchEvalRunner</code> 用 <code>workers</code> 并发跑、按指标聚合 <code>EvaluationResult.passing</code>；通过率就是闸比对的数。",
+          "<code>BatchEvalRunner</code> runs concurrently via <code>workers</code> and aggregates <code>EvaluationResult.passing</code> per metric; the pass-rate is what the gate compares."),
+        L("免参考的<strong>忠实/相关</strong>最适合当 CI 闸；<strong>正确性</strong>需参考答案，留给人工金标子集。",
+          "Reference-free <strong>faithfulness/relevancy</strong> fit the CI gate best; <strong>correctness</strong> needs references — reserve it for the human gold subset."),
+    ])
+    + c.design_highlight(L(
+        "规模化评估的精髓是把“评估”变成“<strong>闸</strong>”：一套<strong>固定可复跑的金标集</strong> + 一个"
+        "<strong>通过率阈值</strong>，让每次改动都必须用<strong>同一把尺子</strong>自证没有变差——质量从“谁记得测”"
+        "升级成“不达标就合不进来”。",
+        "The essence of evaluation at scale is turning “evaluation” into a <strong>gate</strong>: a <strong>fixed, "
+        "re-runnable gold set</strong> plus a <strong>pass-rate threshold</strong> forces every change to prove — against "
+        "the <strong>same ruler</strong> — that it didn't regress; quality goes from “whoever remembers to test” to "
+        "“below the bar, it can't get in”.",
+    ))
+)
 LESSON_23 = _skeleton("可观测与追踪", "observability &amp; tracing")
 LESSON_24 = _skeleton("成本与延迟工程", "cost &amp; latency engineering")
 LESSON_25 = _skeleton("安全与防护", "security &amp; guardrails")
