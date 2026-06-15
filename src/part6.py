@@ -759,6 +759,296 @@ LESSON_23 = (
         "evaluation, tuning and cost work, every production capability.",
     ))
 )
-LESSON_24 = _skeleton("成本与延迟工程", "cost &amp; latency engineering")
+LESSON_24 = (
+    c.pipeline(None)
+    + c.lead(L(
+        "到了生产，光“答得对”不够，还得“答得起、答得快”。两个公式钉死了优化方向："
+        "<strong>成本 = token 数 × 调用次数</strong>，<strong>延迟 = 多步串行累加</strong>。对着公式有"
+        "<strong>四把刀</strong>，按“省得多、伤得少”的顺序抡：① <strong>缓存</strong>（重复的别再算第二遍）"
+        "② <strong>异步 / 批</strong>（多步多问并发跑）③ <strong>流式</strong>（逐 token 先吐、首字延迟骤降）"
+        "④ <strong>选小模型 / 小 embedding + 控 top_k</strong>（每次少烧点 token）。先记牢一句最容易踩错的话："
+        "<strong>流式优化的是“首字延迟”，不是“总延迟”</strong>——用户更早看到字，但答完整段话的总时间几乎没变。",
+        "In production, “correct” isn't enough — it must also be “affordable” and “fast”. Two formulas pin down where "
+        "to optimize: <strong>cost = tokens × number of calls</strong>, <strong>latency = a serial sum of "
+        "steps</strong>. Against them stand <strong>four knives</strong>, swung in “most saved, least harmed” order: "
+        "(1) <strong>caching</strong> (never recompute the same thing twice), (2) <strong>async / batch</strong> "
+        "(run multi-step and multi-question concurrently), (3) <strong>streaming</strong> (emit tokens as they come — "
+        "time-to-first-token plummets), (4) <strong>a smaller model / smaller embedding + capped top_k</strong> (burn "
+        "fewer tokens per call). Memorize the one thing people get wrong first: <strong>streaming optimizes "
+        "time-to-first-token, not total latency</strong> — users see characters sooner, but the time to finish the "
+        "whole answer barely changes.",
+    ))
+    + d.layers([
+        (L("① embedding 缓存", "① Embedding cache"),
+         L("相同文本不再重复向量化 —— 砍<strong>重复 embedding API</strong> 的钱（摄取 / 重建索引时最明显）",
+           "identical text is never re-vectorized — cuts the <strong>repeat embedding-API</strong> bill (biggest at ingest / re-index)")),
+        (L("② LLM 响应缓存", "② LLM-response cache"),
+         L("相同 prompt 直接返回上次答案 —— <strong>同时砍 LLM 生成的钱和那几秒延迟</strong>",
+           "an identical prompt returns last time's answer — <strong>cuts both the LLM bill and those seconds of latency</strong>")),
+        (L("③ 检索-响应缓存", "③ Retrieval–response cache"),
+         L("相同问题缓存整条“检索 + 合成” —— <strong>砍整条链</strong>（连检索都省）",
+           "an identical question caches the whole “retrieve + synthesize” — <strong>cuts the entire chain</strong> (even retrieval is skipped)")),
+    ], caption=L(
+        "三层缓存各管一段：embedding 缓存砍重复向量化，LLM 响应缓存砍重复生成（连带延迟），"
+        "检索-响应缓存砍整条链——越靠外，命中一次省得越多",
+        "Three cache layers, each covering a stretch: the embedding cache cuts repeat vectorization, the LLM-response "
+        "cache cuts repeat generation (and its latency), the retrieval–response cache cuts the whole chain — the outer "
+        "the layer, the more a single hit saves",
+    ))
+    + c.analogy(L(
+        "缓存像<strong>便利店的预制餐</strong>：第一次现做（慢、贵），做好摆上货架，下次同样的单子直接拿"
+        "（近乎零成本）；流式则像餐厅<strong>先上一道前菜</strong>：整桌菜上齐的时间没变，但你<strong>马上有得吃"
+        "</strong>，不用干等。",
+        "Caching is like a convenience store's <strong>pre-made meals</strong>: the first order is cooked fresh "
+        "(slow, costly), then it sits on the shelf so the same order is grabbed instantly next time (near-zero cost); "
+        "streaming is like a restaurant <strong>serving a starter first</strong>: the time for the full table of "
+        "dishes is unchanged, but you <strong>have something to eat right away</strong> instead of waiting idle.",
+    ))
+    + d.compare2(
+        (L("同步阻塞（等整段答完）", "Blocking (wait for the whole answer)"), i18n.render(L(
+            "<code>query()</code> 一直阻塞到 LLM <strong>整段生成完</strong>才返回，用户盯着空白转圈 3~5 秒才一次性"
+            "看到全文。<strong>首字延迟 = 总延迟</strong>，体感“很久没反应”。",
+            "<code>query()</code> blocks until the LLM has generated the <strong>entire answer</strong>, so the user "
+            "stares at a spinner for 3–5s before seeing anything all at once. <strong>Time-to-first-token = total "
+            "latency</strong>, and it feels “unresponsive”.",
+        ))),
+        (L("流式（逐 token 先吐）", "Streaming (emit token by token)"), i18n.render(L(
+            "<code>streaming=True</code> 让 LLM <strong>边生成边吐 token</strong>，几百毫秒就冒出第一个字，用户一边读"
+            "一边等后文。<strong>总耗时几乎不变，但首字延迟骤降</strong>，体感“立刻在答”。",
+            "<code>streaming=True</code> makes the LLM <strong>emit tokens as it generates</strong>, so the first "
+            "character appears in a few hundred ms and the user reads while the rest arrives. <strong>Total time "
+            "barely changes, but time-to-first-token plummets</strong>, and it feels “answering right away”.",
+        ))),
+        caption=L(
+            "同一句答案：同步要等整段生成完才显示（首字 = 总延迟）；流式逐 token 先吐，首字延迟骤降但总时长几乎不变"
+            "——流式优化体感，不缩短总延迟",
+            "Same answer: blocking shows nothing until the whole thing is generated (first-token = total); streaming "
+            "emits token by token, so first-token drops sharply while total time is nearly unchanged — streaming "
+            "improves the feel, not the total latency",
+        ),
+    )
+    + c.section(
+        L("成本 = token × 调用次数，延迟 = 多步串行", "Cost = tokens × calls, latency = a serial sum of steps"),
+        L(
+            "把账算清楚，优化才有方向。<strong>成本</strong>几乎全在 token：≈ <strong>每次调用的 token 数 × 调用次数 "
+            "× 单价</strong>——所以要么<strong>少调</strong>（缓存命中就不调）、要么<strong>每次少烧 token</strong>"
+            "（小模型 / 短 context / 控 top_k）。<strong>延迟</strong>则是<strong>一串串行步骤累加</strong>："
+            "检索 → rerank → 组 prompt → LLM 生成，每步都等前一步做完，<strong>LLM 生成通常是大头</strong>。"
+            "对着这两个公式，有<strong>四把刀</strong>，按“省得多、改得轻”的顺序抡：① <strong>缓存</strong>——重复的"
+            "查询 / 向量直接复用，<strong>一刀同砍成本和延迟</strong>，命中即零成本，是性价比最高的第一刀；"
+            "② <strong>异步 / 批</strong>——<code>aquery</code> 让多问并发、批量 embedding 一次过，不缩单条但提"
+            "<strong>吞吐</strong>；③ <strong>流式</strong>——逐 token 先吐，<strong>只砍首字延迟</strong>、提体感，"
+            "总延迟和成本不变；④ <strong>选小模型 / 小 embedding + 控 top_k</strong>——直接压低每次的 token 与算力，"
+            "省钱也常顺带提速，但要盯着质量别掉。",
+            "Get the bill straight and optimization has direction. <strong>Cost</strong> is almost all tokens: "
+            "≈ <strong>tokens per call × number of calls × unit price</strong> — so either <strong>call less</strong> "
+            "(a cache hit means no call) or <strong>burn fewer tokens per call</strong> (smaller model / shorter "
+            "context / capped top_k). <strong>Latency</strong> is a <strong>serial sum of steps</strong>: "
+            "retrieve → rerank → build prompt → LLM generate, each waiting on the last, with <strong>LLM generation "
+            "usually the big chunk</strong>. Against these two formulas stand <strong>four knives</strong>, swung in "
+            "“most saved, lightest change” order: (1) <strong>caching</strong> — reuse repeated queries / vectors, "
+            "<strong>cutting cost and latency in one stroke</strong>, zero cost on a hit — the highest-payoff first "
+            "knife; (2) <strong>async / batch</strong> — <code>aquery</code> runs questions concurrently and batches "
+            "embeddings in one pass, not shortening a single call but raising <strong>throughput</strong>; "
+            "(3) <strong>streaming</strong> — emit tokens first, <strong>cutting only time-to-first-token</strong> and "
+            "the feel, with total latency and cost unchanged; (4) <strong>a smaller model / smaller embedding + "
+            "capped top_k</strong> — directly lower the tokens and compute each call, saving money and often speeding "
+            "up too, but watch that quality doesn't slip.",
+        ),
+        c.compare_table(
+            [L("四把刀", "Knife"), L("砍什么", "Cuts what"), L("怎么用", "How"), L("代价 / 注意", "Cost / caveat")],
+            [
+                [L("① 缓存", "① Cache"), L("成本 + 延迟（命中即零）", "cost + latency (zero on hit)"),
+                 L("embedding / LLM / 检索-响应 三层缓存，相同输入复用", "embedding / LLM / retrieval-response, three layers; reuse identical inputs"),
+                 L("要管命中率与<strong>新鲜度</strong>：数据变了要失效", "manage hit-rate and <strong>freshness</strong>: invalidate when data changes")],
+                [L("② 异步 / 批", "② Async / batch"), L("延迟（吞吐）", "latency (throughput)"),
+                 L("<code>aquery</code> 并发多问、批量 embedding 一次过", "<code>aquery</code> runs questions concurrently; batch embeddings in one pass"),
+                 L("不缩<strong>单条</strong>延迟，只提整体吞吐", "doesn't shrink a <strong>single</strong> call, only overall throughput")],
+                [L("③ 流式", "③ Streaming"), L("<strong>首字</strong>延迟（体感）", "<strong>time-to-first-token</strong> (feel)"),
+                 L("<code>streaming=True</code> + <code>print_response_stream()</code>", "<code>streaming=True</code> + <code>print_response_stream()</code>"),
+                 L("<strong>总延迟和成本不变</strong>，只改体感", "<strong>total latency and cost unchanged</strong>, only the feel")],
+                [L("④ 小模型 / 小 embedding + 控 top_k", "④ Smaller model / embedding + cap top_k"),
+                 L("成本（+ 常顺带提速）", "cost (+ often speed)"),
+                 L("换更小的 LLM / embedding、调低 top_k 与 chunk", "swap a smaller LLM / embedding, lower top_k and chunk size"),
+                 L("可能<strong>掉质量</strong>，必须用评测守住", "may <strong>drop quality</strong> — must be guarded by evals")],
+            ],
+        ),
+    )
+    + c.section(
+        L("怎么度量：先有基线，才知道砍对没", "How to measure: a baseline first, or you can't tell you cut right"),
+        L(
+            "优化前先定<strong>基线</strong>，否则砍完不知道有没有用、有没有砍到质量。延迟别只看平均——"
+            "<strong>平均会被少数极慢请求拉偏</strong>，要看<strong>分位数</strong>：<strong>p50</strong>"
+            "（一半请求快过它，代表“典型体感”）和 <strong>p95</strong>（95% 请求快过它，代表“最差也就这样”，"
+            "决定用户骂不骂）。成本看<strong>每问平均成本</strong>（总 token 花费 ÷ 问题数）和<strong>缓存命中率"
+            "</strong>。每抡一刀就用<strong>同一批真实查询</strong>重测，对比 p50 / p95 / 每问成本，同时跑评测确认"
+            "<strong>忠实度 / 命中率没掉</strong>——只有“更快更省且不更差”才算数。",
+            "Set a <strong>baseline</strong> before optimizing, or after a cut you can't tell whether it helped or "
+            "quietly hurt quality. Don't watch the average for latency — <strong>a few very slow requests skew the "
+            "mean</strong> — watch <strong>percentiles</strong>: <strong>p50</strong> (half the requests are faster — "
+            "the “typical feel”) and <strong>p95</strong> (95% are faster — “the worst it usually gets”, which decides "
+            "whether users complain). For cost, watch <strong>average cost per question</strong> (total token spend ÷ "
+            "questions) and <strong>cache hit-rate</strong>. After each knife, re-run the <strong>same batch of real "
+            "queries</strong>, compare p50 / p95 / cost-per-question, and run evals to confirm <strong>faithfulness / "
+            "hit-rate didn't drop</strong> — only “faster and cheaper and no worse” counts.",
+        ),
+        d.grid(
+            [L("盯哪个数", "Metric"), L("它说明什么", "What it tells you"), L("砍完怎么用它验证", "How you verify with it")],
+            [
+                [L("p50 延迟", "p50 latency"), L("典型请求的体感快慢（一半快过它）", "the typical request's feel (half are faster)"),
+                 L("缓存 / 流式后它该明显下降", "should drop noticeably after caching / streaming")],
+                [L("p95 延迟", "p95 latency"), L("最差请求有多差（决定口碑）", "how bad the worst gets (drives reputation)"),
+                 L("异步 / 降 top_k 后看长尾有没有收窄", "watch the tail narrow after async / lower top_k")],
+                [L("每问成本", "Cost per question"), L("总 token 花费 ÷ 问题数", "total token spend ÷ questions"),
+                 L("小模型 / 缓存命中后它该往下走", "should fall after a smaller model / cache hits")],
+                [L("缓存命中率", "Cache hit-rate"), L("多少请求走了缓存（白省的钱）", "how many requests hit the cache (money saved free)"),
+                 L("命中率越高、成本越低，但要警惕<strong>新鲜度</strong>", "higher hit-rate, lower cost — but mind <strong>freshness</strong>")],
+            ],
+            caption=L(
+                "四个该盯的数：p50 看典型体感、p95 看最差长尾、每问成本看烧钱、缓存命中率看白省了多少——砍完都用同一批查询重测对比",
+                "Four numbers to watch: p50 for the typical feel, p95 for the worst tail, cost-per-question for spend, cache hit-rate for free savings — re-run the same batch after each cut and compare",
+            ),
+        ),
+    )
+    + c.source_ref(
+        "ingestion/cache.py", "IngestionCache",
+        L("摄取管道的缓存：按“转换 + 输入”的哈希复用上次结果，避免重复 embedding / 转换",
+          "the ingestion pipeline's cache: reuse last results keyed by the hash of “transform + input”, skipping repeat embedding / transforms"),
+    )
+    + c.source_ref(
+        "base/response/schema.py", "StreamingResponse",
+        L("流式响应对象：持有逐 token 产出的 response_gen，print_response_stream() 边生成边打印",
+          "the streaming response object: holds a token-by-token response_gen; print_response_stream() prints as it generates"),
+    )
+    + c.accordion(
+        L("深入：缓存复用、为什么缓存第一、流式与异步、命中率 vs 新鲜度",
+          "Deep dive: cache reuse, why caching first, streaming and async, hit-rate vs freshness"),
+        c.qa_item(
+            L("🧪 示例：IngestionCache 让重建索引近乎零成本", "🧪 Example: IngestionCache makes re-indexing near-zero cost"),
+            L(
+                "给 <code>IngestionPipeline</code> 挂上 <code>cache=IngestionCache()</code>，它会按<strong>每个转换 + "
+                "输入文档的哈希</strong>缓存输出。第一次 <code>run(documents=docs)</code> 正常切块 + embedding；改一份"
+                "文档再跑，<strong>只有那一份重算</strong>，其余命中缓存、不再调 embedding API。"
+                "<code>pipeline.persist('./pipeline_cache')</code> 把缓存落盘，<strong>换进程 / 重启后照样命中</strong>"
+                "——重建索引从“每次全量烧钱”变成“只为改动付费”。",
+                "Attach <code>cache=IngestionCache()</code> to an <code>IngestionPipeline</code> and it caches outputs "
+                "keyed by <strong>the hash of each transform + input doc</strong>. The first "
+                "<code>run(documents=docs)</code> chunks + embeds normally; change one doc and re-run, and "
+                "<strong>only that one is recomputed</strong> while the rest hit the cache and never call the "
+                "embedding API. <code>pipeline.persist('./pipeline_cache')</code> writes the cache to disk so it "
+                "<strong>still hits across processes / restarts</strong> — re-indexing goes from “burn money on the "
+                "whole set every time” to “pay only for what changed”.",
+            ),
+        ),
+        c.qa_item(
+            L("❓ 为什么“缓存”是第一把刀", "❓ Why caching is the first knife"),
+            L(
+                "因为它<strong>性价比最高、风险最低</strong>：① <strong>一刀同砍成本和延迟</strong>——命中即零 token、"
+                "零等待，别的刀大多只砍一边；② <strong>不动模型、不动检索质量</strong>——只是“别重复算”，几乎不牺牲"
+                "答案质量（不像换小模型有掉质量风险）；③ 生产里<strong>重复查询天然多</strong>（热门问题、相同文档"
+                "重建索引），命中率往往不低。所以先上缓存把“白烧的钱”省掉，再去碰更可能伤质量的小模型 / top_k。"
+                "唯一要管的是<strong>新鲜度</strong>：数据变了要让旧缓存失效。",
+                "Because it has the <strong>best payoff and lowest risk</strong>: (1) it <strong>cuts cost and latency "
+                "at once</strong> — a hit means zero tokens and zero wait, while most other knives cut only one side; "
+                "(2) it <strong>touches neither the model nor retrieval quality</strong> — it just “stops "
+                "recomputing”, barely sacrificing answer quality (unlike a smaller model, which risks quality); "
+                "(3) production <strong>naturally has many repeats</strong> (popular questions, re-indexing the same "
+                "docs), so hit-rates are often decent. So put caching in first to stop “money burned for nothing”, "
+                "then touch the quality-risky knives (smaller model / top_k). The one thing to manage is "
+                "<strong>freshness</strong>: invalidate stale cache when data changes.",
+            ),
+        ),
+        c.qa_item(
+            L("⚙️ 内部怎么跑：流式 response_gen 与 aquery 异步", "⚙️ How it runs inside: streaming response_gen and async aquery"),
+            L(
+                "<strong>流式</strong>：<code>as_query_engine(streaming=True)</code> 返回 <code>StreamingResponse</code>，"
+                "它持有一个 <strong><code>response_gen</code> 生成器</strong>——LLM 每解码出一个 token 就 "
+                "<code>yield</code> 出来，<code>print_response_stream()</code> 就是边迭代边打印；所以“首字”在 LLM 刚"
+                "开口时就到，无需等整段。<strong>异步</strong>：<code>aquery</code> / <code>aretrieve</code> 是 async "
+                "版本，配合 <code>asyncio.gather</code> 能让<strong>多个问题并发</strong>走完各自的检索 + 生成，或在"
+                "一次查询里<strong>并行</strong>跑多路检索——总墙钟时间趋近“最慢那一路”而非“逐条相加”。两者都不改变"
+                "<strong>单条</strong>的计算量，改变的是<strong>何时拿到第一个字</strong>（流式）和<strong>多条怎么"
+                "排布</strong>（异步）。",
+                "<strong>Streaming</strong>: <code>as_query_engine(streaming=True)</code> returns a "
+                "<code>StreamingResponse</code> holding a <strong><code>response_gen</code> generator</strong> — the "
+                "LLM <code>yield</code>s each token as it decodes it, and <code>print_response_stream()</code> simply "
+                "iterates and prints; so the “first token” arrives the moment the LLM starts, with no wait for the "
+                "whole thing. <strong>Async</strong>: <code>aquery</code> / <code>aretrieve</code> are the async "
+                "versions; with <code>asyncio.gather</code> they let <strong>multiple questions run "
+                "concurrently</strong> through their own retrieve + generate, or run <strong>parallel</strong> "
+                "retrieval paths within one query — wall-clock time approaches “the slowest path” rather than “the sum "
+                "of all”. Neither changes the <strong>per-call</strong> compute; they change <strong>when you get the "
+                "first token</strong> (streaming) and <strong>how multiple calls are arranged</strong> (async).",
+            ),
+        ),
+        c.qa_item(
+            L("🔀 取舍：缓存命中率 vs 新鲜度", "🔀 Trade-off: cache hit-rate vs freshness"),
+            L(
+                "缓存留得越久、范围越宽，<strong>命中率越高、越省钱</strong>，但<strong>越容易答出过期内容</strong>。"
+                "两头要平衡：① <strong>TTL（过期时间）</strong>——给缓存设有效期，高频但时效性弱的问题（“公司地址”）"
+                "可长留，强时效的（“今天库存”“当前余额”）短 TTL 或干脆不缓存；② <strong>失效（invalidation）</strong>"
+                "——文档更新就让相关缓存作废，<code>IngestionCache</code> 按输入哈希天然做到“内容变了 key 就变”；"
+                "③ <strong>分层</strong>——embedding 缓存最安全（向量只随文本变），<strong>LLM 响应 / 检索-响应缓存"
+                "</strong>要按问题的时效性区别对待。一句话：<strong>命中率换新鲜度</strong>，按数据多久变一次来定。",
+                "The longer and broader you keep the cache, the <strong>higher the hit-rate and the more you "
+                "save</strong> — but the <strong>easier it is to serve stale content</strong>. Balance both ends: "
+                "(1) <strong>TTL</strong> — give entries an expiry; popular but low-volatility questions (“company "
+                "address”) can live long, while time-sensitive ones (“today's stock”, “current balance”) get a short "
+                "TTL or no cache; (2) <strong>invalidation</strong> — expire related entries when docs update; "
+                "<code>IngestionCache</code> does this naturally by input hash (“content changed → key changed”); "
+                "(3) <strong>layering</strong> — the embedding cache is safest (vectors only change with text), while "
+                "the <strong>LLM-response / retrieval-response caches</strong> must be treated by each question's "
+                "volatility. In a line: <strong>trade hit-rate for freshness</strong>, tuned to how often the data "
+                "changes.",
+            ),
+        ),
+    )
+    + c.code(
+        "# 流式：逐 token 返回，首字延迟大幅下降（生产体验关键）\n"
+        "engine = index.as_query_engine(streaming=True)\n"
+        "engine.query('详细解释一下退款流程').print_response_stream()   # 边生成边打印",
+        caption=L("流式：streaming=True + print_response_stream()，逐 token 先吐，首字延迟骤降",
+                  "Streaming: streaming=True + print_response_stream() emits token by token, so time-to-first-token plummets"),
+    )
+    + c.code(
+        "from llama_index.core import Settings\n"
+        "from llama_index.core.ingestion import IngestionPipeline, IngestionCache\n"
+        "from llama_index.core.node_parser import SentenceSplitter\n"
+        "\n"
+        "# embedding 缓存：相同输入直接复用上次向量，避免重复花钱\n"
+        "pipeline = IngestionPipeline(\n"
+        "    transformations=[SentenceSplitter(chunk_size=512), Settings.embed_model],\n"
+        "    cache=IngestionCache())\n"
+        "pipeline.run(documents=docs)          # 第二次跑命中缓存、近乎零成本\n"
+        "pipeline.persist('./pipeline_cache')  # 跨进程持久化缓存",
+        caption=L("embedding 缓存：给 IngestionPipeline 挂 IngestionCache，第二次跑命中缓存、近乎零成本，persist 跨进程留存",
+                  "Embedding cache: attach IngestionCache to the IngestionPipeline; the second run hits the cache at near-zero cost, and persist keeps it across processes"),
+    )
+    + c.key_points([
+        L("成本 = <strong>token × 调用次数</strong>，延迟 = <strong>多步串行累加</strong>；优化就是“少调 / 每次少烧 / 让步骤别干等”。",
+          "Cost = <strong>tokens × calls</strong>, latency = <strong>a serial sum of steps</strong>; optimizing means “call less / burn fewer tokens / stop steps idling”."),
+        L("四把刀按序抡：<strong>缓存</strong>（同砍成本与延迟、第一刀）→ <strong>异步 / 批</strong>（提吞吐）→ "
+          "<strong>流式</strong>（只砍首字延迟）→ <strong>小模型 / 小 embedding + 控 top_k</strong>（压 token，但盯质量）。",
+          "Swing the four knives in order: <strong>caching</strong> (cuts both cost and latency — first) → "
+          "<strong>async / batch</strong> (throughput) → <strong>streaming</strong> (only time-to-first-token) → "
+          "<strong>smaller model / embedding + capped top_k</strong> (fewer tokens, but watch quality)."),
+        L("<strong>流式优化的是首字延迟，不是总延迟</strong>：用户更早看到字，答完整段话的总时间几乎不变。",
+          "<strong>Streaming optimizes time-to-first-token, not total latency</strong>: users see characters sooner, but finishing the whole answer takes about the same time."),
+        L("先定<strong>基线</strong>再砍：看 <strong>p50 / p95 延迟</strong>和<strong>每问成本</strong>，每抡一刀用同一批查询重测、并跑评测确认质量没掉。",
+          "Set a <strong>baseline</strong> before cutting: watch <strong>p50 / p95 latency</strong> and <strong>cost per question</strong>, re-run the same batch after each knife, and run evals to confirm quality held."),
+    ])
+    + c.design_highlight(L(
+        "成本与延迟工程的精髓是<strong>先量化、再对着公式下刀</strong>：成本盯 token × 调用、延迟盯多步串行，然后按"
+        "“省得多、伤得少”的顺序抡刀——<strong>缓存</strong>永远第一（同砍两边、几乎不伤质量），<strong>流式</strong>"
+        "只买体感（首字延迟）别指望缩总时长，<strong>换小模型 / 降 top_k</strong> 最后上且必须用评测兜底。"
+        "没有 p50/p95 和每问成本的基线，所有“优化”都是自我感动。",
+        "The essence of cost &amp; latency engineering is to <strong>quantify first, then cut along the formulas</strong>: "
+        "watch tokens × calls for cost and the serial steps for latency, then swing the knives in “most saved, least "
+        "harmed” order — <strong>caching always first</strong> (cuts both sides, barely hurts quality), "
+        "<strong>streaming buys only the feel</strong> (time-to-first-token, don't expect a shorter total), and "
+        "<strong>a smaller model / lower top_k last</strong>, always backstopped by evals. Without a p50/p95 and "
+        "cost-per-question baseline, every “optimization” is just self-congratulation.",
+    ))
+)
 LESSON_25 = _skeleton("安全与防护", "security &amp; guardrails")
 LESSON_26 = _skeleton("Agent 与 Workflows", "agents &amp; workflows")

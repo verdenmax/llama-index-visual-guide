@@ -526,6 +526,25 @@ QUIZZES = {
         "open": [L("你只能在<strong>本地零依赖</strong>（不接任何外部后端）的前提下排查一条“答得慢又不准”的查询，你会用 <code>LlamaDebugHandler</code> 看哪些信息、按什么顺序定位问题？",
                    "Restricted to a <strong>local, zero-dependency</strong> setup (no external backend), how would you use <code>LlamaDebugHandler</code> to debug one “slow and inaccurate” query — which signals would you read, and in what order?")],
     },
+    "24-cost-latency.html": {
+        "mcq": [{
+            "q": L("给生产 RAG 开了 <code>streaming=True</code>（流式），它主要改善的是哪个指标？",
+                   "You enable <code>streaming=True</code> on a production RAG. Which metric does it mainly improve?"),
+            "opts": [
+                L("总延迟（答完整段话的总时间）大幅下降",
+                  "total latency (time to finish the whole answer) drops sharply"),
+                L("首字延迟（看到第一个 token 的时间）大幅下降，总延迟几乎不变",
+                  "time-to-first-token drops sharply, while total latency is nearly unchanged"),
+                L("每问的 token 成本下降", "token cost per question drops"),
+                L("检索召回率提升", "retrieval recall improves"),
+            ],
+            "answer": 1,
+            "why": L("流式让 LLM 边生成边逐 token 吐出，用户几百毫秒就看到第一个字，<strong>体感“立刻在答”</strong>；但模型要生成的 token 总数没变，<strong>答完整段话的总时间几乎一样</strong>，token 成本也不变。要真正缩短总延迟得靠缓存命中、换更快/更小的模型、压 context 或降 top_k。",
+                     "Streaming makes the LLM emit tokens as it generates, so the first character shows in a few hundred ms and it <strong>feels like it's answering instantly</strong>; but the total tokens to generate are unchanged, so <strong>finishing the whole answer takes about the same time</strong>, and token cost is unchanged too. Actually shortening total latency takes cache hits, a faster/smaller model, trimming context, or lowering top_k."),
+        }],
+        "open": [L("你的 RAG 每问成本偏高、p95 延迟也超标。在不明显牺牲答案质量的前提下，你会<strong>按什么顺序</strong>动手，每一步用<strong>什么数字</strong>判断“砍对了”？",
+                   "Your RAG has high cost-per-question and an over-budget p95 latency. Without obviously sacrificing answer quality, in <strong>what order</strong> would you act, and <strong>which numbers</strong> tell you each step “cut the right thing”?")],
+    },
 }
 
 

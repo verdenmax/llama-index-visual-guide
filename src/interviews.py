@@ -1027,4 +1027,125 @@ INTERVIEW = {
             "safer</strong>, not the charts themselves."),
         },
     ],
+    "24-cost-latency.html": [
+        {"q": L(
+            "线上反馈“这套 RAG 太烧钱”，每问成本居高不下。你会<strong>按什么顺序</strong>砍——缓存 / 换小模型 / "
+            "降 top_k / 关 rerank？为什么是这个顺序？每砍一刀你怎么<strong>验证质量没掉</strong>，而不是省了钱却把"
+            "答案搞砸？",
+            "Production says “this RAG is too expensive” — cost per question stays high. In <strong>what order</strong> "
+            "do you cut — caching / a smaller model / lower top_k / dropping rerank? Why that order? After each cut, "
+            "how do you <strong>verify quality didn't drop</strong> rather than saving money while wrecking answers?"),
+         "answer": L(
+            "🔑 <strong>重点：按“省得多、伤质量小”的顺序——先缓存（几乎不伤质量），再降 top_k / 砍多余 rerank"
+            "（轻伤、可控），换小模型放最后（最伤质量）；每砍一刀都用固定金标集的忠实度 / 命中率当“质量没掉”的闸，"
+            "并用每问成本 + p95 证明真省了。</strong>① <strong>先缓存</strong>：embedding / LLM 响应 / 检索-响应三层，"
+            "命中即零 token、零延迟，<strong>不动模型与检索质量</strong>，是白捡的便宜，唯一管好新鲜度（TTL + 失效）；"
+            "② <strong>降 top_k / 精简 rerank</strong>：top_k 从 10 砍到 5、关掉收益不大的 rerank，能省 context token "
+            "和一步串行延迟，但<strong>可能少召到依据</strong>，要看命中率；③ <strong>换小模型 / 小 embedding 放最后"
+            "</strong>：最省钱但<strong>最可能掉质量</strong>，必须有评测兜底。④ <strong>怎么验证</strong>：固定一组真实"
+            "查询，每步比改前后的<strong>每问成本、p50 / p95 延迟</strong>，同时用 <code>Faithfulness / Relevancy</code> "
+            "或命中率确认<strong>质量没跌破阈值</strong>——只有“更省且不更差”才保留这一刀，跌了就回退。",
+            "🔑 <strong>Key: order by “most saved, least quality harmed” — caching first (barely hurts quality), then "
+            "lower top_k / trim redundant rerank (light, controllable), and a smaller model last (most harmful); after "
+            "each cut, gate “quality held” with faithfulness / hit-rate on a fixed gold set, and prove real savings "
+            "with cost-per-question + p95.</strong> (1) <strong>Cache first</strong>: three layers (embedding / "
+            "LLM-response / retrieval-response) — a hit is zero tokens and zero latency, <strong>touching neither "
+            "model nor retrieval quality</strong>, free money, just manage freshness (TTL + invalidation); "
+            "(2) <strong>lower top_k / trim rerank</strong>: cut top_k from 10 to 5, drop a low-payoff rerank — saves "
+            "context tokens and one serial step, but <strong>may miss evidence</strong>, so watch hit-rate; "
+            "(3) <strong>smaller model / embedding last</strong>: cheapest but <strong>most likely to drop "
+            "quality</strong>, so it must be backstopped by evals. (4) <strong>How to verify</strong>: on a fixed set "
+            "of real queries, compare <strong>cost-per-question and p50 / p95 latency</strong> before/after each step "
+            "while confirming with <code>Faithfulness / Relevancy</code> or hit-rate that <strong>quality stays above "
+            "threshold</strong> — keep a cut only if it's “cheaper and no worse”, otherwise revert."),
+         "fig": d.flow([
+            ("base", L("定基线", "Baseline"), L("p50/p95 · 每问成本 · 质量", "p50/p95 · cost/Q · quality")),
+            ("cache", L("先缓存", "Cache first"), L("几乎不伤质量", "barely hurts quality")),
+            ("topk", L("降 top_k / 砍 rerank", "Lower top_k / trim rerank"), L("看命中率", "watch hit-rate")),
+            ("small", L("换小模型放最后", "Smaller model last"), L("最易掉质量", "most quality risk")),
+            ("verify", L("每步重测", "Re-test each step"), L("更省且不更差才留", "keep only if cheaper, no worse")),
+         ], active="cache", caption=L(
+            "降本顺序：先定基线 → 缓存（白省）→ 降 top_k / 砍 rerank（轻伤）→ 换小模型（最险，最后）→ 每步用成本+质量重测",
+            "Cost-cutting order: baseline → cache (free) → lower top_k / trim rerank (light) → smaller model (riskiest, last) → re-test each step on cost + quality")),
+        },
+        {"q": L(
+            "产品经理说“用户嫌答得慢，你上个流式就行了吧？”你认同吗？流式到底<strong>改善什么、不改善什么</strong>？"
+            "如果用户真正抱怨的是“<strong>等太久才答完</strong>”，你会怎么做、又怎么证明？",
+            "A PM says “users find it slow — just turn on streaming, right?” Do you agree? What does streaming "
+            "<strong>actually improve, and not improve</strong>? If users are really complaining that it "
+            "“<strong>takes too long to finish</strong>”, what would you do and how would you prove it?"),
+         "answer": L(
+            "🔑 <strong>重点：流式只砍“首字延迟”、改善体感，不缩短“总延迟”也不省成本；若抱怨的是总时长，得靠缓存 / "
+            "更快或更小的模型 / 压 context / 降 top_k，并用 p95 总延迟来证明。</strong>① <strong>先分清抱怨的是哪种"
+            "“慢”</strong>：是“干等好几秒才出第一个字”（首字延迟）还是“答得太长、总也答不完”（总延迟）。"
+            "② <strong>若是首字慢</strong>：<code>streaming=True</code> 立竿见影——逐 token 先吐，用户几百毫秒就开始读，"
+            "<strong>但总耗时和 token 成本不变</strong>，别拿它当“变快”的银弹。③ <strong>若是总时长慢</strong>：流式没用，"
+            "要从真延迟下手——缓存命中省掉整段生成、换更快 / 更小的模型、压缩 context、降 top_k 少一步串行、把多路检索"
+            "改异步并发。④ <strong>怎么证明</strong>：固定一组真实查询，比较<strong>首字延迟</strong>（流式该骤降）与"
+            "<strong>p50 / p95 总延迟</strong>（真优化才会降），别只看平均；同时跑评测确认<strong>质量没掉</strong>。"
+            "一句话回 PM：流式买的是“体感”，不是“总时长”。",
+            "🔑 <strong>Key: streaming only cuts “time-to-first-token” and improves the feel; it does not shorten "
+            "“total latency” or save cost. If the complaint is about total time, you need caching / a faster or "
+            "smaller model / trimmed context / lower top_k, proven by p95 total latency.</strong> (1) <strong>First "
+            "separate which “slow”</strong>: “waiting seconds for the first character” (time-to-first-token) vs "
+            "“the answer drags on forever” (total latency). (2) <strong>If first-token is slow</strong>: "
+            "<code>streaming=True</code> helps instantly — tokens emit first and the user starts reading in a few "
+            "hundred ms, <strong>but total time and token cost are unchanged</strong>; don't treat it as a “make it "
+            "faster” silver bullet. (3) <strong>If total time is slow</strong>: streaming won't help — attack real "
+            "latency: cache hits skip whole generations, swap a faster / smaller model, compress context, lower top_k "
+            "to drop a serial step, make multi-path retrieval async. (4) <strong>How to prove</strong>: on a fixed "
+            "query set compare <strong>time-to-first-token</strong> (should plummet with streaming) and <strong>p50 / "
+            "p95 total latency</strong> (only a real optimization moves these), not just the average; and run evals to "
+            "confirm <strong>quality held</strong>. In a line to the PM: streaming buys “feel”, not “total time”."),
+        },
+        {"q": L(
+            "你打算用缓存给 RAG 降本提速。<strong>embedding 缓存、LLM 响应缓存、检索-响应缓存</strong>你会怎么分层上？"
+            "缓存最大的坑是“<strong>答出过期内容</strong>”，你怎么在<strong>命中率</strong>和<strong>新鲜度</strong>之间"
+            "取舍、又怎么验证缓存确实在省钱而没坑用户？",
+            "You plan to use caching to cut cost and latency. How would you layer the <strong>embedding cache, "
+            "LLM-response cache and retrieval-response cache</strong>? Caching's biggest trap is <strong>serving stale "
+            "content</strong> — how do you trade off <strong>hit-rate</strong> vs <strong>freshness</strong>, and how "
+            "do you verify the cache truly saves money without hurting users?"),
+         "answer": L(
+            "🔑 <strong>重点：按“安全度”分层上——embedding 缓存最安全先上，LLM / 检索-响应缓存按问题时效性配 TTL + "
+            "失效；用缓存命中率 + 每问成本证明在省钱，用“过期内容抽检 / 投诉率”守新鲜度。</strong>① <strong>分层</strong>："
+            "<strong>embedding 缓存</strong>最该先上——向量只随<strong>文本</strong>变，<code>IngestionCache</code> 按"
+            "输入哈希天然失效，几乎没有过期风险；<strong>LLM 响应 / 检索-响应缓存</strong>命中收益最大（连生成都省），"
+            "但<strong>答案会过期</strong>，要谨慎。② <strong>命中率 vs 新鲜度</strong>：给强时效问题（“今天库存”“当前"
+            "余额”）<strong>短 TTL 或不缓存</strong>，弱时效问题（“公司地址”“产品说明”）<strong>长留</strong>；文档一更新"
+            "就<strong>失效相关缓存</strong>，别让旧答案常驻。③ <strong>怎么验证省钱</strong>：盯<strong>缓存命中率</strong>"
+            "（多少请求白省）和<strong>每问平均成本 / p50 延迟</strong>（命中后应明显下降）。④ <strong>怎么守住没坑用户"
+            "</strong>：对缓存命中的回答做<strong>抽样核对</strong>、监控“内容已变但仍答旧值”的<strong>投诉 / 点踩率</strong>，"
+            "并把易过期的问题纳入回归评测——<strong>省钱不能以答错为代价</strong>。",
+            "🔑 <strong>Key: layer by “safety” — the embedding cache is safest and goes first; LLM / "
+            "retrieval-response caches get TTL + invalidation by each question's volatility; prove savings with cache "
+            "hit-rate + cost-per-question, and guard freshness with stale-content spot-checks / complaint rate.</strong> "
+            "(1) <strong>Layering</strong>: the <strong>embedding cache</strong> should go first — vectors only change "
+            "with <strong>text</strong>, <code>IngestionCache</code> invalidates naturally by input hash, almost no "
+            "staleness risk; the <strong>LLM-response / retrieval-response caches</strong> have the biggest payoff "
+            "(they skip generation) but <strong>answers can go stale</strong>, so be careful. (2) <strong>Hit-rate vs "
+            "freshness</strong>: give time-sensitive questions (“today's stock”, “current balance”) a <strong>short "
+            "TTL or no cache</strong>, and low-volatility ones (“company address”, “product spec”) a <strong>long "
+            "life</strong>; the moment a doc updates, <strong>invalidate related entries</strong> so old answers don't "
+            "linger. (3) <strong>Proving savings</strong>: watch <strong>cache hit-rate</strong> (how many requests "
+            "are free) and <strong>average cost per question / p50 latency</strong> (should drop noticeably on hits). "
+            "(4) <strong>Guarding users</strong>: <strong>spot-check</strong> cached answers, monitor the "
+            "<strong>complaint / thumbs-down rate</strong> for “content changed but old value still served”, and add "
+            "staleness-prone questions to the regression evals — <strong>savings must never come at the cost of wrong "
+            "answers</strong>."),
+         "fig": d.grid(
+            [L("缓存层", "Cache layer"), L("命中省什么", "A hit saves"), L("新鲜度风险 / 怎么管", "Staleness risk / how to manage")],
+            [
+                [L("embedding 缓存", "Embedding cache"), L("重复向量化（摄取 / 重建）", "repeat vectorization (ingest / rebuild)"),
+                 L("最低：按输入哈希天然失效", "lowest: invalidates by input hash")],
+                [L("LLM 响应缓存", "LLM-response cache"), L("重复生成的钱 + 那几秒延迟", "repeat generation cost + seconds of latency"),
+                 L("中高：配 TTL，文档变就失效", "med-high: set TTL, invalidate on doc change")],
+                [L("检索-响应缓存", "Retrieval-response cache"), L("整条“检索 + 合成”链", "the whole “retrieve + synthesize” chain"),
+                 L("最高：强时效问题短 TTL 或不缓存", "highest: short TTL or no cache for volatile questions")],
+            ],
+            caption=L(
+                "三层缓存的省与险：越靠外命中省得越多，但过期风险也越大——embedding 最安全，检索-响应最需 TTL + 失效兜底",
+                "Each cache layer's savings vs risk: outer layers save more per hit but go stale more easily — embedding is safest, retrieval-response most needs TTL + invalidation")),
+        },
+    ],
 }
