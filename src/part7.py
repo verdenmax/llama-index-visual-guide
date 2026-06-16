@@ -484,6 +484,236 @@ LESSON_28 = (
         "</strong>.",
     ))
 )
-LESSON_29 = _skeleton("embed", "多模态 RAG", "multimodal RAG")
+LESSON_29 = (
+    c.pipeline("embed")
+    + c.lead(L(
+        "前面所有检索都是“<strong>文字找文字</strong>”：把问题和文本块塞进同一个向量空间，取回最相似的片段。可现实里"
+        "大量知识<strong>长在图里</strong>——架构图、仪表盘截图、产品照、扫描的电路图。只把它们 OCR / 配文字成纯文本，"
+        "<strong>视觉细节就丢了</strong>（“这张图里设备有几个接口”光靠文字答不出）。<strong>多模态 RAG</strong> 换一种"
+        "存法：用<strong>多模态 embedding</strong> 把图和文映进<strong>同一个向量空间</strong>，于是能“<strong>用文字"
+        "查图、用图查图</strong>”；检索时图和文一起召回，再交给一个<strong>看得见图的多模态 LLM</strong> 看着图作答。"
+        "一句话：先让图文“<strong>坐标统一</strong>”，再让<strong>会看图的模型</strong>来回答。",
+        "Every retrieval so far has been “<strong>text finds text</strong>”: push the question and text chunks into one "
+        "vector space and fetch the most similar. But in the real world a lot of knowledge <strong>lives in images"
+        "</strong> — architecture diagrams, dashboard screenshots, product photos, scanned schematics. OCR-ing or "
+        "captioning them into plain text <strong>throws away the visual detail</strong> (“how many ports does the device "
+        "in this picture have” can't be answered from text alone). <strong>Multimodal RAG</strong> stores things "
+        "differently: a <strong>multimodal embedding</strong> maps images and text into the <strong>same vector space"
+        "</strong>, so you can “<strong>query images with text, or query images with images</strong>”; retrieval recalls "
+        "images and text together, then hands them to a <strong>vision-capable multimodal LLM</strong> that answers by "
+        "actually looking at the picture. In a line: <strong>unify the coordinates</strong> of image and text first, "
+        "then let a <strong>model that can see</strong> answer.",
+    ))
+    + c.section(
+        L("图文进同一向量空间：于是能“用文字查图、用图查图”",
+          "Image and text in one vector space: now you can “query images with text, or with images”"),
+        L(
+            "纯文本 RAG 能成立，靠的是一个前提：问题和文档块被<strong>同一个 embedding 模型</strong>映进<strong>同一个"
+            "向量空间</strong>，所以“算两段文字的余弦相似度、取最近邻”才有意义。多模态的关键，是把这个前提<strong>扩展"
+            "到图像</strong>：用<strong>图文对</strong>训练出来的<strong>多模态 embedding</strong>（最有名的是 CLIP），会"
+            "让“一张猫的照片”和“cat 这个词”落在<strong>彼此邻近的坐标</strong>上——图和文<strong>共用一套坐标系</strong>。"
+            "一旦共用，<strong>跨模态的最近邻就有了意义</strong>：拿“文字问题”的向量，去和<strong>图像向量</strong>比距离，"
+            "就能召回“画的就是这件事”的图片——这正是“<strong>用文字查图</strong>”的全部底气。反过来，如果图、文各在"
+            "<strong>两个互不相干的空间</strong>，跨空间比距离<strong>毫无意义</strong>，就像拿经纬度去和体温比大小。所以"
+            "“同一向量空间”不是一句口号，而是跨模态检索<strong>能不能成立的根</strong>。",
+            "Text-only RAG works because of one premise: the question and the doc chunks are mapped by the <strong>same "
+            "embedding model</strong> into the <strong>same vector space</strong>, so “cosine similarity between two "
+            "pieces of text, take the nearest” actually means something. The crux of going multimodal is <strong>"
+            "extending that premise to images</strong>: a <strong>multimodal embedding</strong> trained on <strong>"
+            "image–text pairs</strong> (the famous one is CLIP) makes “a photo of a cat” and “the word cat” land at "
+            "<strong>neighboring coordinates</strong> — image and text <strong>share one coordinate system</strong>. "
+            "Once shared, <strong>cross-modal nearest-neighbor becomes meaningful</strong>: take the vector of a "
+            "<strong>text question</strong>, measure its distance to <strong>image vectors</strong>, and you recall the "
+            "picture that “depicts exactly this” — which is the entire basis of “<strong>querying images with text"
+            "</strong>”. Conversely, if image and text sat in <strong>two unrelated spaces</strong>, measuring distance "
+            "across them would be <strong>meaningless</strong>, like comparing latitude to body temperature. So “the same "
+            "vector space” isn't a slogan; it's the <strong>root of whether cross-modal retrieval can exist at all"
+            "</strong>.",
+        ),
+    )
+    + d.compare2(
+        (L("文本路径", "Text path"), i18n.render(L("文字 → 文本 embedding", "text → text embedding"))),
+        (L("图像路径", "Image path"), i18n.render(L("图片 → 图像 embedding", "image → image embedding"))),
+        caption=L("两条路径映到<strong>同一向量空间</strong>，于是能跨模态互相检索",
+                  "both map into the <strong>same vector space</strong>, enabling cross-modal retrieval"),
+    )
+    + c.section(
+        L("建多模态索引：文本库、图像库各一，统一检索",
+          "Build a multimodal index: a text store and an image store, retrieved together"),
+        L(
+            "把图文放进同一空间后，索引也要相应地<strong>分两套向量库</strong>。<code>MultiModalVectorStoreIndex</code> "
+            "内部维护<strong>两个 store</strong>：一个存<strong>文本节点</strong>（段落，走文本 embedding），一个存"
+            "<strong>图像节点</strong>（<code>ImageNode</code>，走图像 embedding）。<code>SimpleDirectoryReader</code> 读"
+            "一个混合文件夹时，文本读成普通 <code>Document</code>、图片读成 <code>ImageDocument</code>，<code>"
+            "from_documents</code> 自动按类型<strong>分流进各自的 store</strong>。查询时两个 store <strong>都召回</strong>，"
+            "再把图、文候选<strong>合并</strong>交给下游——所以一次检索既可能捞回相关段落，也可能捞回相关图片。为什么要分"
+            "两套、而不是混成一堆？因为两种模态的<strong>向量来自不同的 embedder</strong>，分库便于各自索引、各自调 "
+            "top-k，最后在统一的检索结果里汇合。",
+            "Once image and text share a space, the index splits into <strong>two vector stores</strong> to match. "
+            "<code>MultiModalVectorStoreIndex</code> keeps <strong>two stores</strong> internally: one for <strong>text "
+            "nodes</strong> (passages, via the text embedding) and one for <strong>image nodes</strong> (<code>ImageNode"
+            "</code>, via the image embedding). When <code>SimpleDirectoryReader</code> reads a mixed folder, text "
+            "becomes ordinary <code>Document</code>s and pictures become <code>ImageDocument</code>s, and <code>"
+            "from_documents</code> automatically <strong>routes each type into its own store</strong>. At query time "
+            "<strong>both stores are queried</strong> and the image + text candidates are <strong>merged</strong> for the "
+            "downstream step — so one retrieval may pull back relevant passages and relevant pictures alike. Why two "
+            "stores rather than one mixed pile? Because the two modalities' <strong>vectors come from different embedders"
+            "</strong>; separate stores let each be indexed and top-k-tuned independently, then meet in one unified result "
+            "set.",
+        ),
+        c.compare_table(
+            [L("子库", "Sub-store"), L("存什么", "Holds"), L("用什么 embedding", "Embedded by")],
+            [
+                [L("文本 store", "Text store"), L("文本节点（段落）", "text nodes (passages)"),
+                 L("文本 embedding（沿用前课的标准文本嵌入，同属集成）", "text embedding (the standard text embedder from L08 — also an integration)")],
+                [L("图像 store", "Image store"), L("图像节点 <code>ImageNode</code>", "image nodes <code>ImageNode</code>"),
+                 L("图像 embedding（如 CLIP，走集成）", "image embedding (e.g. CLIP, an integration)")],
+            ],
+        ),
+    )
+    + c.code(
+        'from llama_index.core import SimpleDirectoryReader\n'
+        'from llama_index.core.indices import MultiModalVectorStoreIndex\n\n'
+        'documents = SimpleDirectoryReader("./mixed_docs").load_data()   # 文本 + 图片\n'
+        'index = MultiModalVectorStoreIndex.from_documents(documents)\n'
+        'qe = index.as_query_engine(llm=mm_llm)                          # mm_llm：多模态 LLM（走集成）\n'
+        'print(qe.query("图里这台设备的型号和接口数量是多少？"))',
+        caption=L("读混合文件夹建多模态索引：文本/图像各进一个 store，查询交多模态 LLM 看图作答",
+                  "Build a multimodal index from a mixed folder: text/images go to separate stores; the query hands it to a multimodal LLM to read the picture"),
+    )
+    + c.source_ref(
+        "indices/multi_modal/base.py", "MultiModalVectorStoreIndex",
+        L("文本与图像各建向量库，统一检索。", "separate text/image vector stores, retrieved together."),
+    )
+    + c.source_ref(
+        "llama-index-embeddings-clip", "ClipEmbedding",
+        L("CLIP 图像 embedding 在 core 之外的<strong>集成包</strong>里——core 只给抽象；作答的视觉 LLM 同样是外部集成。",
+          "the CLIP image embedding lives in an <strong>integration package</strong> outside core — core only ships the abstractions; the vision LLM is likewise an external integration."),
+    )
+    + c.section(
+        L("检索件 + 生成件，都要换成多模态版",
+          "Both the retrieval side and the generation side must go multimodal"),
+        L(
+            "把一套纯文本 RAG 升级成多模态，要<strong>同时换两个件</strong>，缺一不可。① <strong>检索件</strong>："
+            "embedding 必须是<strong>多模态</strong>的，图片才能被编码进那个共享空间、被文字查到——这一步落在<strong>图像 "
+            "embedding</strong>（如 CLIP）和索引里的<strong>图像 store</strong> 上。② <strong>生成件</strong>：作答的 LLM "
+            "必须<strong>看得见图</strong>——检索召回的是图片节点，得交给一个<strong>多模态 LLM</strong>（视觉模型），它把"
+            "图像当输入<strong>直接“看”</strong>着回答；换成纯文本 LLM，召回的图它根本读不了，多模态就白做了。还要分清"
+            "<strong>哪是 core、哪是集成</strong>：抽象层是 core 的——<code>MultiModalLLM</code> 基类、<code>"
+            "MultiModalVectorStoreIndex</code>、<code>ImageNode</code> 都在核心里；但<strong>具体能跑的模型</strong>——"
+            "一个<strong>会看图的多模态 LLM</strong>（如 GPT-4o / Gemini）、CLIP 图像 embedding——都在 core 之外的<strong>集成包</strong>，"
+            "要按需另装。core 给“<strong>插槽</strong>”，模型是“<strong>插件</strong>”。",
+            "Upgrading a text-only RAG to multimodal means swapping <strong>two components at once</strong>, neither "
+            "optional. (1) <strong>Retrieval side</strong>: the embedding must be <strong>multimodal</strong> so images "
+            "get encoded into that shared space and become findable by text — this rides on the <strong>image embedding"
+            "</strong> (e.g. CLIP) and the index's <strong>image store</strong>. (2) <strong>Generation side</strong>: the "
+            "answering LLM must be able to <strong>see the image</strong> — retrieval returns image nodes, which must go "
+            "to a <strong>multimodal LLM</strong> (a vision model) that takes the image as input and <strong>actually "
+            "“looks”</strong> to answer; swap in a text-only LLM and it simply can't read the recalled pictures, wasting "
+            "the whole effort. Keep <strong>what is core vs an integration</strong> straight: the abstraction layer is "
+            "core — the <code>MultiModalLLM</code> base class, <code>MultiModalVectorStoreIndex</code> and <code>"
+            "ImageNode</code> all live in core; but the <strong>concrete runnable models</strong> — a "
+            "<strong>vision-capable multimodal LLM</strong> (e.g. GPT-4o / Gemini), the CLIP image embedding — sit in <strong>integration packages</strong> "
+            "outside core and are installed as needed. Core gives the “<strong>sockets</strong>”, the models are the "
+            "“<strong>plugins</strong>”.",
+        ),
+    )
+    + d.flow([
+        ("q", L("问题（文/图）", "query (text/img)")),
+        ("ret", L("跨模态检索", "cross-modal retrieve"), L("图+文都召回", "images + text")),
+        ("mm", L("多模态 LLM", "multimodal LLM"), L("看图作答", "reads images")),
+        ("ans", L("答案", "answer")),
+    ], caption=L("多模态 RAG：检索召回图与文，再交会看图的 LLM 合成",
+                 "multimodal RAG: retrieve images+text, then a vision-capable LLM synthesizes"))
+    + c.section(
+        L("什么时候值得上多模态、什么时候不必",
+          "When multimodal is worth it, and when it isn't"),
+        L(
+            "判断只看一件事：<strong>答案到底在不在“像素里”</strong>。值得上的典型场景，是信息<strong>只长在图里</strong>"
+            "且文字旁注补不全的：读<strong>图表 / 仪表盘截图</strong>取趋势与数值、看<strong>产品照</strong>认型号与接口、"
+            "查<strong>电路图 / 架构图 / 扫描件</strong>里的连接与标注——这些问题“看图才能答”，纯文本 RAG <strong>结构上"
+            "答不了</strong>。反过来，如果图只是<strong>装饰</strong>、或它的信息<strong>本就写在正文 / 标题 / 配文里"
+            "</strong>，那纯文本检索<strong>又快又便宜</strong>，没必要上多模态。成本也要算清：多模态 embedding 和视觉 "
+            "LLM <strong>更贵更慢</strong>、图像 store 也更占资源。还有一种<strong>降级方案</strong>——先把图 OCR / 配成 "
+            "caption 文字、再做纯文本 RAG：便宜，但<strong>丢视觉细节</strong>（布局、颜色、相对位置、图里没写成字的东西）。"
+            "实务里的稳妥姿态是<strong>默认文本优先、图像按需启用</strong>：只对“确有图、且要看图”的查询和文档走多模态。",
+            "The test is one thing: <strong>does the answer actually live “in the pixels”</strong>. The cases worth it "
+            "are where information <strong>exists only in the image</strong> and no text caption fully covers it: reading "
+            "<strong>charts / dashboard screenshots</strong> for trends and values, reading a <strong>product photo"
+            "</strong> for a model number and ports, checking a <strong>schematic / architecture diagram / scan</strong> "
+            "for connections and labels — these need you to “look at the picture”, and text-only RAG <strong>structurally "
+            "can't answer</strong> them. Conversely, if the image is merely <strong>decorative</strong>, or its "
+            "information is <strong>already written in the body / heading / caption</strong>, then text-only retrieval is "
+            "<strong>faster and cheaper</strong> and multimodal isn't needed. Count the cost too: multimodal embeddings "
+            "and vision LLMs are <strong>pricier and slower</strong>, and an image store consumes more resources. There's "
+            "also a <strong>downgrade path</strong> — OCR/caption the image into text first, then do text-only RAG: "
+            "cheap, but it <strong>loses visual detail</strong> (layout, color, relative position, anything not written "
+            "out in the picture). The safe production stance is <strong>text-first by default, images enabled on demand"
+            "</strong>: route only the queries and documents that “truly have an image and need to look at it” through "
+            "the multimodal path.",
+        ),
+    )
+    + c.analogy(L(
+        "想象给每张照片和每个词都标上<strong>同一张地图上的坐标</strong>：一旦“猫的照片”和“猫”这个词被放到地图上"
+        "<strong>同一个点</strong>，你就能<strong>站在词上、找最近的照片</strong>——这就是“用文字查图”。要是照片用的是"
+        "一张地图、文字用的是另一张<strong>互不对齐</strong>的地图，那“谁离谁近”就<strong>无从谈起</strong>。多模态 "
+        "embedding 干的就是“<strong>把图和字标到同一张地图上</strong>”这件事；剩下的检索，不过是<strong>在同一张图上找"
+        "最近的点</strong>。",
+        "Picture giving every photo and every word <strong>coordinates on the same map</strong>: once “a photo of a cat” "
+        "and the word “cat” are placed at the <strong>same spot</strong>, you can <strong>stand on the word and find the "
+        "nearest photo</strong> — that's “querying images with text”. If photos used one map and words used another, "
+        "<strong>misaligned</strong> map, then “who is near whom” is <strong>meaningless</strong>. A multimodal "
+        "embedding does exactly the “<strong>plot images and words on one shared map</strong>” part; the retrieval that "
+        "follows is just <strong>finding the nearest point on that one map</strong>.",
+    ))
+    + c.key_points([
+        L("多模态 RAG 的根：用<strong>多模态 embedding</strong>（如 CLIP）把图和文映进<strong>同一向量空间</strong>，"
+          "跨模态最近邻才有意义，于是能“<strong>用文字查图、用图查图</strong>”。",
+          "The root of multimodal RAG: a <strong>multimodal embedding</strong> (e.g. CLIP) maps images and text into the "
+          "<strong>same vector space</strong>, making cross-modal nearest-neighbor meaningful — so you can “<strong>query "
+          "images with text, or with images</strong>”."),
+        L("<code>MultiModalVectorStoreIndex</code> 内部<strong>文本 store + 图像 store 各一</strong>，<code>"
+          "from_documents</code> 按类型分流（文本 → <code>Document</code>、图片 → <code>ImageDocument</code>），查询时"
+          "<strong>两库都召回再合并</strong>。",
+          "<code>MultiModalVectorStoreIndex</code> keeps a <strong>text store and an image store</strong>; <code>"
+          "from_documents</code> routes by type (text → <code>Document</code>, image → <code>ImageDocument</code>), and a "
+          "query <strong>recalls from both stores and merges</strong>."),
+        L("升级要<strong>同时换两个件</strong>：检索件换<strong>多模态 embedding</strong>，生成件换<strong>看得见图的"
+          "多模态 LLM</strong>；纯文本 LLM 读不了召回的图。",
+          "Upgrading swaps <strong>two components at once</strong>: a <strong>multimodal embedding</strong> on the "
+          "retrieval side and a <strong>vision-capable multimodal LLM</strong> on the generation side; a text-only LLM "
+          "can't read the recalled images."),
+        L("<strong>core 给抽象、集成给模型</strong>：<code>MultiModalVectorStoreIndex</code> / <code>MultiModalLLM"
+          "</code> / <code>ImageNode</code> 在 core；<strong>会看图的多模态 LLM</strong>（如 GPT-4o / Gemini）、CLIP embedding 在<strong>集成包"
+          "</strong>。按需上多模态——<strong>答案在像素里才值得</strong>，否则文本优先更省。",
+          "<strong>Core ships abstractions, integrations ship models</strong>: <code>MultiModalVectorStoreIndex</code> / "
+          "<code>MultiModalLLM</code> / <code>ImageNode</code> are in core; a <strong>vision-capable multimodal LLM</strong> (e.g. GPT-4o / Gemini) and the CLIP "
+          "embedding are in <strong>integration packages</strong>. Go multimodal on demand — <strong>worth it only when "
+          "the answer is in the pixels</strong>, otherwise text-first is cheaper."),
+    ])
+    + c.design_highlight(L(
+        "多模态 RAG 的精髓，是把“<strong>找相似</strong>”从纯文本扩展到图文之间，而这一切的支点只有一个：<strong>图和文"
+        "落在同一个向量空间</strong>。有了这层<strong>跨模态对齐</strong>，“用文字查图”才从不可能变成一次普通的最近邻；"
+        "没有它，图像向量和文本向量就是两套不能互比的坐标。工程上要记住三件事：① <strong>两个件一起换</strong>——检索端"
+        "的多模态 embedding 让图<strong>进得了空间</strong>，生成端的视觉 LLM 让模型<strong>看得懂召回的图</strong>，缺一"
+        "边都不成；② <strong>分清 core 与集成</strong>——core 只给 <code>MultiModalVectorStoreIndex</code> / <code>"
+        "MultiModalLLM</code> 这层抽象插槽，真正能跑的视觉模型和 CLIP embedding 是外部集成，别把它们当核心内置；③ "
+        "<strong>按需启用</strong>——多模态更贵更慢，只有当“<strong>答案确实在像素里</strong>”时才值得，否则文本优先、"
+        "必要时再用 caption 降级。一句话：<strong>先让图文坐标统一，再让会看图的模型来回答</strong>。",
+        "The essence of multimodal RAG is extending “<strong>find similar</strong>” from pure text to between images and "
+        "text, and the whole thing pivots on one fulcrum: <strong>images and text landing in the same vector space"
+        "</strong>. With that <strong>cross-modal alignment</strong>, “querying images with text” turns from impossible "
+        "into an ordinary nearest-neighbor; without it, image vectors and text vectors are two coordinate systems you "
+        "can't compare. Three engineering points: (1) <strong>swap both components together</strong> — the "
+        "retrieval-side multimodal embedding lets images <strong>enter the space</strong>, the generation-side vision "
+        "LLM lets the model <strong>understand the recalled images</strong>, and neither alone suffices; (2) <strong>keep "
+        "core vs integrations straight</strong> — core ships only the abstraction sockets like <code>"
+        "MultiModalVectorStoreIndex</code> / <code>MultiModalLLM</code>, while the actual runnable vision models and CLIP "
+        "embedding are external integrations, not core built-ins; (3) <strong>enable on demand</strong> — multimodal is "
+        "pricier and slower, worth it only when “<strong>the answer is truly in the pixels</strong>”, otherwise go "
+        "text-first and fall back to captioning when needed. In a line: <strong>unify the coordinates of image and text "
+        "first, then let a model that can see answer</strong>.",
+    ))
+)
 LESSON_30 = _skeleton("retrieve", "查询分解（Sub-Question）", "query decomposition (Sub-Question)")
 LESSON_31 = _skeleton("synthesize", "结构化输出", "structured outputs")

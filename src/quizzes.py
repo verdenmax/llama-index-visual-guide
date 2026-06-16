@@ -630,6 +630,34 @@ QUIZZES = {
                    "Why must you be especially careful with <code>PandasQueryEngine</code>? (Hint: <strong>it executes "
                    "LLM-generated Python / prompt injection · over-reach / sandbox · read-only · least privilege</strong>)")],
     },
+    "29-multimodal-rag.html": {
+        "mcq": [{
+            "q": L("多模态 RAG 能“用文字查图”的根本前提是什么？",
+                   "What is the fundamental prerequisite that lets multimodal RAG “query images with text”?"),
+            "opts": [
+                L("图和文被映射到同一个向量空间", "images and text are mapped into the same vector space"),
+                L("先把每张图用 caption 转成文字再做纯文本检索",
+                  "caption every image into text first, then do text-only retrieval"),
+                L("换一个更大参数量的 LLM", "switch to an LLM with more parameters"),
+                L("关闭 rerank 重排", "turn off reranking"),
+            ],
+            "answer": 0,
+            "why": L("正确的是“图和文被映射到同一个向量空间”：跨模态检索的前提，是图、文的 embedding 落在<strong>同一空间</strong>，"
+                     "才能拿文字向量去和图像向量比距离、互相召回。“先把图用 caption 转成文字再做纯文本检索”是另一种<strong>降级方案"
+                     "</strong>（能跑，但丢视觉细节），并没有让图文向量对齐；“换更大参数量的 LLM”和“关闭 rerank 重排”都在调别的环节，"
+                     "<strong>都不解决跨模态对齐</strong>这个根本前提。",
+                     "The right one is “images and text are mapped into the same vector space”: cross-modal retrieval hinges on "
+                     "image and text embeddings sitting in <strong>one shared space</strong>, so a text vector can be "
+                     "distance-compared to image vectors and recall them. “Caption images into text first, then do text-only "
+                     "retrieval” is a <strong>downgrade</strong> (it runs, but loses visual detail) and never aligns the "
+                     "image/text vectors; “use a larger LLM” and “turn off reranking” tweak other stages and <strong>none "
+                     "address the cross-modal alignment</strong> that is the real prerequisite."),
+        }],
+        "open": [L("纯文字 RAG 遇到“这张架构图说明了什么”为什么无能为力、多模态怎么解决？（提示：<strong>视觉细节 / 同一向量空间 / "
+                   "会看图的 LLM</strong>）",
+                   "Why is text-only RAG helpless on “what does this architecture diagram show”, and how does multimodal solve "
+                   "it? (Hint: <strong>visual detail / same vector space / a vision-capable LLM</strong>)")],
+    },
 }
 
 

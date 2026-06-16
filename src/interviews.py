@@ -1552,4 +1552,93 @@ INTERVIEW = {
             "llama-index-experimental</code> marked “secure environments only”, so avoid it for external-facing use."),
         },
     ],
+    "29-multimodal-rag.html": [
+        {"q": L(
+            "多模态 RAG 的 embedding 和视觉 LLM 都<strong>更贵更慢</strong>，图像 store 也更占资源。你会怎么<strong>权衡</strong>，"
+            "别让每条查询都付这份钱？",
+            "A multimodal RAG's embeddings and vision LLM are both <strong>pricier and slower</strong>, and the image store "
+            "costs more. How would you <strong>weigh</strong> it so not every query pays that bill?"),
+         "answer": L(
+            "🔑 <strong>重点：默认<em>文本优先</em>、图像<em>按需启用</em>——只对“确有图、且要看图才能答”的查询和文档走多模态，"
+            "别让每条请求都付视觉模型的钱。</strong>① <strong>按文档分流</strong>：入库时区分“图承载信息”的文档（图表、截图、"
+            "产品图）和“纯文字”文档，只给前者建图像 store、跑多模态 embedding；② <strong>按查询分流</strong>：用路由（回想 "
+            "L18）判断这条问题要不要看图——要，才召回图片、调多模态 LLM，否则走更快更省的纯文本路径；③ <strong>降级兜底"
+            "</strong>：很多场景先把图 OCR / 配 caption 成文字、再做文本 RAG 就够了，只在 caption 丢了关键视觉细节时才升级到真"
+            "多模态；④ <strong>用数字定阈值</strong>：统计“真正需要看图”的查询占比，对比多模态 vs 文本在这批问题上的答对率增量，"
+            "是否抵得过多出的延迟与成本。一句话：<strong>多模态是按需的精装件，不是默认全开</strong>。",
+            "🔑 <strong>Key: default to <em>text-first</em> and <em>enable images on demand</em> — route only the queries and "
+            "documents that “truly have an image and need to look at it” through the multimodal path; don't make every "
+            "request pay for a vision model.</strong> (1) <strong>Route by document</strong>: at ingest, separate "
+            "“image-bearing” docs (charts, screenshots, product photos) from “text-only” ones, and build an image store / "
+            "run multimodal embeddings only for the former; (2) <strong>route by query</strong>: use routing (recall L18) "
+            "to decide whether a question needs to look at an image — if so, recall pictures and call the multimodal LLM, "
+            "otherwise take the faster, cheaper text-only path; (3) <strong>downgrade fallback</strong>: in many cases "
+            "OCR/captioning images into text and doing text RAG is enough, upgrading to true multimodal only when "
+            "captioning drops key visual detail; (4) <strong>set the threshold with numbers</strong>: measure the share of "
+            "queries that genuinely need the image, and compare multimodal vs text answer-accuracy lift on that subset "
+            "against the extra latency and cost. In a line: <strong>multimodal is an on-demand upgrade, not on by "
+            "default</strong>."),
+        },
+        {"q": L(
+            "评估多模态 RAG 和评估纯文本 RAG 有什么<strong>不同</strong>？你怎么<strong>证明</strong>多模态确实带来了价值？",
+            "How does evaluating a multimodal RAG <strong>differ</strong> from evaluating a text-only one? How do you "
+            "<strong>prove</strong> multimodal actually adds value?"),
+         "answer": L(
+            "🔑 <strong>重点：金标问答里必须包含一批“靠图才能答”的题——答案只在图里、文字旁注补不全，否则多模态和纯文本会打平，"
+            "测不出它的价值（呼应 L19 评估、L22 回归集）。</strong>① <strong>题目要对路</strong>：除常规问答外，专门设计“读图表取"
+            "数值”“认产品图型号”“看架构图连接”这类<strong>必须看图</strong>的题，纯文本基线在这批题上应当明显答不好；② <strong>"
+            "分轨看指标</strong>：检索侧看“相关图片有没有被召回”（图像命中率），生成侧看视觉 LLM 读图后的 Faithfulness / 正确率，"
+            "别把两者混成一个分；③ <strong>和文本基线对照</strong>：同一批题跑“纯文本 RAG” vs “多模态 RAG”，用答对率的<strong>"
+            "增量</strong>证明多模态值这个钱；④ <strong>接回归闸</strong>：把这批“看图题”固定成回归集，挡住“换了 embedding / 模型"
+            "把读图能力悄悄弄坏”的退化。一句话：<strong>测不出差异，往往是题目里根本没有需要看图的题</strong>。",
+            "🔑 <strong>Key: the gold Q&amp;A set must include a batch of “only answerable from the image” questions — the "
+            "answer lives only in the picture and no caption covers it — otherwise multimodal and text-only tie and you "
+            "can't measure the value (echoing L19's evaluation, L22's regression set).</strong> (1) <strong>Questions on "
+            "point</strong>: beyond ordinary Q&amp;A, deliberately design “read a value off a chart”, “identify a product "
+            "model from a photo”, “trace connections in an architecture diagram” items that <strong>require looking at the "
+            "image</strong>, on which a text-only baseline should clearly do poorly; (2) <strong>metrics by track</strong>: "
+            "on the retrieval side check “were the relevant images recalled” (image hit-rate), on the generation side check "
+            "the vision LLM's Faithfulness / correctness after reading the image — don't blend them into one score; (3) "
+            "<strong>compare against a text baseline</strong>: run “text-only RAG” vs “multimodal RAG” on the same set and "
+            "use the <strong>accuracy lift</strong> to prove multimodal earns its cost; (4) <strong>wire a regression "
+            "gate</strong>: freeze those “look-at-the-image” questions into a regression set to block “swapping the "
+            "embedding / model quietly broke image reading” regressions. In a line: <strong>if you can't measure a "
+            "difference, usually the set has no questions that actually need the image</strong>."),
+        },
+        {"q": L(
+            "有人说“把图都转成 caption 文字、再做纯文本 RAG”就够了，不必上真多模态。你怎么看这个取舍？",
+            "Someone argues “just caption all images into text and do text-only RAG” is enough, no need for true "
+            "multimodal. How do you see this trade-off?"),
+         "answer": L(
+            "🔑 <strong>重点：caption / OCR 降级法便宜又好维护，能覆盖“信息一句话能说清”的图；但把图压成文字就丢了视觉细节，所以"
+            "选型取决于你的图是“配文字就够”还是“非看原图不可”。</strong>① <strong>caption 够用的场景</strong>：图里的信息本就能被"
+            "一段描述覆盖（写着规格的表格、一句话能说清的示意图），转成文字后纯文本 RAG 又快又省，还能复用现成的文本检索栈；② "
+            "<strong>必须真多模态的场景</strong>：答案藏在<strong>布局 / 颜色 / 相对位置 / 没写成字的细节</strong>里（电路怎么连、"
+            "仪表盘哪条线在涨、产品照上有几个接口），caption 几乎必然漏，得让图进共享向量空间、再交视觉 LLM 直接看；③ <strong>"
+            "成本对照</strong>：caption 省掉了图像 embedding 和视觉 LLM 的开销，但 caption 本身要花一次模型调用且质量参差；真多模态"
+            "更贵更慢但信息无损。一句话：<strong>caption 是有损压缩，能不能用先问“丢掉的那部分要不要紧”</strong>。",
+            "🔑 <strong>Key: the caption/OCR downgrade is cheap and easy to maintain and covers images whose “information "
+            "fits in a sentence”; but squashing an image into text drops visual detail, so the choice depends on whether "
+            "your images are “fine with a caption” or “must be seen in the original”.</strong> (1) <strong>When captioning "
+            "suffices</strong>: the image's information is already coverable by a description (a spec table, a "
+            "one-sentence schematic), so converting to text and doing text RAG is fast and cheap and reuses your existing "
+            "text retrieval stack; (2) <strong>when true multimodal is required</strong>: the answer hides in <strong>"
+            "layout / color / relative position / details never written as words</strong> (how a circuit connects, which "
+            "line on a dashboard is rising, how many ports are on a product photo), where captioning almost certainly "
+            "misses, so the image must enter the shared vector space and go to a vision LLM to be seen directly; (3) "
+            "<strong>cost contrast</strong>: captioning saves the image-embedding and vision-LLM cost, but the caption "
+            "itself takes a model call of uneven quality; true multimodal is pricier and slower but lossless. In a line: "
+            "<strong>captioning is lossy compression — first ask “does the part it drops matter”</strong>."),
+         "fig": d.grid(
+            [L("方案", "Approach"), L("成本/延迟", "Cost/latency"), L("视觉细节", "Visual detail"), L("最适合", "Best for")],
+            [
+                [L("caption → 文本 RAG", "caption → text RAG"), L("低", "low"), L("丢失", "lost"),
+                 L("图能被一句话说清", "image summarizable in a sentence")],
+                [L("真多模态 embedding", "true multimodal embedding"), L("高", "high"), L("保留", "kept"),
+                 L("答案藏在像素里", "answer hidden in the pixels")],
+            ],
+            caption=L("两条路线的取舍：caption 是有损压缩、便宜但丢细节；真多模态信息无损但更贵更慢",
+                      "Two routes: captioning is lossy — cheap but drops detail; true multimodal is lossless but pricier and slower")),
+        },
+    ],
 }
