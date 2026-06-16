@@ -9,6 +9,8 @@ import part3
 import part4
 import part5
 import part6
+import part7
+import part8
 import glossary
 
 CONTENT = {
@@ -38,5 +40,14 @@ CONTENT = {
     "24-cost-latency.html": part6.LESSON_24,
     "25-security.html": part6.LESSON_25,
     "26-agents-workflows.html": part6.LESSON_26,
-    "27-glossary.html": glossary.LESSON_21,
+    "27-graph-rag.html": part7.LESSON_27,
+    "28-structured-data.html": part7.LESSON_28,
+    "29-multimodal-rag.html": part7.LESSON_29,
+    "30-sub-question.html": part7.LESSON_30,
+    "31-structured-outputs.html": part7.LESSON_31,
+    "32-multi-agent.html": part8.LESSON_32,
+    "33-human-in-the-loop.html": part8.LESSON_33,
+    "34-serving.html": part8.LESSON_34,
+    "35-finetuning-embeddings.html": part8.LESSON_35,
+    "36-glossary.html": glossary.LESSON_21,
 }

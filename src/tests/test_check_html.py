@@ -67,5 +67,5 @@ def test_two_figures_clears_the_figure_warning():
 
 
 def test_glossary_is_exempt_from_figure_warning():
-    issues = check_html.check_lesson("27-glossary.html", NO_FIG)
+    issues = check_html.check_lesson("36-glossary.html", NO_FIG)
     assert not any("figures" in i[2] for i in issues)

@@ -42,7 +42,9 @@ P3 = L("第三部分 · 查询路径", "Part 3 · Query Path")
 P4 = L("第四部分 · 进阶", "Part 4 · Advanced")
 P5 = L("第五部分 · 实战", "Part 5 · Capstone")
 P6PROD = L("第六部分 · 生产进阶", "Part 6 · Production")
-P7REF = L("第七部分 · 速查", "Part 7 · Reference")
+P7BEYOND = L("第七部分 · 超越文本 RAG", "Part 7 · Beyond Plain-Text RAG")
+P8AGENT = L("第八部分 · Agentic 进阶与上线", "Part 8 · Agentic Depth &amp; Shipping")
+P9REF = L("第九部分 · 速查", "Part 9 · Reference")
 
 PAGES = [
     ("01-what-is-llamaindex.html", L("LlamaIndex 与 RAG 是什么", "What is LlamaIndex &amp; RAG"), P1),
@@ -71,7 +73,16 @@ PAGES = [
     ("24-cost-latency.html", L("成本与延迟工程", "Cost &amp; Latency"), P6PROD),
     ("25-security.html", L("安全与防护", "Security &amp; Guardrails"), P6PROD),
     ("26-agents-workflows.html", L("Agent 与 Workflows", "Agents &amp; Workflows"), P6PROD),
-    ("27-glossary.html", L("术语表 · 概念索引", "Glossary &amp; Concept Index"), P7REF),
+    ("27-graph-rag.html", L("图谱 RAG", "Graph RAG"), P7BEYOND),
+    ("28-structured-data.html", L("结构化数据查询", "Querying Structured Data"), P7BEYOND),
+    ("29-multimodal-rag.html", L("多模态 RAG", "Multimodal RAG"), P7BEYOND),
+    ("30-sub-question.html", L("查询分解 Sub-Question", "Query Decomposition"), P7BEYOND),
+    ("31-structured-outputs.html", L("结构化输出", "Structured Outputs"), P7BEYOND),
+    ("32-multi-agent.html", L("多智能体与控制流", "Multi-Agent Workflows"), P8AGENT),
+    ("33-human-in-the-loop.html", L("人在回路 HITL", "Human-in-the-Loop"), P8AGENT),
+    ("34-serving.html", L("上线服务", "Serving Your RAG"), P8AGENT),
+    ("35-finetuning-embeddings.html", L("微调 Embedding", "Fine-Tuning Embeddings"), P8AGENT),
+    ("36-glossary.html", L("术语表 · 概念索引", "Glossary &amp; Concept Index"), P9REF),
 ]
 
 INDEX_FILE = "index.html"
@@ -103,7 +114,16 @@ SUBTITLES = {
     "24-cost-latency.html": L("缓存 · 异步 · 流式", "caching · async · streaming"),
     "25-security.html": L("多租户隔离 · PII · 注入", "multi-tenant · PII · injection"),
     "26-agents-workflows.html": L("Workflow · FunctionAgent · 工具", "Workflow · FunctionAgent · tools"),
-    "27-glossary.html": L("术语一句话查 + 跳转", "one-line term lookup + jump"),
+    "27-graph-rag.html": L("实体-关系多跳检索", "multi-hop over entities and relations"),
+    "28-structured-data.html": L("文字转 SQL / 表格分析", "text-to-SQL and table analysis"),
+    "29-multimodal-rag.html": L("图文同空间检索", "text and images in one space"),
+    "30-sub-question.html": L("拆子问题再汇总", "split into sub-questions, then combine"),
+    "31-structured-outputs.html": L("LLM 直出 Pydantic 对象", "LLM emits typed objects"),
+    "32-multi-agent.html": L("多 agent 分工 + 工作流控制流", "agents with handoffs; workflow control flow"),
+    "33-human-in-the-loop.html": L("高风险动作前人工确认", "human confirmation before risky actions"),
+    "34-serving.html": L("把 RAG 包成服务上线", "wrap RAG as a service"),
+    "35-finetuning-embeddings.html": L("用 QA 对微调领域 embedding", "fine-tune domain embeddings with QA pairs"),
+    "36-glossary.html": L("术语一句话查 + 跳转", "one-line term lookup + jump"),
 }
 
 CSS = r"""
