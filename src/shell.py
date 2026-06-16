@@ -78,7 +78,7 @@ PAGES = [
     ("29-multimodal-rag.html", L("多模态 RAG", "Multimodal RAG"), P7BEYOND),
     ("30-sub-question.html", L("查询分解 Sub-Question", "Query Decomposition"), P7BEYOND),
     ("31-structured-outputs.html", L("结构化输出", "Structured Outputs"), P7BEYOND),
-    ("32-multi-agent.html", L("多智能体与控制流", "Multi-Agent Workflows"), P8AGENT),
+    ("32-multi-agent.html", L("多智能体与控制流", "Multi-Agent &amp; Control Flow"), P8AGENT),
     ("33-human-in-the-loop.html", L("人在回路 HITL", "Human-in-the-Loop"), P8AGENT),
     ("34-serving.html", L("上线服务", "Serving Your RAG"), P8AGENT),
     ("35-finetuning-embeddings.html", L("微调 Embedding", "Fine-Tuning Embeddings"), P8AGENT),

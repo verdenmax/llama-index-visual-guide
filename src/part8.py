@@ -118,12 +118,14 @@ LESSON_32 = (
         "from llama_index.core.agent.workflow import AgentWorkflow, FunctionAgent\n\n"
         'research = FunctionAgent(name="research", description="查资料的研究员", tools=[search_tool], llm=llm,\n'
         '                         system_prompt="查资料，把要点交给 writer", can_handoff_to=["write"])\n'
-        'write = FunctionAgent(name="write", description="根据要点写答复的写手", tools=[], llm=llm,\n'
-        '                      system_prompt="据要点写成答复")\n'
-        'workflow = AgentWorkflow(agents=[research, write], root_agent="research")\n'
+        'write = FunctionAgent(name="write", description="根据要点写草稿的写手", tools=[], llm=llm,\n'
+        '                      system_prompt="据要点写成草稿，交给 reviewer", can_handoff_to=["review"])\n'
+        'review = FunctionAgent(name="review", description="复核定稿的把关人", tools=[], llm=llm,\n'
+        '                       system_prompt="复核草稿，通过则定稿", can_handoff_to=[])\n'
+        'workflow = AgentWorkflow(agents=[research, write, review], root_agent="research")\n'
         'resp = await workflow.run(user_msg="写一段关于 X-2000 的简报")',
-        caption=L("两个专精 agent + handoff：research 查完把任务交给 write；AgentWorkflow 编排，root_agent 是入口；多 agent 下每个都要 description（handoff 据此择人）",
-                  "Two specialized agents + handoff: research gathers, then hands the task to write; AgentWorkflow orchestrates, root_agent is the entry; in a multi-agent workflow each agent needs a description (handoff targets are chosen by it)"),
+        caption=L("三个专精 agent + handoff 链：research 查完交给 write 写草稿、write 再交给 review 复核定稿；AgentWorkflow 编排，root_agent 是入口；多 agent 下每个都要 description（handoff 据此择人）",
+                  "Three specialized agents + a handoff chain: research gathers and hands to write for a draft, write then hands to review to finalize; AgentWorkflow orchestrates, root_agent is the entry; in a multi-agent workflow each agent needs a description (handoff targets are chosen by it)"),
     )
     + c.source_ref(
         "agent/workflow/multi_agent_workflow.py", "AgentWorkflow",
