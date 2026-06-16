@@ -50,7 +50,7 @@
 - **图**：① `d.compare2`：文本路径 vs 图像路径（各自 embedding→同一空间）；② `d.flow`：图文混合检索 → 多模态 LLM 合成。
 
 **L30 查询分解（Sub-Question / 多文档）** — `c.pipeline("retrieve")`
-- **aha**：复杂/对比/跨源问题，单次 top-k 答不全——**拆成子问题**分别检索、再汇总。
+- **aha**：对比/跨源/**并行多部分**问题，单次 top-k 答不全——**拆成可并行的子问题**分别检索、再汇总。（注：依赖链——前一步答案喂下一步——属 Agent/L32，不是 SubQuestion）
 - **锚定**：`SubQuestionQueryEngine`（`query_engine/sub_question_query_engine.py`）、`QueryEngineTool`/`ToolMetadata`（`tools/`）。
 - **代码**：`SubQuestionQueryEngine.from_defaults(query_engine_tools=[QueryEngineTool(qe_A, ToolMetadata(...)), ...])`，问"对比 A 与 B"自动拆子问题。
 - **图**：① `d.vflow`：母问题→拆出子问 q1/q2→各自检索→汇总答；② `d.annot`：一个母问题节点 + 多个子问题 callouts。

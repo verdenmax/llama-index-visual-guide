@@ -371,7 +371,7 @@ print(qe.query("图里这台设备的型号和接口数量是多少？"))
 
 **Files:** Modify `src/part7.py` (`LESSON_30`), `src/quizzes.py`, `src/interviews.py`.
 
-- [ ] **Step 1: Replace `LESSON_30`** — `c.pipeline("retrieve")`. Sections: ① 痛点 — 对比/跨源/多步问题单次 top-k 答不全；② SubQuestion — 自动把母问题拆成子问题，每个路由到对应 `QueryEngineTool`，再汇总；③ 与 L18 区别 — L18 是"换更强检索器"，这里是"拆问题 + 多引擎编排"。`c.analogy`：像把一道复杂题拆成几个小题分别查资料，再合并。
+- [ ] **Step 1: Replace `LESSON_30`** — `c.pipeline("retrieve")`. Sections: ① 痛点 — 对比/跨源/并行多部分问题单次 top-k 答不全（注：真正的依赖链——前一步答案喂下一步——属 Agent/L32，SubQuestion 是单次并行拆解）；② SubQuestion — 自动把母问题拆成子问题，每个路由到对应 `QueryEngineTool`，再汇总；③ 与 L18 区别 — L18 是"换更强检索器"，这里是"拆问题 + 多引擎编排"。`c.analogy`：像把一道复杂题拆成几个小题分别查资料，再合并。
 
 - [ ] **Step 2: code① + source_ref** — verbatim:
 
