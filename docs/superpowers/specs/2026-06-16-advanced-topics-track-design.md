@@ -55,7 +55,7 @@
 - **代码**：`SubQuestionQueryEngine.from_defaults(query_engine_tools=[QueryEngineTool(qe_A, ToolMetadata(...)), ...])`，问"对比 A 与 B"自动拆子问题。
 - **图**：① `d.vflow`：母问题→拆出子问 q1/q2→各自检索→汇总答；② `d.annot`：一个母问题节点 + 多个子问题 callouts。
 
-**L31 结构化输出（Structured outputs）** — `c.pipeline("synth")`
+**L31 结构化输出（Structured outputs）** — `c.pipeline("synthesize")`
 - **aha**：别用正则 parse 自由文本——**直接让 LLM 吐 Pydantic 对象**，类型即契约，下游可直接用。
 - **锚定**：`LLMTextCompletionProgram`、`FunctionCallingProgram`（`program/`）、`llm.structured_predict(...)`（`llms/llm.py`）、配 `pydantic.BaseModel`。
 - **代码**：`program = LLMTextCompletionProgram.from_defaults(output_cls=MyModel, prompt_template_str=...)` → `obj = program(...)`；或 `llm.structured_predict(MyModel, prompt)`。
