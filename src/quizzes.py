@@ -814,6 +814,43 @@ QUIZZES = {
                    "LLM / vector store others keep running; <strong>streaming</strong> cuts <strong>first-token "
                    "latency</strong> for a better experience but doesn't shorten total time — both from L24)")],
     },
+    "35-finetuning-embeddings.html": {
+        "mcq": [{
+            "q": L("微调 embedding 最直接改善的是什么？",
+                   "What does fine-tuning an embedding most directly improve?"),
+            "opts": [
+                L("领域内的检索召回质量", "retrieval recall quality within the domain"),
+                L("LLM 的生成速度", "the LLM's generation speed"),
+                L("prompt 的长度上限", "the prompt's maximum length"),
+                L("多模态能力", "multimodal capability"),
+            ],
+            "answer": 0,
+            "why": L("微调 embedding 调整的是<strong>把文字映射成向量</strong>那一层，校准的是“<strong>领域语义 → 向量</strong>”"
+                    "的映射——所以它直接抬升的是<strong>领域内的检索召回质量</strong>：让本该相近的领域概念在向量空间里真正"
+                    "靠近，top-k 召回更准。其余三项都<strong>不归 embedding 管</strong>：“<strong>LLM 的生成速度</strong>”由"
+                    "模型大小 / 解码 / 硬件决定，换 embedding 不影响；“<strong>prompt 的长度上限</strong>”是 LLM 的上下文窗口"
+                    "属性，与 embedding 无关；“<strong>多模态能力</strong>”取决于你用的是不是多模态模型（L29），微调一个文本 "
+                    "embedding 也不会凭空长出图像能力。",
+                    "Fine-tuning an embedding adjusts the layer that <strong>maps text to vectors</strong>, calibrating "
+                    "the “<strong>domain semantics → vector</strong>” mapping — so what it directly lifts is "
+                    "<strong>retrieval recall quality within the domain</strong>: related domain concepts truly sit "
+                    "closer in vector space and top-k recall gets sharper. The other three are <strong>not the "
+                    "embedding's job</strong>: the “<strong>LLM's generation speed</strong>” is set by model size / "
+                    "decoding / hardware and is untouched by swapping embeddings; the “<strong>prompt's maximum "
+                    "length</strong>” is the LLM's context-window property, unrelated to embeddings; and "
+                    "“<strong>multimodal capability</strong>” depends on whether you use a multimodal model (L29) — "
+                    "fine-tuning a text embedding grows no image ability from nothing."),
+        }],
+        "open": [L("在花成本微调 embedding 之前，应先尝试哪些更便宜的手段？（提示：先<strong>调 chunking（L06）</strong>、"
+                   "<strong>加 metadata（L07）</strong>、<strong>上 hybrid + rerank（L21）</strong>、<strong>换更强的基座 "
+                   "embedding（L08）</strong>，并用 L19/L22 确认<strong>检索仍是瓶颈、根因确实是领域语义错位</strong>，再考虑"
+                   "微调）",
+                   "Before spending on fine-tuning an embedding, which cheaper levers should you try first? (Hint: first "
+                   "<strong>tune chunking (L06)</strong>, <strong>add metadata (L07)</strong>, <strong>bring in hybrid + "
+                   "rerank (L21)</strong>, and <strong>switch to a stronger base embedding (L08)</strong>, then use "
+                   "L19/L22 to confirm <strong>retrieval is still the bottleneck and the root cause really is domain "
+                   "misalignment</strong> before considering fine-tuning)")],
+    },
 }
 
 

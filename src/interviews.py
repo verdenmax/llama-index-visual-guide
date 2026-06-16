@@ -2184,4 +2184,108 @@ INTERVIEW = {
             "a retry / failover doesn't <strong>execute an irreversible op twice</strong>."),
         },
     ],
+    "35-finetuning-embeddings.html": [
+        {"q": L(
+            "团队提议“<strong>微调一个领域 embedding</strong>”来救低迷的检索效果。作为负责人，你会先问什么、在什么"
+            "条件下才点头？为什么微调是<strong>最后一招</strong>而不是第一反应？",
+            "Your team proposes <strong>fine-tuning a domain embedding</strong> to rescue weak retrieval. As the lead, "
+            "what would you ask first, and under what conditions would you green-light it? Why is fine-tuning a "
+            "<strong>last resort</strong> rather than a first reflex?"),
+         "answer": L(
+            "🔑 <strong>重点：只有当①领域术语密集、②通用模型语义错位明显、③检索已被证明是瓶颈、④且更便宜的手段都试过"
+            "仍不够时，微调才划算——否则别先动微调。</strong> ① <strong>先定位瓶颈</strong>：用 L23 trace + <strong>L12</strong> 检索指标（hit-rate / MRR）确认错"
+            "在<strong>检索召回</strong>（top-k 里根本没有相关块），而不是 rerank / 生成；若召回没问题，微调是白搭。② "
+            "<strong>看根因是不是领域错位</strong>：抽几条失败 query，看是不是<strong>专业术语 / 缩写 / 内部黑话</strong>"
+            "导致向量不相近——是，才对症。③ <strong>先穷尽更便宜的药</strong>：chunking（L06）、metadata（L07）、hybrid + "
+            "rerank（L21）、换更强基座 embedding（L08）——这些<strong>不用训练、风险低、见效快</strong>，多数“召回不准”在"
+            "这里就解决了。④ <strong>再算账</strong>：微调要造数据、要 GPU、要重建整个索引、还要长期维护一个自有模型版本，"
+            "而且<strong>容易过拟合</strong>；只有当收益（召回提升）<strong>用 L19/L22 数字证明</strong>能覆盖这些成本，"
+            "才值得做。一句话：<strong>微调是最贵的一味药，留到最后、对着确诊的病灶才开。</strong>",
+            "🔑 <strong>Key: fine-tuning is only worth it when (1) the domain is jargon-dense, (2) the generic model "
+            "clearly misaligns, (3) retrieval is proven to be the bottleneck, and (4) the cheaper levers were all tried "
+            "and still fall short — otherwise don't reach for it first.</strong> (1) <strong>Locate the bottleneck "
+            "first</strong>: use L23 traces + <strong>L12</strong> retrieval metrics (hit-rate / MRR) to confirm the fault is in <strong>retrieval recall</strong> "
+            "(no relevant chunk in the top-k at all), not rerank / generation; if recall is fine, fine-tuning is "
+            "wasted. (2) <strong>Check the root cause is domain misalignment</strong>: pull a few failing queries and "
+            "see whether <strong>jargon / acronyms / internal slang</strong> made the vectors non-adjacent — only then "
+            "is it the right cure. (3) <strong>Exhaust the cheaper medicines</strong>: chunking (L06), metadata (L07), "
+            "hybrid + rerank (L21), a stronger base embedding (L08) — <strong>no training, low risk, fast payoff</strong> "
+            "— most “imprecise recall” is solved here. (4) <strong>Then do the math</strong>: fine-tuning means building "
+            "data, a GPU, rebuilding the whole index, and maintaining a private model version long-term, and it "
+            "<strong>overfits easily</strong>; do it only when the gain (recall lift) <strong>proven with L19/L22 "
+            "numbers</strong> covers those costs. In a line: <strong>fine-tuning is the priciest dose — saved for last, "
+            "prescribed only against a diagnosed cause.</strong>"),
+        },
+        {"q": L(
+            "你微调完 embedding、重建了索引，训练 loss 也降了。<strong>怎么向团队证明它真的更好、而且没有过拟合？</strong>",
+            "You've fine-tuned the embedding, rebuilt the index, and training loss went down. <strong>How do you prove "
+            "to the team it's genuinely better and not overfit?</strong>"),
+         "answer": L(
+            "🔑 <strong>重点：别信训练 loss——留出一个独立测试集，用 L12 的检索指标（hit-rate / MRR）、按 L19/L22 的纪律在测试集上对比"
+            "微调前后，数字升了才算数。</strong> ① <strong>训练 loss 不作数</strong>：loss 是在<strong>训练对</strong>上算"
+            "的，降了只说明模型<strong>记住了这批 QA 对</strong>，既不等于检索更准，更可能是过拟合的信号。② <strong>切一份"
+            "独立测试集</strong>：造 QA 对时就<strong>留出一部分绝不参与训练</strong>（或另起一批人工问题），它代表“<strong>"
+            "没见过的真实问题</strong>”。③ <strong>用检索指标对比</strong>：承 <strong>L12</strong>，用 <code>RetrieverEvaluator</code> 在测试"
+            "集上算<strong>微调前 vs 微调后</strong>的 <strong>hit-rate / MRR</strong>，<strong>升了才有用</strong>；若训练集"
+            "涨、测试集跌，就是典型<strong>过拟合</strong>。④ <strong>纳入回归（L22）</strong>：把这套评估固化成<strong>回归集"
+            "</strong>，确保微调没在<strong>别的查询类型</strong>上悄悄变差（局部变好、整体退化也不行）。⑤ <strong>端到端复核"
+            "</strong>：最后用 Faithfulness / 答案质量看看下游答案是否真的变好——<strong>检索指标升 + 端到端不退</strong>，"
+            "才算微调真有用。",
+            "🔑 <strong>Key: don't trust the training loss — hold out an independent test set and use L12's "
+            "retrieval metrics (hit-rate / MRR), following L19/L22's discipline, to compare before vs after on it; "
+            "it counts only if the numbers "
+            "rise.</strong> (1) <strong>Training loss doesn't count</strong>: loss is computed on the <strong>training "
+            "pairs</strong>, so a drop just means the model <strong>memorized these QA pairs</strong> — not sharper "
+            "retrieval, and more likely a sign of overfitting. (2) <strong>Carve out an independent test "
+            "set</strong>: when building QA pairs, <strong>hold some back from training entirely</strong> (or write a "
+            "separate human set) to represent “<strong>unseen real questions</strong>”. (3) <strong>Compare with "
+            "retrieval metrics</strong>: per L12, use <code>RetrieverEvaluator</code> on the test set to compute "
+            "<strong>hit-rate / MRR</strong> <strong>before vs after</strong> — <strong>useful only if it rises</strong>; "
+            "if train climbs while test drops, that's textbook <strong>overfitting</strong>. (4) <strong>Fold into "
+            "regression (L22)</strong>: freeze this evaluation into a <strong>regression set</strong> so the fine-tune "
+            "didn't quietly worsen <strong>other query types</strong> (locally better, globally worse won't do). (5) "
+            "<strong>End-to-end re-check</strong>: finally use Faithfulness / answer quality to see if downstream "
+            "answers truly improved — <strong>retrieval metrics up + end-to-end not regressing</strong> is what makes "
+            "the fine-tune genuinely useful."),
+         "fig": d.flow([
+            ("split", L("造对时留出测试集", "hold out a test set"), L("绝不参与训练", "never trained on")),
+            ("before", L("微调前检索指标", "pre-FT metrics"), L("hit-rate / MRR", "hit-rate / MRR")),
+            ("after", L("微调后检索指标", "post-FT metrics"), L("hit-rate / MRR", "hit-rate / MRR")),
+            ("judge", L("升了才有用", "better only if it rises"), L("训涨测跌 = 过拟合", "train up, test down = overfit")),
+         ], caption=L("证明微调有效：在独立测试集上比微调前后的 hit-rate / MRR，别信训练 loss",
+                      "prove the gain: compare hit-rate / MRR before vs after on a held-out set — don't trust training loss")),
+        },
+        {"q": L(
+            "<code>generate_qa_embedding_pairs</code> 用 LLM 自动造训练对，又快又省人力。但这些问题是<strong>机器生成的"
+            "</strong>——你怎么保证训练数据的质量，不让“垃圾进、垃圾出”？",
+            "<code>generate_qa_embedding_pairs</code> uses an LLM to auto-build training pairs — fast and cheap. But "
+            "these questions are <strong>machine-generated</strong>; how do you ensure training-data quality and avoid "
+            "“garbage in, garbage out”?"),
+         "answer": L(
+            "🔑 <strong>重点：自动生成打底 + 人工抽检过滤 + 补难负样本——把“机器造的对”当初稿而非终稿。</strong> ① "
+            "<strong>自动生成打底</strong>：用 LLM 给每个块反向造问题，<strong>快速铺量</strong>，但默认它<strong>有噪声"
+            "</strong>（泛泛而问、答非所块、甚至幻觉出文档里没有的问题）。② <strong>人工抽检</strong>：随机抽一批人工过目，"
+            "估算<strong>噪声率</strong>；太高就<strong>改生成 prompt</strong>（要求问题具体、能被该块直接回答）或换更强的 "
+            "LLM 生成。③ <strong>过滤明显坏对</strong>：用规则 / 模型筛掉过短、过泛、与块无关的问题。④ <strong>补难负样本"
+            "（hard negatives）</strong>：光有正样本不够——刻意挑<strong>看起来相似但其实不相关</strong>的块当负样本，模型"
+            "才学得会<strong>细粒度区分</strong>，这是微调效果的关键。⑤ <strong>贴近真实分布</strong>：尽量让训练问题<strong>"
+            "像真实用户会问的</strong>（可掺入线上真实 query / 日志），否则训练集与测试集分布不一致，指标会骗人。一句话："
+            "<strong>数据质量决定微调上限，自动生成只是起点，人工与难负样本才是关键。</strong>",
+            "🔑 <strong>Key: auto-generate as a base + human spot-check to filter + add hard negatives — treat "
+            "machine-built pairs as a first draft, not the final one.</strong> (1) <strong>Auto-generate as a base"
+            "</strong>: have an LLM reverse-build a question per chunk to <strong>get volume fast</strong>, but assume "
+            "it's <strong>noisy</strong> by default (vague questions, answers not in the chunk, even hallucinated "
+            "questions the doc can't answer). (2) <strong>Human spot-check</strong>: eyeball a random sample to estimate "
+            "the <strong>noise rate</strong>; if too high, <strong>fix the generation prompt</strong> (demand specific "
+            "questions the chunk can directly answer) or use a stronger LLM. (3) <strong>Filter obvious bad pairs"
+            "</strong>: use rules / a model to drop questions that are too short, too generic, or unrelated to the "
+            "chunk. (4) <strong>Add hard negatives</strong>: positives alone aren't enough — deliberately pick chunks "
+            "that <strong>look similar but aren't relevant</strong> as negatives, so the model learns <strong>"
+            "fine-grained distinctions</strong> — the crux of fine-tuning's payoff. (5) <strong>Match the real "
+            "distribution</strong>: make training questions <strong>resemble what real users ask</strong> (mix in real "
+            "production queries / logs), or a train/test distribution mismatch will make the metrics lie. In a line: "
+            "<strong>data quality sets the ceiling; auto-generation is only the start, while human curation and hard "
+            "negatives are the crux.</strong>"),
+        },
+    ],
 }

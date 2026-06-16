@@ -828,4 +828,269 @@ LESSON_34 = (
         "on the shelf, steadily, under the discipline of “resident + async + persistent”</strong>.",
     ))
 )
-LESSON_35 = _skeleton("embed", "微调 embedding", "fine-tuning embeddings")
+LESSON_35 = (
+    c.pipeline("embed")
+    + c.lead(L(
+        "走到全书<strong>最后一课</strong>，RAG 的每个零件你都见过了——可有一个最底层的零件，我们从头到尾"
+        "<strong>原样拿来用</strong>：<strong>embedding 模型</strong>。它把文字映射成向量、决定“谁和谁相近”，是检索的"
+        "<strong>地基</strong>。通用 embedding（<code>bge</code> / <code>text-embedding-3</code> 之类）在<strong>大众语料"
+        "</strong>上训练，泛泛场景够用；可一旦进了<strong>专业领域</strong>——医疗、法律、芯片、你公司内部的黑话——它常常"
+        "<strong>语义错位</strong>：把<strong>专业术语 / 缩写 / 内部简称</strong>映射得不准，本该相近的概念在向量空间里"
+        "<strong>离得老远</strong>，于是<strong>召回不到位</strong>，后面 rerank、合成做得再好也救不回来。这一课讲<strong>最后"
+        "一招</strong>：用<strong>自家文档</strong>自动造 <strong>(问题, 相关块)</strong> 训练对、<strong>微调 embedding"
+        "</strong>，把领域语义<strong>校准</strong>进向量空间——正样本拉近、负样本推远。但要<strong>先把两件事说在前头"
+        "</strong>：① <strong>微调成本高、易过拟合</strong>，它该是<strong>穷尽更便宜手段之后</strong>的最后一步，不是第一"
+        "反应；② <strong>llama-index-finetuning 在 core 之外</strong>（<code>pip install llama-index-finetuning</code>），"
+        "本课代码是<strong>示例</strong>，重点在<strong>思路与判断</strong>，不在 API 细节。",
+        "At the book's <strong>final lesson</strong>, you've met every part of RAG — yet one foundational part we kept "
+        "<strong>using as-is</strong> from start to finish: the <strong>embedding model</strong>. It maps text to "
+        "vectors and decides “who is near whom” — the <strong>bedrock</strong> of retrieval. Generic embeddings "
+        "(<code>bge</code> / <code>text-embedding-3</code> and friends) are trained on <strong>broad corpora</strong> "
+        "and serve general cases well; but step into a <strong>specialized domain</strong> — medicine, law, chips, your "
+        "company's internal slang — and they often <strong>misalign</strong>: mapping <strong>jargon / acronyms / "
+        "internal shorthand</strong> imprecisely, so concepts that should be near sit <strong>far apart</strong> in "
+        "vector space, retrieval <strong>under-recalls</strong>, and no amount of downstream rerank or synthesis can "
+        "recover it. This lesson covers the <strong>last resort</strong>: use <strong>your own documents</strong> to "
+        "auto-build <strong>(question, relevant-chunk)</strong> training pairs and <strong>fine-tune the embedding"
+        "</strong>, calibrating domain semantics into the vector space — pulling positives closer and pushing negatives "
+        "apart. But <strong>two caveats first</strong>: (1) fine-tuning is <strong>costly and overfits easily</strong>, "
+        "so it should be the <strong>last step after exhausting cheaper means</strong>, not the first reflex; (2) "
+        "<strong>llama-index-finetuning lives outside core</strong> (<code>pip install llama-index-finetuning</code>), "
+        "and the code here is <strong>illustrative</strong> — the point is the <strong>reasoning and judgment</strong>, "
+        "not API details.",
+    ))
+    + d.compare2(
+        (L("通用 embedding", "Generic embedding"),
+         i18n.render(L("领域术语<strong>语义错位</strong>，相关块排不上来", "domain terms <strong>misalign</strong>; relevant chunks rank low"))),
+        (L("领域微调后", "After fine-tuning"),
+         i18n.render(L("正样本拉近、负样本推远 → 召回更准", "positives pulled closer, negatives pushed apart → better recall"))),
+        caption=L("微调把你的领域语义“校准”进向量空间", "fine-tuning calibrates your domain semantics into the vector space"),
+    )
+    + c.section(
+        L("① 痛点：通用 embedding 在专业领域“语义错位”，召回从地基就漏",
+          "① The pain: generic embeddings “misalign” in a specialized domain — retrieval leaks from the foundation"),
+        L(
+            "<strong>embedding 是检索的地基</strong>：它决定每段文字落在向量空间的哪个位置，而 top-k 召回<strong>只看谁离"
+            "查询近</strong>。通用 embedding 在<strong>大众语料</strong>上训练，专业领域的词在它眼里要么<strong>稀薄</strong>、"
+            "要么<strong>歧义</strong>。举两个例子：缩写 <strong>“MI”</strong> 在通用语料里更像 Michigan 或 Mutual "
+            "Information，可在心内科它是<strong>“心肌梗死”</strong>；你公司内部的<strong>项目代号、产品简称、黑话</strong>，"
+            "通用模型<strong>压根没见过</strong>。结果是：用户拿<strong>领域术语</strong>去问，真正相关的块因为<strong>向量不"
+            "相近</strong>而<strong>排不进 top-k</strong>——召回阶段就把答案漏在了门外。这条漏一旦发生，<strong>后面救不回</strong>："
+            "L21 的 rerank 只能在<strong>已召回的候选</strong>里重排，<strong>召回时就没捞上来的块，rerank 给不出来</strong>；"
+            "合成器再聪明，也只能拿手里这几个错块去拼。所以当你用 L23 的 trace + <strong>L12</strong> 的检索指标（hit-rate / MRR）确认<strong>错就错在“检索召回”"
+            "</strong>、且根因是<strong>领域语义错位</strong>时，才轮到微调——它修的正是这层最底下的地基。",
+            "<strong>The embedding is retrieval's foundation</strong>: it fixes where each piece of text lands in vector "
+            "space, and top-k recall <strong>only looks at what's nearest the query</strong>. Generic embeddings train "
+            "on <strong>broad corpora</strong>, where domain words are either <strong>thin</strong> or "
+            "<strong>ambiguous</strong>. Two examples: the acronym <strong>“MI”</strong> in general text reads as "
+            "Michigan or Mutual Information, but in cardiology it means <strong>“myocardial infarction”</strong>; your "
+            "company's <strong>project codenames, product nicknames, and slang</strong> the generic model has "
+            "<strong>simply never seen</strong>. The result: a user asks with <strong>domain terms</strong>, and the "
+            "truly relevant chunk — because its vector <strong>isn't near</strong> — <strong>never enters the top-k</strong>, "
+            "so retrieval leaves the answer outside the door. Once that leak happens, <strong>nothing downstream "
+            "recovers it</strong>: L21's rerank can only reorder <strong>already-retrieved candidates</strong>, and "
+            "<strong>a chunk never recalled can't be re-ranked into existence</strong>; however clever the synthesizer, "
+            "it can only stitch from the wrong chunks it holds. So only when L23's traces + <strong>L12</strong>'s retrieval metrics (hit-rate / MRR) confirm the "
+            "fault is <strong>in “retrieval recall”</strong> and the root cause is <strong>domain misalignment</strong> "
+            "does fine-tuning's turn arrive — it repairs exactly that deepest foundation.",
+        ),
+    )
+    + c.section(
+        L("② 思路：用自家 QA 对当“信号”，把正样本拉近、负样本推远",
+          "② The idea: use your own QA pairs as the “signal” — pull positives closer, push negatives apart"),
+        L(
+            "微调 embedding 的本质是<strong>对比学习</strong>：喂给模型一批“<strong>这条问题</strong>和<strong>这个块</strong>"
+            "是相关的（正样本）”的例子，让它微调权重，<strong>把相关的问题与块在向量空间里拉近</strong>，同时<strong>把不相关"
+            "的推远</strong>。难点只有一个：<strong>哪来这么多标注好的 (问题, 相关块) 对</strong>？答案很巧——<strong>用你自家"
+            "的文档自动造</strong>。把文档切成块（你早在 L06 就会），对<strong>每个块</strong>让一个 LLM <strong>反向生成</strong>"
+            "“这个块能回答的问题”——于是 (生成的问题, 这个块) 天然是一对<strong>正样本</strong>，同一批里的其它块自然充当"
+            "<strong>负样本</strong>。这正是 <code>generate_qa_embedding_pairs(nodes, llm=...)</code> 做的事：喂进 nodes，吐"
+            "出一个<strong>可直接用于微调的 embedding QA 数据集</strong>。要清醒的是：这些问题是<strong>机器造的</strong>，质量"
+            "参差，应当<strong>自动生成打底 + 人工抽检过滤 + 补难负样本</strong>（详见本课面试题）——<strong>数据质量直接决定"
+            "微调的上限</strong>，“垃圾进”只会“垃圾出”。",
+            "Fine-tuning an embedding is at heart <strong>contrastive learning</strong>: feed the model a batch of “<strong>"
+            "this question</strong> and <strong>this chunk</strong> are relevant (a positive)” examples and let it nudge "
+            "its weights to <strong>pull related questions and chunks closer</strong> in vector space while <strong>pushing "
+            "unrelated ones apart</strong>. There's only one hard part: <strong>where do all those labeled (question, "
+            "relevant-chunk) pairs come from</strong>? The neat answer — <strong>auto-build them from your own "
+            "documents</strong>. Chunk the docs (you've done this since L06), and for <strong>each chunk</strong> have an "
+            "LLM <strong>reverse-generate</strong> “a question this chunk can answer” — so (generated question, this "
+            "chunk) is naturally a <strong>positive</strong>, and the other chunks in the batch serve as "
+            "<strong>negatives</strong>. That is exactly what <code>generate_qa_embedding_pairs(nodes, llm=...)</code> "
+            "does: feed in nodes, get back an <strong>embedding QA dataset ready for fine-tuning</strong>. Stay "
+            "clear-eyed: these questions are <strong>machine-made</strong> and uneven, so you should <strong>auto-generate "
+            "as a base + human spot-check to filter + add hard negatives</strong> (see this lesson's interview drills) — "
+            "<strong>data quality sets the ceiling of fine-tuning</strong>, and “garbage in” only yields “garbage out”.",
+        ),
+    )
+    + c.section(
+        L("③ 流程：造对 → 微调 → 换模型重建索引 → 用 L19/L22 量化提升",
+          "③ The flow: build pairs → fine-tune → rebuild the index with the new model → quantify the gain via L19/L22"),
+        L(
+            "整条链是一个<strong>四步闭环</strong>，每一步都有 <strong>llama-index-finetuning（core 之外，示例）</strong>的对应"
+            "符号。① <strong>造对</strong>：<code>generate_qa_embedding_pairs(nodes, llm=...)</code> 自动产出 QA 数据集（见 ②）。"
+            "② <strong>微调</strong>：<code>SentenceTransformersFinetuneEngine(dataset, model_id=基座, model_output_path=...)"
+            "</code> 在你的 QA 对上<strong>接着训练</strong>一个开源 sentence-transformer（如 <code>bge-small</code>），"
+            "<code>.finetune()</code> 跑完、<code>get_finetuned_model()</code> 取回一个<strong>领域版</strong> embedding。"
+            "③ <strong>换模型重建索引</strong>——<strong>最容易被忽略、却必须做</strong>的一步：embedding 一旦换了，<strong>旧"
+            "索引里的向量是旧模型算的、不能和新模型混用</strong>，必须把微调模型设成 <code>Settings.embed_model</code>、"
+            "<strong>重新 embedding 整库、重建索引</strong>（这也提醒你微调有多贵——要重跑一遍建库）。④ <strong>量化提升"
+            "</strong>——<strong>最不能省</strong>的一步：微调到底有没有用、有没有过拟合，<strong>必须用数字证明</strong>。用 "
+            "<strong>L12</strong> 的检索指标（<strong>hit-rate / MRR</strong>）——以 <code>RetrieverEvaluator</code> 在一组"
+            "<strong>留出的</strong>测试问题上算——按 <strong>L19/L22</strong> 的“用数字证明、并入回归”纪律对比微调<strong>前后"
+            "</strong>；再承 L22 把它固化成<strong>回归集</strong>，确保这次微调没在别的查询类型上<strong>悄悄带崩</strong>。"
+            "<strong>只看训练 loss 下降是自欺</strong>——loss 降只说明模型记住了这批 QA 对，既不等于检索更准，更可能是过拟合"
+            "的信号。",
+            "The whole chain is a <strong>four-step loop</strong>, each step with a symbol from <strong>llama-index-finetuning "
+            "(outside core, illustrative)</strong>. (1) <strong>Build pairs</strong>: "
+            "<code>generate_qa_embedding_pairs(nodes, llm=...)</code> auto-produces the QA dataset (see (2)). (2) "
+            "<strong>Fine-tune</strong>: <code>SentenceTransformersFinetuneEngine(dataset, model_id=base, "
+            "model_output_path=...)</code> <strong>continues training</strong> an open-source sentence-transformer (e.g. "
+            "<code>bge-small</code>) on your QA pairs; <code>.finetune()</code> runs and "
+            "<code>get_finetuned_model()</code> returns a <strong>domain version</strong> of the embedding. (3) "
+            "<strong>Rebuild the index with the new model</strong> — the <strong>easily-missed but mandatory</strong> "
+            "step: once the embedding changes, <strong>the old index's vectors were computed by the old model and "
+            "can't be mixed with the new one</strong>, so you must set the fine-tuned model as "
+            "<code>Settings.embed_model</code> and <strong>re-embed the whole corpus and rebuild the index</strong> (a "
+            "reminder of how costly fine-tuning is — you re-run the build). (4) <strong>Quantify the gain</strong> — the "
+            "<strong>step you must not skip</strong>: whether fine-tuning actually helped or overfit <strong>must be "
+            "proven with numbers</strong>. Compute the <strong>L12</strong> retrieval metrics (<strong>hit-rate / MRR"
+            "</strong>) with <code>RetrieverEvaluator</code> on a <strong>held-out</strong> set, following "
+            "<strong>L19/L22</strong>'s prove-with-numbers + regression discipline, and compare <strong>before vs "
+            "after</strong>; per L22, freeze it into a <strong>regression set</strong> so this fine-tune didn't "
+            "<strong>quietly tank</strong> other query types. <strong>Watching only the training loss drop is "
+            "self-deception</strong> — a falling loss just means the model memorized these QA pairs, which is "
+            "not sharper retrieval, and more likely a sign of overfitting.",
+        ),
+    )
+    + c.code(
+        "# pip install llama-index-finetuning  —— 示例，微调在 core 之外\n"
+        "from llama_index.finetuning import generate_qa_embedding_pairs, SentenceTransformersFinetuneEngine\n\n"
+        "train = generate_qa_embedding_pairs(nodes, llm=llm)            # 用文档自动造 (问题, 相关块) 对\n"
+        "engine = SentenceTransformersFinetuneEngine(train, model_id=\"BAAI/bge-small-en\",\n"
+        "                                            model_output_path=\"ft_model\")\n"
+        "engine.finetune()\n"
+        "ft_model = engine.get_finetuned_model()                        # 用它重建索引，再按 L19/L22 评估",
+        caption=L("示例：用自家 QA 对微调一个开源 embedding；llama-index-finetuning 在 core 之外，代码仅作演示",
+                  "Illustrative: fine-tune an open-source embedding on your own QA pairs; llama-index-finetuning is outside core, code is for demonstration only"),
+    )
+    + c.source_ref(
+        "(integration) llama-index-finetuning", "SentenceTransformersFinetuneEngine",
+        L("用自家 QA 对微调 embedding，提升领域召回。",
+          "fine-tunes embeddings on your QA pairs to lift domain recall."),
+    )
+    + d.flow([
+        ("docs", L("自家文档", "your docs")),
+        ("pairs", L("造 QA 对", "build QA pairs"), L("自动+人工挑", "auto + curate")),
+        ("ft", L("微调 embedding", "fine-tune")),
+        ("rebuild", L("换模型重建索引", "rebuild index")),
+        ("eval", L("评估提升", "evaluate gain"), L("承 L19/L22", "per L19/L22")),
+    ], caption=L("微调闭环：造对 → 微调 → 重建 → 评估，用数字证明提升",
+                 "fine-tune loop: pairs → train → rebuild → evaluate; prove the gain with numbers"))
+    + c.section(
+        L("④ 性价比：微调贵又易过拟合——先穷尽更便宜的手段",
+          "④ Cost-effectiveness: fine-tuning is pricey and overfit-prone — exhaust the cheaper levers first"),
+        L(
+            "微调不该是<strong>第一反应</strong>，而是<strong>最后一招</strong>。它<strong>贵</strong>：要造数据、要 GPU 训练、"
+            "要<strong>重建整个索引</strong>、还要长期维护一个<strong>自有的模型版本</strong>；它<strong>容易过拟合</strong>："
+            "QA 对是机器造的、数量又有限，模型可能学到的是“这批问题的腔调”而非“领域语义”，在真实问题上<strong>反而变差"
+            "</strong>。所以在动微调之前，<strong>先把这串更便宜、风险更低的手段穷尽</strong>：① <strong>调 chunking（L06）"
+            "</strong>——块太大太小都稀释语义，先把切块切对；② <strong>加 metadata（L07）</strong>——把标题 / 章节 / 关键词喂给"
+            "检索，常常立竿见影；③ <strong>上 hybrid + rerank（L21）</strong>——向量召回配上关键词（BM25）兜住术语的精确匹配，"
+            "再用 reranker 精排，多数“召回不准”到这一步就解决了；④ <strong>换更强的基座 embedding（L08）</strong>——直接换一个"
+            "更大 / 更贴领域的开源或商用 embedding，常比自己微调一个小模型<strong>更省事也更稳</strong>。<strong>把这四样都"
+            "试过、并用 L19/L22 确认“检索仍是瓶颈、根因确实是领域语义错位”</strong>，再考虑微调——这时它才真正<strong>划算"
+            "</strong>。",
+            "Fine-tuning shouldn't be your <strong>first reflex</strong> but your <strong>last resort</strong>. It is "
+            "<strong>expensive</strong>: you build data, train on a GPU, <strong>rebuild the whole index</strong>, and "
+            "maintain a <strong>private model version</strong> long-term; and it <strong>overfits easily</strong>: the "
+            "QA pairs are machine-made and limited, so the model may learn “the phrasing of this batch” rather than "
+            "“domain semantics” and get <strong>worse</strong> on real questions. So before touching fine-tuning, "
+            "<strong>exhaust this chain of cheaper, lower-risk levers</strong>: (1) <strong>tune chunking (L06)</strong> "
+            "— chunks too big or small dilute meaning, so cut them right first; (2) <strong>add metadata (L07)</strong> "
+            "— feed titles / sections / keywords to retrieval, often an instant win; (3) <strong>bring in hybrid + "
+            "rerank (L21)</strong> — pair vector recall with keywords (BM25) to nail exact term matches, then a reranker "
+            "to refine — most “imprecise recall” is solved by here; (4) <strong>switch to a stronger base embedding "
+            "(L08)</strong> — swap in a bigger / more domain-fit open-source or commercial embedding, often <strong>"
+            "easier and steadier</strong> than fine-tuning a small one yourself. <strong>Only after trying all four and "
+            "using L19/L22 to confirm “retrieval is still the bottleneck and the root cause really is domain "
+            "misalignment”</strong> should you consider fine-tuning — that's when it's genuinely <strong>worth it"
+            "</strong>.",
+        ),
+    )
+    + c.analogy(L(
+        "通用 embedding 像一本<strong>通用词典</strong>：覆盖面广，但对你<strong>行业内部的术语、缩写、黑话</strong>常常"
+        "<strong>词不达意</strong>——把意思相近的两个行话词条<strong>放到八竿子打不着的两页</strong>。微调就像<strong>给你的"
+        "行业单独编一本“术语对照表”</strong>：把“<strong>同一个意思的不同叫法</strong>”<strong>并到一处</strong>，让相近的"
+        "领域概念在向量空间里<strong>真正靠在一起</strong>。但编这本对照表<strong>费时费钱、还容易编偏</strong>，所以只有当"
+        "<strong>通用词典实在不够用</strong>、且你确认问题<strong>就出在词义对不齐</strong>时，才值得动手编。",
+        "A generic embedding is like a <strong>general dictionary</strong>: broad coverage, but for your <strong>"
+        "industry's own terms, acronyms, and slang</strong> it often <strong>misses the meaning</strong> — placing two "
+        "in-context synonyms <strong>pages apart</strong>. Fine-tuning is like <strong>compiling a “glossary of terms” "
+        "just for your industry</strong>: <strong>merging the different names for the same thing</strong> so related "
+        "domain concepts <strong>actually sit together</strong> in vector space. But compiling that glossary is "
+        "<strong>slow, costly, and easy to get wrong</strong>, so it's worth doing only when the <strong>general "
+        "dictionary truly falls short</strong> and you've confirmed the problem is <strong>misaligned word meanings"
+        "</strong>.",
+    ))
+    + c.key_points([
+        L("<strong>痛点在地基</strong>：通用 embedding 在专业领域<strong>语义错位</strong>（术语 / 缩写 / 黑话映射不准），"
+          "相关块进不了 top-k；这是<strong>召回阶段</strong>的漏，rerank / 合成都<strong>救不回</strong>。",
+          "<strong>The pain is in the foundation</strong>: generic embeddings <strong>misalign</strong> in a domain "
+          "(jargon / acronyms / slang mapped imprecisely), so relevant chunks never enter the top-k — a "
+          "<strong>recall-stage</strong> leak that rerank / synthesis <strong>can't recover</strong>."),
+        L("<strong>思路是对比学习</strong>：用 <code>generate_qa_embedding_pairs</code> 让 LLM 从自家文档<strong>反向造 "
+          "(问题, 相关块) 对</strong>当信号，<strong>正样本拉近、负样本推远</strong>，校准领域语义。",
+          "<strong>The idea is contrastive learning</strong>: use <code>generate_qa_embedding_pairs</code> to have an "
+          "LLM <strong>reverse-build (question, chunk) pairs</strong> from your docs as signal, <strong>pulling "
+          "positives closer and pushing negatives apart</strong> to calibrate domain semantics."),
+        L("<strong>流程是四步闭环</strong>：造对 → <code>SentenceTransformersFinetuneEngine.finetune()</code> → <strong>换"
+          "模型重建索引</strong>（向量不可混用）→ 按 <strong>L19/L22</strong> 的纪律、用 <strong>L12</strong> 的检索指标"
+          "（<code>RetrieverEvaluator</code> 算 hit-rate / MRR）并入 L22 回归集<strong>量化前后</strong>，别只看训练 loss。",
+          "<strong>The flow is a four-step loop</strong>: build pairs → "
+          "<code>SentenceTransformersFinetuneEngine.finetune()</code> → <strong>rebuild the index with the new "
+          "model</strong> (vectors can't be mixed) → following <strong>L19/L22</strong>'s discipline, quantify "
+          "before/after with <strong>L12</strong>'s retrieval metrics (<code>RetrieverEvaluator</code> for hit-rate / "
+          "MRR) plus an L22 regression set — not just the training loss."),
+        L("<strong>性价比要算清</strong>：微调<strong>贵又易过拟合</strong>，先穷尽更便宜的手段——chunking（L06）、metadata"
+          "（L07）、hybrid + rerank（L21）、换更强基座（L08）——确认检索仍是瓶颈、根因是领域错位再微调。",
+          "<strong>Weigh the cost</strong>: fine-tuning is <strong>pricey and overfit-prone</strong>, so exhaust the "
+          "cheaper levers first — chunking (L06), metadata (L07), hybrid + rerank (L21), a stronger base (L08) — and "
+          "fine-tune only after confirming retrieval is still the bottleneck and the cause is domain misalignment."),
+        L("<strong>分清 core 边界</strong>：<code>generate_qa_embedding_pairs</code> / "
+          "<code>SentenceTransformersFinetuneEngine</code> 都来自 <strong>llama-index-finetuning（core 之外的集成）"
+          "</strong>，本课代码为示例；评估用的 hit-rate / MRR 与回归集才是贯穿全书的真功夫。",
+          "<strong>Mind the core boundary</strong>: <code>generate_qa_embedding_pairs</code> / "
+          "<code>SentenceTransformersFinetuneEngine</code> both come from <strong>llama-index-finetuning (an "
+          "out-of-core integration)</strong> and the code here is illustrative; the real craft running through the "
+          "book is the hit-rate / MRR evaluation and regression set."),
+    ])
+    + c.design_highlight(L(
+        "这是全书<strong>最后一课</strong>，落点却和<strong>第一课</strong>遥相呼应：L01 我们就掂量过“<strong>RAG 还是微调"
+        "</strong>”，结论是知识该<strong>外置成可检索的索引</strong>、而非焊进权重。今天微调的<strong>不是 LLM、而是 "
+        "embedding</strong>——校准的是“<strong>领域语义 → 向量</strong>”这层<strong>检索地基</strong>，恰恰是为了让<strong>"
+        "检索</strong>更准，和 L01 那条主线<strong>始终一致</strong>。整本书其实在反复讲<strong>同一个判断</strong>：<strong>"
+        "先量化、找瓶颈，再对症下药，永远用数字说话</strong>——切块（L06）、元数据（L07）、混合检索 + 重排（L21）、更强基座"
+        "（L08）都是<strong>更便宜的药</strong>，微调是<strong>最贵的那一味</strong>，只在前面都不够、且 L19/L22 证明“检索仍是"
+        "瓶颈、根因是领域错位”时才开；<strong>用完还得再用 L19/L22 证明它真有效、没过拟合</strong>——<strong>开头量化、结尾"
+        "量化</strong>，正是这套手艺的纪律。三十五课走下来，你已经把 RAG 从<strong>“能跑一次”</strong>搭成了一条<strong>可检索、"
+        "可评估、可观测、可上线、还能持续校准</strong>的工程管线。最后这块拼图——微调 embedding——留下的是一件朴素的提醒："
+        "<strong>最强的优化，往往不是再加一层花哨的新组件，而是把最底层的地基，对着你的领域，校准准。</strong>",
+        "This is the book's <strong>final lesson</strong>, yet it lands in <strong>quiet echo of the first</strong>: "
+        "back in L01 we weighed “<strong>RAG vs fine-tuning</strong>” and concluded that knowledge belongs in a "
+        "<strong>searchable, external index</strong> rather than welded into weights. What we fine-tune today is "
+        "<strong>not the LLM but the embedding</strong> — calibrating the “<strong>domain semantics → vector</strong>” "
+        "layer that is retrieval's <strong>bedrock</strong>, precisely to make <strong>retrieval</strong> sharper, "
+        "fully <strong>consistent</strong> with L01's through-line. The whole book has, in truth, repeated <strong>one "
+        "judgment</strong>: <strong>quantify first, find the bottleneck, then treat the cause — always speak with "
+        "numbers</strong>. Chunking (L06), metadata (L07), hybrid + rerank (L21), a stronger base model (L08) are the "
+        "<strong>cheaper medicines</strong>; fine-tuning is the <strong>priciest dose</strong>, prescribed only when "
+        "those fall short and L19/L22 prove “retrieval is still the bottleneck and the cause is domain misalignment”; "
+        "and <strong>after using it you must again use L19/L22 to prove it truly helped and didn't overfit</strong> — "
+        "<strong>quantify at the start, quantify at the end</strong> is the discipline of this craft. Thirty-five "
+        "lessons on, you've grown RAG from <strong>“runs once”</strong> into an engineering pipeline that is "
+        "<strong>searchable, evaluable, observable, shippable, and continuously recalibrated</strong>. This last piece "
+        "— fine-tuning embeddings — leaves one plain reminder: <strong>the strongest optimization is often not bolting "
+        "on another shiny component, but calibrating the deepest foundation to fit your domain.</strong>",
+    ))
+)
