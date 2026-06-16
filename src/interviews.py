@@ -1372,4 +1372,95 @@ INTERVIEW = {
             "Agentic RAG splits a “compare” question into several retrievals then a synthesis — the trace shows it really queried twice")),
         },
     ],
+    "27-graph-rag.html": [
+        {"q": L(
+            "图谱 RAG 里，<strong>抽取器（extractor）质量差</strong>会怎样？你会怎么<strong>控住</strong>抽取质量、"
+            "又怎么<strong>验证</strong>它够好？",
+            "In Graph RAG, what happens when the <strong>extractor quality is poor</strong>? How would you <strong>keep "
+            "it under control</strong> and <strong>verify</strong> it's good enough?"),
+         "answer": L(
+            "🔑 <strong>重点：图的质量 = 抽取的质量——抽错 / 抽漏会造出错误的边，多跳时一路放大成错答；靠 ① schema "
+            "约束、② 评估抽取准确率、③ 人工校验高价值实体 三道闸控住。</strong>① <strong>用 "
+            "<code>SchemaLLMPathExtractor</code> 上 schema</strong>：预先声明允许的实体 / 关系类型，把 LLM 关进栏里，"
+            "不让它乱造关系（“幻觉边”）；② <strong>评估抽取准确率</strong>：抽样三元组和人工标注的金标比 precision / "
+            "recall，差就换更强的抽取 LLM 或细化 schema；③ <strong>人工校验高价值实体</strong>：被很多跳路过的枢纽"
+            "实体（核心产品、关键厂商）一旦错，下游全错，优先人工过一遍；④ <strong>端到端验证</strong>：用一组多跳问答"
+            "金标，看修抽取前后答案对不对——别只盯抽取本身，要落到下游答案质量。",
+            "🔑 <strong>Key: graph quality = extraction quality — wrong/missing extractions create bad edges that "
+            "multi-hop then amplifies into wrong answers; control it with three gates: (1) schema constraints, (2) "
+            "measuring extraction accuracy, (3) human-verifying high-value entities.</strong> (1) <strong>Add a schema "
+            "via <code>SchemaLLMPathExtractor</code></strong>: declare the allowed entity/relation types up front to "
+            "cage the LLM so it can't invent stray relations (“hallucinated edges”); (2) <strong>measure extraction "
+            "accuracy</strong>: sample triples against a human-labeled gold set for precision/recall, and if low, swap "
+            "in a stronger extraction LLM or refine the schema; (3) <strong>human-verify high-value entities</strong>: "
+            "hub entities that many hops pass through (core products, key vendors) corrupt everything downstream if "
+            "wrong, so review them first; (4) <strong>end-to-end check</strong>: use a set of multi-hop QA gold "
+            "questions and compare answer correctness before/after — don't just stare at extraction, tie it back to "
+            "downstream answer quality."),
+        },
+        {"q": L(
+            "什么时候你会<strong><em>不</em></strong>上图谱、继续用纯向量？你拿什么<strong>数据</strong>支撑这个决定？",
+            "When would you <strong><em>not</em></strong> adopt a graph and stick with pure vectors? What <strong>data"
+            "</strong> backs that call?"),
+         "answer": L(
+            "🔑 <strong>重点：关系稀疏、一跳就够、或构建 / 维护成本扛不住时，纯向量更划算——别为用不上的关系付抽取的"
+            "钱。</strong>① <strong>关系稀疏</strong>：语料就是一篇篇独立文档、没什么实体间链接，建图抽不出几条有用的边；"
+            "② <strong>一跳就够</strong>：问题大多是“找一段相关的话 / 查单个事实”，向量的相似召回已经够好；③ <strong>"
+            "成本扛不住</strong>：图要 LLM 逐文档抽三元组，建库慢且贵，语料还频繁更新就要反复重抽，延迟 / 预算紧时"
+            "不划算。<strong>怎么用数据</strong>：统计真实查询里真正多跳 / 关系型的占比——若很低，就只把这一小撮路由到"
+            "图谱（混合），其余留给向量；再对比“向量 vs 图谱”在这批问题上的命中率 / 答案质量增量，是否抵得过多出的"
+            "成本与延迟。",
+            "🔑 <strong>Key: when relations are sparse, one hop suffices, or build/maintenance cost is too high, plain "
+            "vectors win — don't pay extraction cost for relations you'll never traverse.</strong> (1) <strong>Sparse "
+            "relations</strong>: the corpus is independent documents with few entity links, so building a graph "
+            "extracts few useful edges; (2) <strong>one hop is enough</strong>: most questions are “find a relevant "
+            "passage / look up a single fact”, where vector similarity already does well; (3) <strong>cost is too "
+            "high</strong>: a graph needs an LLM to extract triples per document — slow and pricey to build, and a "
+            "frequently-changing corpus forces repeated re-extraction; not worth it under tight latency/budget. "
+            "<strong>How to use data</strong>: measure the share of real queries that are genuinely multi-hop / "
+            "relational — if it's low, route only that minority to a graph (hybrid) and keep the rest on vectors; then "
+            "compare “vector vs graph” hit-rate / answer-quality lift on that subset against the extra cost and "
+            "latency."),
+        },
+        {"q": L(
+            "为什么用新的 <code>PropertyGraphIndex</code> 而不是旧的 <code>KnowledgeGraphIndex</code>？在<strong>关系"
+            "表达 / 构建成本 / 可解释性</strong>上，它和纯向量又各自怎么取舍？",
+            "Why use the newer <code>PropertyGraphIndex</code> instead of the legacy <code>KnowledgeGraphIndex</code>? "
+            "And how do the two trade off against pure vectors on <strong>relation modeling / build cost / "
+            "explainability</strong>?"),
+         "answer": L(
+            "🔑 <strong>重点：<code>PropertyGraphIndex</code> 是新一代图谱抽象，实体 / 关系能带属性与类型、可挂多路"
+            "子检索器、可上 schema 约束，表达力和可控性都强过只存裸三元组的旧 <code>KnowledgeGraphIndex</code>；和纯"
+            "向量比，图用“可解释的多跳路径”换“更高的构建成本”。</strong>选型沿一条轴：<strong>关系越重、越需要可"
+            "解释，越往图谱走</strong>。<code>PropertyGraph</code> 表达最丰富、<strong>可解释性</strong>最好（能看到"
+            "走了哪条边），但抽取要烧 LLM；旧 <code>KnowledgeGraph</code> 只存简单三元组、工具较旧，新项目一般直接上 "
+            "<code>PropertyGraph</code>；纯向量<strong>不建模关系</strong>、最便宜最快，但答案只有一个相似分、近乎黑箱。"
+            "一句话：<strong>按“问题靠不靠关系”和“要不要可解释路径”选档</strong>。",
+            "🔑 <strong>Key: <code>PropertyGraphIndex</code> is the newer graph abstraction whose entities/relations "
+            "carry properties and types, plugs in multiple sub-retrievers, and supports schema constraints, so it's "
+            "more expressive and controllable than the legacy <code>KnowledgeGraphIndex</code> that stores bare "
+            "triples; versus pure vectors, a graph trades “higher build cost” for an “explainable multi-hop "
+            "path”.</strong> The choice runs along one axis: <strong>the more relations matter and the more you need "
+            "explainability, the more you lean toward a graph</strong>. <code>PropertyGraph</code> is the most "
+            "expressive and <strong>explainable</strong> (you can see which edges were walked) but its extraction "
+            "burns LLM calls; the legacy <code>KnowledgeGraph</code> stores only simple triples with older tooling, so "
+            "new projects usually go straight to <code>PropertyGraph</code>; pure vectors <strong>model no "
+            "relations</strong> and are cheapest/fastest but give only a similarity score, nearly a black box. In a "
+            "line: <strong>pick the tier by “does the question hinge on relations” and “do you need an explainable "
+            "path”</strong>."),
+         "fig": d.grid(
+            [L("方案", "Approach"), L("关系表达", "Relation modeling"), L("构建成本", "Build cost"),
+             L("可解释性", "Explainability")],
+            [
+                [L("PropertyGraph（新）", "PropertyGraph (new)"), L("实体+关系+属性，最丰富", "entities+relations+properties, richest"),
+                 L("中–高：LLM 抽三元组", "mid–high: LLM triple extraction"), L("高：可看遍历路径", "high: see the traversal path")],
+                [L("KnowledgeGraph（旧）", "KnowledgeGraph (legacy)"), L("只存简单三元组，较弱", "plain triples only, weaker"),
+                 L("中：LLM 抽，能力有限", "mid: LLM extraction, limited"), L("中：有三元组但工具较旧", "mid: triples but older tooling")],
+                [L("纯向量", "Vector"), L("不建模关系，只有相似度", "no relations, similarity only"),
+                 L("低：切块 + embedding", "low: chunk + embedding"), L("低：只给相似分，黑箱", "low: only a similarity score, opaque")],
+            ],
+            caption=L("三种存法在 关系表达 / 构建成本 / 可解释性 上的取舍：关系越重，越值得为图谱的抽取成本买单",
+                      "Three storage choices traded off on relation modeling / build cost / explainability: the more relations matter, the more a graph's extraction cost pays off")),
+        },
+    ],
 }

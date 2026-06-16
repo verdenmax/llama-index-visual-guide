@@ -586,6 +586,23 @@ QUIZZES = {
         "open": [L("你有两类查询：① “X-2000 的保修期是多久”（单库、一步能答）；② “把 A、B、C 三款机型的保修与退换政策做个对比表”（要多次检索再综合）。你会让<strong>哪一类</strong>走固定管道、哪一类上 agent？为什么？又怎么<strong>用数据</strong>证明给 ② 上 agent 是划算的（对比固定管道，看哪些指标）？",
                    "You have two query types: (1) “what's the warranty of X-2000” (single store, one step); (2) “build a comparison table of the warranty and return policies for models A, B and C” (needs several retrievals then a synthesis). <strong>Which</strong> goes on a fixed pipeline and which on an agent — and why? And how would you <strong>use data</strong> to prove the agent pays off for (2) versus a fixed pipeline (which metrics would you compare)?")],
     },
+    "27-graph-rag.html": {
+        "mcq": [{
+            "q": L("下列哪种问题最该用图谱 RAG 而非纯向量？",
+                   "Which question most warrants Graph RAG over pure vectors?"),
+            "opts": [
+                L("找与“退款政策”语义相近的段落", "find passages semantically close to “refund policy”"),
+                L("X 的供应商的总部在哪个国家（多跳）", "which country is the HQ of X's supplier in (multi-hop)"),
+                L("这段话的情感是正还是负", "is this passage's sentiment positive or negative"),
+                L("把文档翻译成英文", "translate the document into English"),
+            ],
+            "answer": 1,
+            "why": L("正确的是“多跳关系查询”（X 的供应商的总部在哪个国家）：要顺着 供应商→总部→国家 的边走，图谱把事实存成可遍历的三元组正好胜任。找语义相近段落是相似检索（向量更划算），判断情感正负是分类，翻译就是翻译——都用不上图的多跳能力。",
+                     "The correct one is the “multi-hop relation query” (which country is X's supplier's HQ in): you must walk supplier→HQ→country, and a graph stores facts as traversable triples for exactly this. Finding semantically close passages is similarity retrieval (vectors are cheaper), judging sentiment is classification, and translation is translation — none need a graph's multi-hop power."),
+        }],
+        "open": [L("你的知识库是产品-配件-兼容关系网，为什么图谱比向量更合适？（提示：<strong>关系 / 多跳 / 可解释路径</strong>）",
+                   "Your knowledge base is a product-part-compatibility web of relations. Why is a graph more suitable than vectors? (Hint: <strong>relations / multi-hop / explainable path</strong>)")],
+    },
 }
 
 
