@@ -485,9 +485,10 @@ invoice = program(doc=text)     # -> Invoice(vendor=..., total=..., due_date=...
 ```python
 from llama_index.core.agent.workflow import AgentWorkflow, FunctionAgent
 
-research = FunctionAgent(name="research", tools=[search_tool], llm=llm,
+research = FunctionAgent(name="research", description="查资料的研究员", tools=[search_tool], llm=llm,
                          system_prompt="查资料，把要点交给 writer", can_handoff_to=["write"])
-write = FunctionAgent(name="write", tools=[], llm=llm, system_prompt="据要点写成答复")
+write = FunctionAgent(name="write", description="根据要点写答复的写手", tools=[], llm=llm,
+                      system_prompt="据要点写成答复")
 workflow = AgentWorkflow(agents=[research, write], root_agent="research")
 resp = await workflow.run(user_msg="写一段关于 X-2000 的简报")
 ```
