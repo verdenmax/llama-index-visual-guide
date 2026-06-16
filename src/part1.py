@@ -185,6 +185,16 @@ LESSON_02 = (
         "core is the <strong>standard slots</strong> on a motherboard; integrations are branded RAM/GPUs: anything "
         "that fits the slot just works, and swapping brands never means swapping the board.",
     ))
+    + d.grid(
+        [L("换什么组件", "Swap what"), L("改动量", "Cost to swap"), L("为什么", "Why")],
+        [
+            [L("换 LLM", "the LLM"), L("改一行配置", "one line of config"), L("不碰已建好的索引", "the built index is untouched")],
+            [L("换 Embedding 模型", "the embedding model"), L("要重建索引", "must rebuild the index"), L("旧向量是旧模型算的，不能混用", "old vectors came from the old model")],
+            [L("换向量库", "the vector store"), L("改存储接线", "rewire storage"), L("迁移已存的向量与元数据", "migrate stored vectors + metadata")],
+        ],
+        caption=L("换组件的代价差很多：换 LLM 几乎零成本，换 embedding 却要重建索引——这正是分层抽象要权衡的地方",
+                  "swap costs differ a lot: swapping the LLM is near-free, but swapping the embedding forces a full re-index — the trade-off behind the layered abstraction"),
+    )
     + c.section(
         L("命名约定：一眼看出是核心还是集成", "Naming: spot core vs integration at a glance"),
         c.compare_table(

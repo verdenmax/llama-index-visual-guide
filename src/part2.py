@@ -62,6 +62,23 @@ LESSON_04 = (
             "a Node narrows granularity to “one idea at a time”, fitting the embedding's length limit while making "
             "hits sharper and citations finer.",
         ),
+        d.compare2(
+            (L("整篇 Document = 一个向量", "Whole Document = one vector"), i18n.render(L(
+                "上万字压成<strong>单个</strong>向量，真正相关的一两段被大量无关文字<strong>稀释</strong>——命中既不准也不稳。",
+                "Tens of thousands of words squeezed into <strong>one</strong> vector; the relevant paragraph or two gets "
+                "<strong>diluted</strong> by unrelated text — hits are neither precise nor stable.",
+            ))),
+            (L("切成多个 Node = 各一个向量", "Split into Nodes = one vector each"), i18n.render(L(
+                "每个 Node 只讲<strong>一件事</strong>、单独成向量；相关片段独立命中，<strong>更准、引用更细</strong>，也合 embedding 的长度上限。",
+                "Each Node says <strong>one thing</strong> and is embedded on its own; the relevant chunk is hit "
+                "independently — <strong>sharper, with finer citations</strong> — and fits the embedding's length limit.",
+            ))),
+            caption=L(
+                "为什么以 Node 为检索单位：粒度决定信噪比——整篇会稀释信号，Node 让相关内容单独被命中",
+                "Why the Node is the unit of retrieval: granularity sets the signal-to-noise ratio — a whole doc "
+                "dilutes the signal, while a Node lets the relevant piece be hit on its own",
+            ),
+        ),
         d.flow(
             [
                 ("doc", L("Document", "Document"), L("一整份原始资料", "one whole source")),
@@ -190,6 +207,24 @@ LESSON_05 = (
         "Readers are like a row of <strong>scanners with different ports</strong>: paper, slides or web pages all "
         "come out as the same standard Document.",
     ))
+    + d.grid(
+        [L("来源", "Source"), L("用哪个 Reader", "Which Reader"), L("产出", "Output")],
+        [
+            [L("本地文件夹", "Local folder"), L("SimpleDirectoryReader（内置）", "SimpleDirectoryReader (built-in)"),
+             L("Document 列表", "List of Documents")],
+            [L("PDF 文件", "PDF file"), L("内置 PDF 解析器，按页切", "built-in PDF parser, per page"),
+             L("Document / 每页", "Document / page")],
+            [L("网页", "Web page"), L("SimpleWebPageReader（readers-web）", "SimpleWebPageReader (readers-web)"),
+             L("Document", "Document")],
+            [L("Notion · 数据库 …", "Notion · DB …"), L("LlamaHub 集成包（按需装）", "LlamaHub package (install on demand)"),
+             L("Document", "Document")],
+        ],
+        caption=L(
+            "来源各异、Reader 各不相同，产出却都收敛成 Document——按来源装对应包即可，下游一律不变",
+            "Different sources, different Readers — yet the output always converges to a Document; install the matching "
+            "package per source and everything downstream stays the same",
+        ),
+    )
     + c.section(
         L("SimpleDirectoryReader 常用能力", "What SimpleDirectoryReader gives you"),
         c.compare_table(
@@ -511,6 +546,16 @@ LESSON_07 = (
         "Put a <strong>label and one-line summary</strong> on every sticky note: later you can filter by topic and "
         "match “question ↔ snippet” far more easily.",
     ))
+    + d.flow([
+        ("node", L("原始 Node", "Raw Node"), L("只有正文 + 少量元数据", "body + a little metadata")),
+        ("llm", L("LLM 抽取", "LLM extraction"), L("读内容、按提示生成", "reads content, prompts the LLM")),
+        ("meta", L("+标题 / 关键词 / 问题 / 摘要", "+title / keywords / questions / summary"), L("写进 metadata 键", "written into metadata keys")),
+        ("hit", L("更易被检索到", "Easier to retrieve"), L("向量之外再加一条命中通道", "a hit channel beyond the vector")),
+    ], caption=L(
+        "抽取的意义在结果：Node 经 LLM 补齐元数据后，除了向量相似，还能靠字段过滤与问句对齐被命中",
+        "Why extraction pays off: once an LLM fills in a Node's metadata, it can be hit not only by vector similarity "
+        "but also by field filters and question alignment",
+    ))
     + c.section(
         L("常用抽取器", "Common extractors"),
         c.compare_table(
@@ -528,13 +573,11 @@ LESSON_07 = (
         L(
             "向量相似度是第一检索通道，元数据是第二条。一方面，标题、来源、日期这类字段可做精确过滤"
             "（“只在某产品手册里检索”）；另一方面，像 questions_this_excerpt_can_answer 这样的字段，把"
-            "“用户会怎么问”预先写进块里，让“问句”和“片段”在语义空间里更容易对齐、召回更稳。代价是每个 "
-            "extractor 都要调用一次 LLM，按需启用即可。",
+            "“用户会怎么问”预先写进块里，让“问句”和“片段”在语义空间里更容易对齐、召回更稳。",
             "Vector similarity is the first retrieval channel; metadata is the second. On one hand, fields like title, "
             "source and date enable exact filtering (“search only this product manual”); on the other, fields like "
             "questions_this_excerpt_can_answer bake “how users would ask” into the chunk itself, aligning “question ↔ "
-            "chunk” in semantic space for steadier recall. The cost: each extractor is one LLM call, so enable them "
-            "selectively.",
+            "chunk” in semantic space for steadier recall.",
         ),
         d.flow(
             [
@@ -547,6 +590,14 @@ LESSON_07 = (
                 "transformations form one assembly line: splitter then extractors process the same Nodes in turn",
             ),
         ),
+        c.alert(L(
+            "抽取器都要<strong>调用 LLM</strong>，是有成本的一步：<strong>逐块</strong>抽取器（关键词 / 问题 / 摘要）"
+            "开销随块数线性增长，<strong>按需选字段、别全开</strong>；确定性字段（来源 / 日期）在 Reader 阶段手写即可，零成本。",
+            "Extractors <strong>call the LLM</strong> — a step that costs tokens: <strong>per-node</strong> ones "
+            "(keywords / questions / summary) scale linearly with the chunk count, so <strong>pick fields on demand, "
+            "don't enable them all</strong>; deterministic fields (source / date) are best hand-written at the Reader "
+            "stage, for free.",
+        ), kind="warn"),
     )
     + c.source_ref("extractors/metadata_extractors.py", "TitleExtractor · QuestionsAnsweredExtractor · KeywordExtractor · SummaryExtractor",
                    L("都作为 transformation 接入管道", "all plug in as pipeline transformations"))
@@ -575,20 +626,16 @@ LESSON_07 = (
         c.qa_item(
             L("⚙️ 内部怎么跑", "⚙️ How it runs inside"),
             L(
-                "每个 extractor 都是一个 transformation，按提示词生成内容并写进固定的 metadata 键"
-                "（document_title / excerpt_keywords / questions_this_excerpt_can_answer / section_summary）。"
-                "但调用次数要分两类看：<strong>逐块</strong>的抽取器（KeywordExtractor / QuestionsAnsweredExtractor / "
-                "SummaryExtractor）对每个 Node 各调一次 LLM，开销随块数 N 线性增长；<strong>文档级</strong>的抽取器"
-                "（如 TitleExtractor）只为每篇文档推断一次标题、再共享给该文档的所有 Node，大致<strong>每篇文档一次</strong>"
-                "而非每块一次。所以总开销并不是简单的 N×M——只有逐块抽取器才真正乘以 N。",
-                "Each extractor is a transformation that generates content from a prompt and writes it to a fixed "
-                "metadata key (document_title / excerpt_keywords / questions_this_excerpt_can_answer / "
-                "section_summary). But the call count splits in two: <strong>per-node</strong> extractors "
-                "(KeywordExtractor / QuestionsAnsweredExtractor / SummaryExtractor) make one LLM call per Node, so cost "
-                "grows linearly with the chunk count N; <strong>document-level</strong> extractors (e.g. "
-                "TitleExtractor) infer one title per document and share it across that document's Nodes — roughly "
-                "<strong>once per document</strong>, not once per chunk. So the total is not simply N×M — only the "
-                "per-node extractors truly multiply by N.",
+                "每个 extractor 都是一个 transformation：按提示词生成内容、写进固定的 metadata 键"
+                "（如 document_title / questions_this_excerpt_can_answer）。调用次数分两类："
+                "<strong>逐块</strong>抽取器（Keyword / QuestionsAnswered / Summary）对每个 Node 各调一次 LLM，"
+                "随块数 N 线性增长；<strong>文档级</strong>抽取器（如 TitleExtractor）大致每篇文档只推断一次再共享。"
+                "所以总开销并非简单的 N×M。",
+                "Each extractor is a transformation: it generates content from a prompt and writes it to a fixed "
+                "metadata key (e.g. document_title / questions_this_excerpt_can_answer). The call count splits in two: "
+                "<strong>per-node</strong> extractors (Keyword / QuestionsAnswered / Summary) make one LLM call per "
+                "Node, growing linearly with the chunk count N; <strong>document-level</strong> ones (e.g. "
+                "TitleExtractor) infer roughly once per document and share the result. So the total is not simply N×M.",
             ),
         ),
         c.qa_item(
@@ -837,6 +884,16 @@ LESSON_09 = (
     )
     + c.section(
         L("VectorStore 的职责与可替换性", "What a VectorStore owns, and why it's swappable"),
+        d.annot(
+            L("VectorStore", "VectorStore"),
+            [
+                (L("存向量", "store vectors"), L("每个 Node 一条", "one per Node")),
+                (L("存元数据", "store metadata"), L("随向量一起存", "stored alongside")),
+                (L("近邻查询", "nearest-neighbor"), L("返回 top-k，可按元数据过滤", "top-k, filterable by metadata")),
+            ],
+            caption=L("VectorStore 干三件事：存向量、存元数据、做近邻查询（可按元数据过滤）",
+                      "a VectorStore does three things: store vectors, store metadata, run nearest-neighbor search (filterable by metadata)"),
+        ),
         L(
             "VectorStore 干三件事：保存每个 Node 的向量、保存其元数据、并支持“给定一个查询向量、返回最近邻”。"
             "LlamaIndex 把这三件事抽象成统一契约，于是笔记本上的内存库和生产级引擎对上层看起来一模一样。你按 "

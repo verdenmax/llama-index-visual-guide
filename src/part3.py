@@ -505,6 +505,22 @@ LESSON_15 = (
     )
     + c.section(
         L("QueryEngine 是查询路径的组合根", "The QueryEngine is the query path's composition root"),
+        d.annot(
+            L("QueryEngine（组合根）", "QueryEngine (composition root)"),
+            [
+                (L("检索器 Retriever", "Retriever"),
+                 L("可换：向量 / BM25 / 混合检索", "swap: vector / BM25 / hybrid")),
+                (L("后处理器 Postprocessors", "Postprocessors"),
+                 L("可选、可串联：相似度过滤 · 重排", "optional, chainable: similarity cutoff · rerank")),
+                (L("合成器 Synthesizer", "Synthesizer"),
+                 L("多片段→单答案；可选 ResponseMode（如 compact）", "many → one; pick a ResponseMode (e.g. compact)")),
+            ],
+            caption=L(
+                "组合根：三个正交的“插槽”各自独立替换，QueryEngine 只管装配、对外暴露一个 .query()",
+                "The composition root: three orthogonal “slots”, each independently swappable; the QueryEngine just "
+                "assembles them behind one .query()",
+            ),
+        ),
         L(
             "检索器、后处理器、合成器是三个<strong>正交</strong>的组件：换检索器不影响合成策略，加后处理器不影响检索。"
             "QueryEngine 只负责把它们装配起来、对外暴露一个 <code>.query()</code>。值得记住的是：<code>index.as_query_engine(...)</code> "
