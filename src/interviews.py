@@ -1463,4 +1463,93 @@ INTERVIEW = {
                       "Three storage choices traded off on relation modeling / build cost / explainability: the more relations matter, the more a graph's extraction cost pays off")),
         },
     ],
+    "28-structured-data.html": [
+        {"q": L(
+            "你的 text-to-SQL 在一个<strong>几百张表</strong>的库上准确率很低——经常选错表、写错 join。你会怎么<strong>系统地"
+            "</strong>把它救回来？",
+            "Your text-to-SQL has low accuracy on a <strong>hundreds-of-tables</strong> database — it keeps picking the "
+            "wrong table and botching joins. How would you <strong>systematically</strong> rescue it?"),
+         "answer": L(
+            "🔑 <strong>重点：大库的关键不是“让 LLM 更聪明”，而是“先把 schema 缩小”——只把相关的几张表喂给它，再用示例和"
+            "约束兜底。</strong>① <strong>先选表再写 SQL</strong>：用 <code>ObjectIndex</code> + <code>"
+            "SQLTableRetrieverQueryEngine</code>，查询时先按问题<strong>检索出最相关的少数表</strong>，把上百张表的 schema "
+            "压到几张，提示词短了、选错率自然降；② <strong>给好表/列描述</strong>：为每张表、关键列写清用途，LLM 才分得清 "
+            "<code>amount</code> 和 <code>net_amount</code>；③ <strong>few-shot 示例</strong>：放几条“问题→正确 SQL”的范例，"
+            "教它本库的 join 习惯与命名；④ <strong>限定可用面</strong>：用<strong>只读视图</strong>把复杂表预先 join、改成"
+            "业务友好的字段，缩小它能碰的范围；⑤ <strong>评估闭环</strong>：建一组“问题→金标结果”，用<strong>执行结果是否"
+            "一致</strong>量准确率，针对错例迭代描述与示例。一句话：<strong>缩小 schema，比换更大的模型更有效</strong>。",
+            "🔑 <strong>Key: the lever for a big database isn't “make the LLM smarter”, it's “shrink the schema first” — "
+            "feed it only the few relevant tables, then backstop with examples and constraints.</strong> (1) <strong>"
+            "Select tables before writing SQL</strong>: with <code>ObjectIndex</code> + <code>"
+            "SQLTableRetrieverQueryEngine</code>, first <strong>retrieve the few most relevant tables</strong> per "
+            "question, collapsing hundreds of schemas to a handful — a shorter prompt means fewer wrong picks; (2) "
+            "<strong>good table/column descriptions</strong>: document each table and key column so the LLM can tell "
+            "<code>amount</code> from <code>net_amount</code>; (3) <strong>few-shot examples</strong>: include a few "
+            "“question → correct SQL” pairs to teach this DB's join habits and naming; (4) <strong>restrict the "
+            "surface</strong>: use <strong>read-only views</strong> that pre-join complex tables into business-friendly "
+            "fields, shrinking what it can touch; (5) <strong>an eval loop</strong>: build “question → gold result” "
+            "pairs and measure accuracy by <strong>whether execution results match</strong>, iterating descriptions and "
+            "examples on the failures. In a line: <strong>shrinking the schema beats reaching for a bigger model</strong>."),
+         "fig": d.flow([
+            ("q", L("问题", "Question")),
+            ("pick", L("检索相关表", "Retrieve tables"), L("ObjectIndex 选几张", "ObjectIndex picks a few")),
+            ("schema", L("只给这几张 schema", "Only those schemas"), L("提示词大幅缩短", "much shorter prompt")),
+            ("sql", L("LLM 写 SQL", "LLM writes SQL")),
+            ("run", L("数据库执行", "DB executes")),
+        ], active="pick", caption=L("大库 text-to-SQL：先缩小 schema 再写 SQL，选错率随提示词变短而下降",
+                                    "Large-DB text-to-SQL: shrink the schema before writing SQL — fewer wrong picks as the prompt shrinks")),
+        },
+        {"q": L(
+            "用户的一个问题里<strong>既要查文档</strong>（“退货政策怎么说的”）<strong>又要算数字</strong>（“上季度退货率多少”）。"
+            "你怎么<strong>路由</strong>，让每部分走对引擎？",
+            "A single user question <strong>needs both a document lookup</strong> (“what does the return policy say”) "
+            "<strong>and a number</strong> (“what was last quarter's return rate”). How do you <strong>route</strong> so "
+            "each part hits the right engine?"),
+         "answer": L(
+            "🔑 <strong>重点：用 <code>RouterQueryEngine</code> 按“问题类型”分流——找文字走向量、算数字走 SQL；一个问题同时要"
+            "两类时再拆成子问题各查各的、最后合并（呼应 L18 的路由、L30 的查询分解）。</strong>① <strong>路由</strong>：给 "
+            "Router 挂两个工具——“文档向量引擎”和“text-to-SQL 引擎”，各写清<strong>能力描述</strong>（“擅长政策/条款类语义"
+            "问答” vs “擅长订单/指标的精确统计”），由 LLM 选择器按问题选；② <strong>拆分</strong>：用 <code>"
+            "SubQuestionQueryEngine</code> 把复合问题拆成“政策是什么”（走向量）和“退货率多少”（走 SQL）两个子问题，各取所长"
+            "后合并作答；③ <strong>判据</strong>：路由不靠猜——给每个引擎清晰描述，再用一批带标注的问题<strong>评测路由命中率"
+            "</strong>，错分多就改描述或加示例。一句话：<strong>别让一个引擎硬扛两类活，按数据形态分流</strong>。",
+            "🔑 <strong>Key: use <code>RouterQueryEngine</code> to split by “question type” — text lookups to vectors, "
+            "number-crunching to SQL — and when one question needs both, decompose it into sub-questions answered "
+            "separately, then merge (echoing L18's routing and L30's query decomposition).</strong> (1) <strong>Route"
+            "</strong>: give the Router two tools — a “document vector engine” and a “text-to-SQL engine” — each with a "
+            "crisp <strong>capability description</strong> (“good at policy/clause semantic Q&amp;A” vs “good at exact "
+            "stats over orders/metrics”), and let the LLM selector pick per question; (2) <strong>decompose</strong>: "
+            "use <code>SubQuestionQueryEngine</code> to split the compound question into “what is the policy” (→ vectors) "
+            "and “what's the return rate” (→ SQL), then combine; (3) <strong>judge it</strong>: don't route by guesswork "
+            "— give each engine a clear description and <strong>measure routing hit-rate</strong> on a labeled question "
+            "set, fixing descriptions or adding examples when misrouted. In a line: <strong>don't make one engine carry "
+            "both jobs — split by data shape</strong>."),
+        },
+        {"q": L(
+            "你要把 text-to-SQL 查询接口<strong>开放给外部用户</strong>。安全上你最担心什么？会怎么防？",
+            "You're <strong>exposing</strong> a text-to-SQL interface <strong>to external users</strong>. What worries "
+            "you most on security, and how do you defend it?"),
+         "answer": L(
+            "🔑 <strong>重点：text-to-SQL 在真的执行 LLM 生成的 SQL，等于把“对你数据库下命令”的能力间接交给了提问者——提示"
+            "注入可诱导出 <code>DROP</code>/<code>DELETE</code>/越权读表。核心防线是“最小权限 + 隔离 + 限面 + 校验”，绝不靠"
+            "“在提示词里求它别乱来”。</strong>① <strong>只读、最小权限账号</strong>：只 SELECT、不能写、只授权该看的表/视图，"
+            "从根上堵掉破坏与越权；② <strong>限定可见面</strong>：<code>include_tables</code> / 业务视图把暴露的表/列收到最小，"
+            "敏感列根本不进 schema；③ <strong>沙箱 / 超时 / 行数上限</strong>：查询跑在隔离环境，加语句超时、<code>LIMIT</code> "
+            "和结果行数上限，防爆库；④ <strong>执行前校验</strong>：对生成的 SQL 做白名单校验（只允许 SELECT、只允许这些表），"
+            "可疑就拒；⑤ <strong>Pandas 更甚</strong>：<code>PandasQueryEngine</code> 会 <code>eval</code> Python、风险更大，"
+            "core 0.14.22 已把它移到 <code>llama-index-experimental</code> 并标注“仅安全环境”，对外场景能不用就不用。",
+            "🔑 <strong>Key: text-to-SQL actually executes LLM-generated SQL, so you've indirectly handed “issue commands "
+            "to your database” to the asker — prompt injection can elicit <code>DROP</code>/<code>DELETE</code>/"
+            "unauthorized reads. The real defense is “least privilege + isolation + a small surface + validation”, never "
+            "“asking it nicely in the prompt”.</strong> (1) <strong>read-only, least-privilege account</strong>: SELECT "
+            "only, no writes, granted just the tables/views it should see — closing destruction and over-reach at the "
+            "root; (2) <strong>shrink the visible surface</strong>: <code>include_tables</code> / business views expose "
+            "the minimum tables/columns; sensitive columns never enter the schema; (3) <strong>sandbox / timeouts / row "
+            "caps</strong>: run queries in isolation with statement timeouts, <code>LIMIT</code> and result-row caps to "
+            "prevent blowups; (4) <strong>validate before executing</strong>: allow-list the generated SQL (SELECT only, "
+            "these tables only) and reject anything suspicious; (5) <strong>Pandas is worse</strong>: <code>"
+            "PandasQueryEngine</code> <code>eval</code>s Python and is riskier — core 0.14.22 has moved it to <code>"
+            "llama-index-experimental</code> marked “secure environments only”, so avoid it for external-facing use."),
+        },
+    ],
 }

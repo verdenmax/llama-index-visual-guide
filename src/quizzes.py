@@ -603,6 +603,33 @@ QUIZZES = {
         "open": [L("你的知识库是产品-配件-兼容关系网，为什么图谱比向量更合适？（提示：<strong>关系 / 多跳 / 可解释路径</strong>）",
                    "Your knowledge base is a product-part-compatibility web of relations. Why is a graph more suitable than vectors? (Hint: <strong>relations / multi-hop / explainable path</strong>)")],
     },
+    "28-structured-data.html": {
+        "mcq": [{
+            "q": L("“各区域季度环比增长率”最该用哪种方式？",
+                   "Which approach best fits “quarter-over-quarter growth rate per region”?"),
+            "opts": [
+                L("向量检索", "vector retrieval"),
+                L("text-to-SQL", "text-to-SQL"),
+                L("rerank 重排序", "rerank"),
+                L("HyDE 查询改写", "HyDE query rewrite"),
+            ],
+            "answer": 1,
+            "why": L("正确的是 <strong>text-to-SQL</strong>：季度环比增长率是<strong>聚合计算</strong>（按季度分组、求和，再算环比），"
+                     "要让 LLM 写出 SQL、交数据库<strong>精确算</strong>。其余三个都在解决“<strong>找相似</strong>”而非“精确算数字”——"
+                     "<strong>向量检索</strong>按语义近似召回片段，<strong>rerank 重排序</strong>只是把已召回的片段重新排个序，"
+                     "<strong>HyDE 查询改写</strong>是先造个假设答案再去检索；它们都不会做 <code>GROUP BY/SUM</code> 这类精确聚合。",
+                     "The right one is <strong>text-to-SQL</strong>: quarter-over-quarter growth is an <strong>aggregation</strong> "
+                     "(group by quarter, sum, then compute the ratio), so have the LLM write SQL and let the database <strong>"
+                     "compute it exactly</strong>. The other three all solve “<strong>find similar</strong>”, not “compute exact "
+                     "numbers” — <strong>vector retrieval</strong> recalls chunks by semantic proximity, <strong>rerank</strong> only "
+                     "reorders already-retrieved chunks, and <strong>HyDE</strong> drafts a hypothetical answer to retrieve with; "
+                     "none of them do <code>GROUP BY/SUM</code>-style exact aggregation."),
+        }],
+        "open": [L("为什么 <code>PandasQueryEngine</code> 要特别小心？（提示：<strong>它会执行 LLM 生成的 Python / 提示注入 · 越权 / "
+                   "沙箱 · 只读 · 最小权限</strong>）",
+                   "Why must you be especially careful with <code>PandasQueryEngine</code>? (Hint: <strong>it executes "
+                   "LLM-generated Python / prompt injection · over-reach / sandbox · read-only · least privilege</strong>)")],
+    },
 }
 
 

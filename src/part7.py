@@ -248,7 +248,242 @@ LESSON_27 = (
         "cheap — don't pay for relations you'll never traverse.",
     ))
 )
-LESSON_28 = _skeleton("retrieve", "结构化数据查询（SQL &amp; Pandas）", "querying structured data (SQL &amp; Pandas)")
+LESSON_28 = (
+    c.pipeline("retrieve")
+    + c.lead(L(
+        "到这里，检索一直在做同一件事——“<strong>找相似</strong>”：把问题和文档变成向量、取回最像的片段。可一旦"
+        "问题是“<strong>上个月各区域的总销售额、降序排列</strong>”这种要<strong>精确算数字</strong>的，向量就无能为力："
+        "答案不在某一段话里现成写着，而要把成千上万行<strong>逐笔加总、按区域分组、再排序</strong>。这一课换一种思路："
+        "<strong>别让向量算账，把结构化数据交给天生会精确计算的工具</strong>——用 <strong>text-to-SQL</strong> 让数据库算、"
+        "用 <strong>PandasQueryEngine</strong> 让内存表算；同时盯紧一个绕不开的代价：<strong>这些引擎在执行 LLM 生成的"
+        "代码</strong>。",
+        "Up to here retrieval kept doing one thing — “<strong>find similar</strong>”: turn the question and docs into "
+        "vectors and fetch the most alike chunks. But the moment the question is something like “<strong>total sales "
+        "per region last month, sorted descending</strong>” that needs an <strong>exact number</strong>, vectors are "
+        "helpless: the answer isn't sitting ready in any passage — it requires <strong>summing row by row, grouping by "
+        "region and then sorting</strong> thousands of rows. This lesson flips the approach: <strong>don't make vectors "
+        "do the accounting; hand structured data to tools born to compute exactly</strong> — use <strong>text-to-SQL"
+        "</strong> so the database computes, and <strong>PandasQueryEngine</strong> so an in-memory table computes — "
+        "all while watching one unavoidable cost: <strong>these engines execute LLM-generated code</strong>.",
+    ))
+    + c.section(
+        L("痛点：数字、聚合、精确筛选，塞进向量必然不准",
+          "The pain: numbers, aggregation, exact filtering — forced into vectors, bound to be wrong"),
+        L(
+            "向量检索的本事是“<strong>找像的</strong>”：把每段文字编码成语义向量，召回和问题<strong>最相似</strong>的 "
+            "top-k 片段。这对“讲了什么”的非结构化文字很灵，碰到“<strong>算出确切数字</strong>”却立刻露馅。问“上个月每个"
+            "区域的总销售额、降序排列”，答案不是哪段话里写好的句子，而要把<strong>成千上万行</strong>订单加总、分组、"
+            "排序——向量<strong>既不会做加法</strong>，也保证不了“<strong>全</strong>”：top-k 只取几片，漏一行结果就错。"
+            "把订单表、财务报表、监控指标这种<strong>结构化数据</strong>硬编码成 embedding，等于让一个擅长“<strong>模糊"
+            "联想</strong>”的系统去做“<strong>精确算账</strong>”，结果必然是“看起来差不多、其实算错”。这类问题的正解只有"
+            "一个方向：<strong>别让向量算，把精确计算交给本来就为它而生的工具</strong>——数据库与 DataFrame。",
+            "Vector search is good at “<strong>finding the alike</strong>”: encode each passage into a semantic vector "
+            "and recall the top-k chunks <strong>most similar</strong> to the question. That shines on unstructured text "
+            "about “what was said”, but it falls apart the instant you need an <strong>exact number</strong>. Ask “total "
+            "sales per region last month, sorted descending” and the answer isn't a ready-made sentence in some passage "
+            "— it requires totalling, grouping and sorting <strong>thousands of rows</strong> of orders. Vectors "
+            "<strong>can't do arithmetic</strong> and can't guarantee <strong>completeness</strong>: top-k takes a few "
+            "chunks, and miss one row and the result is wrong. Hard-coding an orders table, a financial report or a "
+            "monitoring metric into embeddings asks a system built for “<strong>fuzzy association</strong>” to do "
+            "“<strong>exact accounting</strong>” — the result is bound to “look about right but compute wrong”. There's "
+            "only one right direction: <strong>don't make vectors compute; hand exact calculation to the tools born for "
+            "it</strong> — databases and DataFrames.",
+        ),
+    )
+    + d.compare2(
+        (L("向量检索", "Vector"),
+         i18n.render(L("问“各区域总销售额”，只捞回几段<strong>看起来相关</strong>的文字，数字还得你自己凑——<strong>漏行、算错</strong>",
+                       "ask “total sales per region” and it just pulls a few <strong>seems-related</strong> snippets; you still patch the numbers yourself — <strong>missed rows, wrong totals</strong>"))),
+        (L("text-to-SQL", "text-to-SQL"),
+         i18n.render(L("LLM 写 <code>GROUP BY · SUM · ORDER BY</code>，数据库<strong>逐行精确算</strong>，结果<strong>又全又准</strong>",
+                       "the LLM writes <code>GROUP BY · SUM · ORDER BY</code>; the database computes <strong>exactly, row by row</strong> — <strong>complete and correct</strong>"))),
+        caption=L("同一个数字问题：向量只会“找相似”，text-to-SQL 才能“精确算”",
+                  "Same numeric question: vectors only “find similar”, text-to-SQL actually “computes exactly”"),
+    )
+    + c.section(
+        L("text-to-SQL：LLM 写 SQL，数据库做精确计算",
+          "text-to-SQL: the LLM writes SQL, the database does the exact compute"),
+        L(
+            "数据库天生就会“精确算账”：<code>GROUP BY</code> 分组、<code>SUM</code> 求和、<code>ORDER BY</code> 排序，"
+            "几十年的引擎优化保证又快又准。text-to-SQL 的思路就是<strong>分工</strong>：把<strong>表结构（schema）</strong>"
+            "喂给 LLM，让它据此<strong>写出 SQL</strong>，交数据库<strong>执行</strong>，再把结果用自然语言讲回来——LLM 只"
+            "做“<strong>把人话翻成 SQL</strong>”这件它擅长的事，真正的计算落在数据库上。<code>SQLDatabase</code> 包住"
+            "数据库连接（<code>include_tables</code> 限定可见表），<code>NLSQLTableQueryEngine</code> 把“自然语言 → SQL → "
+            "执行 → 答案”串成一个查询引擎。",
+            "A database is born to do “exact accounting”: <code>GROUP BY</code> to group, <code>SUM</code> to total, "
+            "<code>ORDER BY</code> to sort — decades of engine optimization make it fast and correct. text-to-SQL is "
+            "just a <strong>division of labor</strong>: feed the <strong>schema</strong> to the LLM, have it <strong>"
+            "write SQL</strong> from that, hand it to the database to <strong>execute</strong>, then phrase the result "
+            "back in natural language — the LLM only does the one thing it's good at, “<strong>translate human words "
+            "into SQL</strong>”, while the real computation lands on the database. <code>SQLDatabase</code> wraps the "
+            "connection (<code>include_tables</code> limits the visible tables) and <code>NLSQLTableQueryEngine</code> "
+            "chains “NL → SQL → execute → answer” into one query engine.",
+        ),
+        L(
+            "可 schema 一大就有新麻烦：库里有<strong>几百张表</strong>时，把所有表结构塞进提示词既<strong>超长又贵</strong>，"
+            "还会让 LLM 在无关表里挑花眼、写错 SQL。解法是<strong>先选表、再写 SQL</strong>：把每张表的描述做成对象、建一个 "
+            "<code>ObjectIndex</code>，查询时先<strong>检索出与问题最相关的少数几张表</strong>，只把这几张的 schema 交给 "
+            "LLM。承担这一步的是 <code>SQLTableRetrieverQueryEngine</code>——它比 <code>NLSQLTableQueryEngine</code> 多了"
+            "“<strong>先按问题召回相关表</strong>”的检索器，正是为大库设计：提示词短了，选错表、串错列的概率自然降下来。",
+            "But a big schema brings a new problem: with <strong>hundreds of tables</strong>, stuffing every schema into "
+            "the prompt is <strong>huge and expensive</strong> and tempts the LLM to pick the wrong table and write "
+            "wrong SQL. The fix is <strong>select tables first, then write SQL</strong>: turn each table's description "
+            "into an object and build an <code>ObjectIndex</code>; at query time first <strong>retrieve the few tables "
+            "most relevant to the question</strong> and give only those schemas to the LLM. That job falls to <code>"
+            "SQLTableRetrieverQueryEngine</code> — it adds a “<strong>retrieve relevant tables by the question first"
+            "</strong>” retriever on top of <code>NLSQLTableQueryEngine</code>, designed exactly for large databases: a "
+            "shorter prompt naturally lowers the odds of the wrong table or a crossed-up column.",
+        ),
+    )
+    + c.code(
+        'from llama_index.core import SQLDatabase\n'
+        'from llama_index.core.query_engine import NLSQLTableQueryEngine\n\n'
+        'sql_db = SQLDatabase(engine, include_tables=["orders"])\n'
+        'qe = NLSQLTableQueryEngine(sql_database=sql_db, tables=["orders"])\n'
+        'print(qe.query("上个月每个区域的总销售额是多少，降序排列？"))',
+        caption=L("自然语言进、SQL 出、数据库算：include_tables 限定可见表，把精确计算交给数据库",
+                  "NL in, SQL out, DB computes: include_tables limits the visible tables, hand the exact math to the database"),
+    )
+    + c.source_ref(
+        "indices/struct_store/sql_query.py", "NLSQLTableQueryEngine",
+        L("把自然语言转成 SQL 在数据库上执行。", "turns NL into SQL executed on the database."),
+    )
+    + d.flow([
+        ("q", L("自然语言问题", "NL question")),
+        ("sql", L("LLM 写 SQL", "LLM writes SQL"), L("据表结构", "from schema")),
+        ("run", L("数据库执行", "DB executes"), L("精确计算", "exact compute")),
+        ("ans", L("自然语言答案", "NL answer")),
+    ], active="run", caption=L("text-to-SQL：把精确计算交给数据库，LLM 只负责翻译",
+                               "text-to-SQL: hand exact compute to the DB; the LLM only translates"))
+    + c.section(
+        L("内存表：交给 PandasQueryEngine",
+          "In-memory tables: hand them to PandasQueryEngine"),
+        L(
+            "不是所有结构化数据都躺在数据库里。很多时候你手上就是一个 <code>pandas.DataFrame</code>——一份刚读进来的 "
+            "CSV、一段 API 返回、一张算好的中间表。为这点数据起一个数据库太重，<code>PandasQueryEngine</code> 直接让 "
+            "LLM 对 DataFrame 干活：把<strong>列名和样例</strong>给 LLM，让它写一小段 <strong>pandas 代码</strong>（如 "
+            "<code>df.groupby(...).sum()</code>），<strong>执行</strong>后把结果讲回来。“销量最高的 3 个产品”这种小分析，"
+            "几行就出；<code>verbose=True</code> 还会打印它生成的代码，方便你核对它到底算了什么。它和 text-to-SQL 是<strong>"
+            "同一套思路</strong>（LLM 写代码、引擎执行），只是把“数据库 + SQL”换成了“<strong>内存表 + pandas</strong>”。",
+            "Not all structured data lives in a database. Often you just hold a <code>pandas.DataFrame</code> — a freshly "
+            "read CSV, an API response, a computed intermediate table. Spinning up a database for that is overkill; "
+            "<code>PandasQueryEngine</code> lets the LLM work the DataFrame directly: give it the <strong>column names "
+            "and a sample</strong>, have it write a small snippet of <strong>pandas code</strong> (e.g. <code>"
+            "df.groupby(...).sum()</code>), <strong>execute</strong> it, and phrase the result back. A small analysis "
+            "like “the top-3 products by sales” comes out in a few lines; <code>verbose=True</code> also prints the "
+            "generated code so you can check what it actually computed. It's the <strong>same idea</strong> as "
+            "text-to-SQL (the LLM writes code, an engine runs it), just swapping “database + SQL” for “<strong>"
+            "in-memory table + pandas</strong>”.",
+        ),
+    )
+    + c.code(
+        '# pip install llama-index-experimental  —— core 0.14.22 仅留会抛弃用警告的占位实现\n'
+        'from llama_index.experimental.query_engine import PandasQueryEngine\n\n'
+        'qe = PandasQueryEngine(df=df, verbose=True)   # ⚠️ 会 eval LLM 生成的 Python，仅用于可信环境\n'
+        'print(qe.query("销量最高的 3 个产品是哪些？"))',
+        caption=L("内存 DataFrame 直接问：LLM 写 pandas、引擎执行；verbose 打印生成的代码便于核对",
+                  "Ask an in-memory DataFrame directly: the LLM writes pandas, the engine runs it; verbose prints the generated code to check"),
+    )
+    + d.grid(
+        [L("数据形态", "Data shape"), L("最该用", "Best tool"), L("为什么", "Why")],
+        [
+            [L("非结构化文档", "unstructured docs"), L("向量检索", "vector"), L("语义相似", "semantic similarity")],
+            [L("数据库表（大）", "DB tables (large)"), L("text-to-SQL", "text-to-SQL"), L("精确聚合/筛选", "exact aggregation")],
+            [L("内存 DataFrame", "in-memory DataFrame"), L("PandasQueryEngine", "PandasQueryEngine"), L("快速表分析", "quick table analysis")],
+        ],
+        caption=L("按数据形态选工具——数字别硬塞向量", "pick by data shape — don't force numbers into vectors"),
+    )
+    + c.section(
+        L("安全：它们在执行 LLM 生成的代码",
+          "Safety: they execute LLM-generated code"),
+        L(
+            "这两个引擎好用，但有一个<strong>必须正视</strong>的共同前提：它们都在<strong>执行 LLM 生成的代码</strong>。"
+            "<code>PandasQueryEngine</code> 会 <code>eval</code> 一段 LLM 写的 Python，<code>NLSQLTableQueryEngine</code> "
+            "会把 LLM 写的 SQL <strong>真的跑在你的数据库上</strong>。一旦输入不可信，<strong>提示注入</strong>就能诱导模型"
+            "写出 <code>DROP TABLE</code>、<code>DELETE</code>、越权去读别的表，甚至（Pandas 这边）执行任意 Python——这"
+            "不是“答错了”，是“<strong>被人借你的手执行命令</strong>”。",
+            "These two engines are handy, but they share one premise you <strong>must face</strong>: both <strong>"
+            "execute LLM-generated code</strong>. <code>PandasQueryEngine</code> <code>eval</code>s a snippet of "
+            "LLM-written Python, and <code>NLSQLTableQueryEngine</code> <strong>actually runs the LLM's SQL on your "
+            "database</strong>. The moment input is untrusted, <strong>prompt injection</strong> can coax the model "
+            "into <code>DROP TABLE</code>, <code>DELETE</code>, reading other tables it shouldn't, or (on the Pandas "
+            "side) running arbitrary Python — that's not “a wrong answer”, it's “<strong>someone executing commands "
+            "through your hands</strong>”.",
+        ),
+        L(
+            "所以上线前的第一要务不是跑通，而是<strong>关进笼子</strong>：① 数据库一律用<strong>只读、最小权限</strong>的"
+            "账号，能 SELECT 不能写、只看该看的表/视图；② Pandas 这类引擎<strong>放进沙箱/隔离进程/容器</strong>，限制可用"
+            "模块与文件系统；③ <strong>只对可信输入开放</strong>，别把这种引擎直接怼到匿名用户面前。事实上，<code>"
+            "llama-index-core 0.14.22</code> 已经把 <code>PandasQueryEngine</code> 做成<strong>会抛弃用警告的占位实现"
+            "</strong>，把真正能跑的版本挪到了 <code>llama-index-experimental</code>（<code>from "
+            "llama_index.experimental.query_engine import PandasQueryEngine</code>），并白纸黑字写明“<strong>会任意执行"
+            "代码、请在安全环境使用</strong>”——库本身就用这种“默认不让用”的姿态提醒你：方便和危险是绑在一起的。",
+            "So the first priority before shipping isn't getting it to run — it's <strong>caging it</strong>: (1) give "
+            "the database a <strong>read-only, least-privilege</strong> account — SELECT but no writes, only the "
+            "tables/views it should see; (2) put Pandas-style engines in a <strong>sandbox / isolated process / "
+            "container</strong>, restricting modules and filesystem; (3) <strong>expose it only to trusted input"
+            "</strong>, never wire such an engine straight to anonymous users. In fact, <code>llama-index-core "
+            "0.14.22</code> already ships <code>PandasQueryEngine</code> as a <strong>shim that raises a deprecation "
+            "warning</strong>, moving the runnable version to <code>llama-index-experimental</code> (<code>from "
+            "llama_index.experimental.query_engine import PandasQueryEngine</code>) and stating in black and white that "
+            "it “<strong>allows arbitrary code execution; use in a secure environment</strong>” — the library itself "
+            "uses this “off by default” stance to remind you that convenience and danger come bound together.",
+        ),
+    )
+    + c.analogy(L(
+        "向量检索像凭“<strong>模糊回忆</strong>”找最像的一段话：问“上个月华东区卖了多少”，它只会捞回几段“看起来相关”"
+        "的文字，真要把数字加起来还得靠你自己、还容易漏。text-to-SQL 像“<strong>拿计算器精确算</strong>”：让数据库去 "
+        "<code>GROUP BY · SUM · ORDER BY</code>，算出来的数字<strong>又全又准</strong>。要数字，就别问“模糊回忆”，去按"
+        "“计算器”。",
+        "Vector search is like fishing by “<strong>fuzzy memory</strong>” for the passage that looks most alike: ask "
+        "“how much did the East region sell last month” and it pulls back a few “seems-related” snippets, leaving the "
+        "actual arithmetic to you — and easy to miss rows. text-to-SQL is like “<strong>reaching for a calculator"
+        "</strong>”: let the database <code>GROUP BY · SUM · ORDER BY</code>, and the number comes back <strong>"
+        "complete and correct</strong>. When you need a number, don't ask “fuzzy memory” — press the “calculator”.",
+    ))
+    + c.key_points([
+        L("数字 / 聚合 / 精确筛选<strong>别塞向量</strong>——向量只会“找相似”，算不准 <code>SUM/COUNT/排序</code>；"
+          "结构化数据交给能<strong>精确计算</strong>的引擎。",
+          "<strong>Don't force numbers / aggregation / exact filtering into vectors</strong> — vectors only “find "
+          "similar” and can't compute <code>SUM/COUNT/sort</code>; hand structured data to engines that <strong>compute "
+          "exactly</strong>."),
+        L("<strong>text-to-SQL</strong>：让 LLM 据表结构写 SQL、数据库执行（<code>NLSQLTableQueryEngine</code>）；表多时"
+          "先用 <code>ObjectIndex</code> + <code>SQLTableRetrieverQueryEngine</code> <strong>选相关表</strong>再生成 SQL。",
+          "<strong>text-to-SQL</strong>: the LLM writes SQL from the schema and the database executes it (<code>"
+          "NLSQLTableQueryEngine</code>); with many tables, first <strong>select relevant tables</strong> via <code>"
+          "ObjectIndex</code> + <code>SQLTableRetrieverQueryEngine</code>, then generate SQL."),
+        L("内存 <code>DataFrame</code> 用 <strong>PandasQueryEngine</strong> 做快速表分析（LLM 写 pandas、引擎执行）。",
+          "For an in-memory <code>DataFrame</code>, use <strong>PandasQueryEngine</strong> for quick table analysis (the "
+          "LLM writes pandas, the engine runs it)."),
+        L("⚠️ <strong>安全</strong>：Pandas/SQL 引擎都在<strong>执行 LLM 生成的代码</strong>——必须<strong>沙箱 / 只读账号 "
+          "/ 最小权限 / 限可信输入</strong>；core 0.14.22 已把 <code>PandasQueryEngine</code> 移到 <code>"
+          "llama-index-experimental</code> 并要求“安全环境”。",
+          "⚠️ <strong>Safety</strong>: Pandas/SQL engines both <strong>execute LLM-generated code</strong> — you must "
+          "<strong>sandbox / use a read-only account / least privilege / restrict to trusted input</strong>; core "
+          "0.14.22 has moved <code>PandasQueryEngine</code> to <code>llama-index-experimental</code> and requires a "
+          "“secure environment”."),
+    ])
+    + c.design_highlight(L(
+        "结构化数据查询的精髓，是把“<strong>该谁来算</strong>”想清楚：向量擅长“<strong>找相似</strong>”，却天生不会"
+        "“<strong>精确算数字</strong>”——<code>SUM</code>、<code>COUNT</code>、<code>GROUP BY</code>、环比这些，硬塞进 "
+        "embedding 只会得到“看起来差不多”的错答。正确做法是<strong>按数据形态选工具</strong>：非结构化文档走向量，"
+        "数据库表走 text-to-SQL，内存表走 Pandas，让<strong>数据库 / 解释器去做它最擅长的精确计算</strong>，LLM 只负责"
+        "“把人话翻成查询”。代价也很实在：这些引擎都在<strong>执行 LLM 生成的代码</strong>，把“翻译”的便利和“任意执行”的"
+        "风险绑在了一起——所以工程上第一件事不是跑通，而是<strong>关进沙箱、换只读账号、收最小权限</strong>。一句话："
+        "<strong>数字别硬塞向量，但给数据库写 SQL 的权力也要锁死</strong>。",
+        "The essence of structured-data querying is getting “<strong>who should do the math</strong>” right: vectors are "
+        "great at “<strong>finding similar</strong>” but inherently can't “<strong>compute exact numbers</strong>” — "
+        "<code>SUM</code>, <code>COUNT</code>, <code>GROUP BY</code>, quarter-over-quarter forced into an embedding only "
+        "yield a “close-looking” wrong answer. The fix is to <strong>pick the tool by data shape</strong>: unstructured "
+        "docs → vectors, database tables → text-to-SQL, in-memory tables → Pandas, letting the <strong>database / "
+        "interpreter do the exact compute it's best at</strong> while the LLM only “translates human questions into a "
+        "query”. The cost is real too: these engines all <strong>execute LLM-generated code</strong>, binding the "
+        "convenience of “translation” to the risk of “arbitrary execution” — so the first engineering move isn't getting "
+        "it to run, it's <strong>caging it: sandbox, swap in a read-only account, cut to least privilege</strong>. In a "
+        "line: <strong>don't force numbers into vectors, but lock down the power to write SQL against your database too"
+        "</strong>.",
+    ))
+)
 LESSON_29 = _skeleton("embed", "多模态 RAG", "multimodal RAG")
 LESSON_30 = _skeleton("retrieve", "查询分解（Sub-Question）", "query decomposition (Sub-Question)")
 LESSON_31 = _skeleton("synthesize", "结构化输出", "structured outputs")
