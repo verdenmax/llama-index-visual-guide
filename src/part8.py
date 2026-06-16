@@ -528,5 +528,304 @@ LESSON_33 = (
         "<strong>ships it as a service</strong>.",
     ))
 )
-LESSON_34 = _skeleton("answer", "把 RAG 上线成服务", "serving your RAG")
+LESSON_34 = (
+    c.pipeline("answer")
+    + c.lead(L(
+        "前面 33 课，我们的 RAG 一直活在 <strong>notebook</strong> 里：建一次索引、问几个问题、看看效果——"
+        "<strong>能跑一次就算赢</strong>。可真正交付时，它得变成一个 <strong>7×24 营业</strong>的<strong>服务</strong>："
+        "通过 HTTP 同时接很多人的请求、要稳、要快。从原型到服务，<strong>最该避免的一件事</strong>就是——<strong>每来一个"
+        "请求就重新加载 / 重建索引</strong>。建库（读文件、切块、embedding、写库）是<strong>一次性</strong>的重活，把它"
+        "摊进<strong>每一次查询</strong>，结果就是又慢又浪费、并发一上来就垮。正解只有一句：<strong>索引在启动时一次"
+        "加载、常驻内存，查询引擎复用</strong>，每个请求只跑「检索+合成」这段轻活。这一课就把这条规则落地："
+        "① 用 <strong>FastAPI</strong> 把<strong>常驻的查询引擎</strong>包成一个 HTTP 接口，配 <strong>async "
+        "<code>aquery</code> / 流式</strong>扛并发、降首 token 延迟（承 L24）；② 用 <strong>persist / "
+        "<code>load_index_from_storage</code></strong> 让服务<strong>启动即秒级恢复</strong>、不必每次重建（承 L11）；"
+        "③ 再往上，<strong>llama-deploy</strong> 编排多 workflow/服务、<strong>create-llama</strong> 脚手架快速起项目。"
+        "<strong>说明：FastAPI / llama-deploy / create-llama 都在 core 之外，本课代码是示例</strong>；真正的 core 只有你"
+        "早就会的 <code>StorageContext</code> / <code>load_index_from_storage</code> / <code>as_query_engine</code> / "
+        "<code>aquery</code>。",
+        "For 33 lessons our RAG has lived in a <strong>notebook</strong>: build the index once, ask a few questions, "
+        "eyeball the result — <strong>running once is a win</strong>. But to actually ship it, it must become a "
+        "<strong>24/7 service</strong>: taking many people's requests over HTTP at once, staying stable and fast. Going "
+        "from prototype to service, the <strong>one thing to avoid most</strong> is <strong>reloading / rebuilding the "
+        "index on every request</strong>. Building the library (read files, chunk, embed, write the store) is a "
+        "<strong>one-time</strong> heavy job; smear it across <strong>every query</strong> and you get slow, wasteful "
+        "work that collapses under concurrency. The fix is one sentence: <strong>load the index once at startup, keep it "
+        "resident in memory, and reuse the query engine</strong>, so each request runs only the light “retrieve + "
+        "synthesize” part. This lesson makes that rule concrete: (1) use <strong>FastAPI</strong> to wrap the "
+        "<strong>resident query engine</strong> as an HTTP endpoint, with <strong>async <code>aquery</code> / "
+        "streaming</strong> to handle concurrency and cut first-token latency (from L24); (2) use <strong>persist / "
+        "<code>load_index_from_storage</code></strong> so the service <strong>restores in seconds at startup</strong> "
+        "instead of rebuilding every time (from L11); (3) one level up, <strong>llama-deploy</strong> orchestrates "
+        "multiple workflows/services and <strong>create-llama</strong> scaffolds a project fast. <strong>Note: FastAPI / "
+        "llama-deploy / create-llama all live outside core; the code here is illustrative</strong>; the real core is "
+        "only what you already know — <code>StorageContext</code> / <code>load_index_from_storage</code> / "
+        "<code>as_query_engine</code> / <code>aquery</code>.",
+    ))
+    + d.compare2(
+        (L("每请求重建索引", "Rebuild per request"), i18n.render(L(
+            "每来一个请求就 <code>load</code> / 重建一次——把<strong>一次性建库成本</strong>摊进每次查询，又慢又浪费，"
+            "并发一上来就垮。",
+            "every request does a <code>load</code> / rebuild — smearing the <strong>one-time build cost</strong> into "
+            "each query: slow, wasteful, and collapses under concurrency."))),
+        (L("启动一次、引擎常驻", "Load once, engine resident"), i18n.render(L(
+            "启动时<strong>一次加载</strong>索引、查询引擎<strong>常驻复用</strong>，每个请求只跑「检索+合成」——快、省、"
+            "扛并发。",
+            "load the index <strong>once</strong> at startup and <strong>reuse the resident</strong> query engine; each "
+            "request runs only “retrieve + synthesize” — fast, cheap, concurrency-ready."))),
+        caption=L("上线第一课：把建库成本留在启动，别摊进每次请求",
+                  "Serving rule #1: keep the build cost at startup, don't smear it into every request"),
+    )
+    + c.section(
+        L("① 从 notebook 到服务：索引一次加载常驻，别每请求重建",
+          "① From notebook to service: load the index once and keep it resident — don't rebuild per request"),
+        L(
+            "<strong>notebook 和服务，活法完全不同</strong>。在 notebook 里，你<strong>从上往下跑一遍</strong>：建索引"
+            "那个 cell 只执行<strong>一次</strong>，之后的 <code>query</code> 都复用内存里那个 index——<strong>跑通一次"
+            "就够了</strong>。可服务是<strong>长命的、并发的</strong>：它常驻进程、通过 HTTP <strong>同时</strong>接很多"
+            "请求，一天跑几万次。这时一个在 notebook 里<strong>看不出问题</strong>的写法会变成致命伤——<strong>把建索引"
+            "写进请求处理函数里</strong>。建库是<strong>读文件 → 切块 → embedding → 写向量库</strong>这一整套重活，"
+            "<strong>慢、烧钱、只需做一次</strong>；可一旦它躺在每个请求的代码路径上，就等于<strong>每问一个问题都把整个"
+            "图书馆重建一遍</strong>——延迟高到没法用，embedding 费用成倍涨，并发稍一上来内存和算力就<strong>被重复建库"
+            "吃垮</strong>。<strong>解法是把「建一次」和「查很多次」彻底分开</strong>：在<strong>服务启动时</strong>（模块"
+            "加载 / app 启动）<strong>一次性</strong>把索引<strong>加载进内存</strong>，得到一个<strong>常驻的查询引擎"
+            "</strong>；之后每个请求<strong>只调用这个已存在的引擎</strong>，跑「检索 + 合成」这段<strong>轻活</strong>。"
+            "一句话——<strong>重活留在启动，请求里只剩轻活</strong>。这条规则贯穿后面三节：异步让「轻活」并发跑得更稳"
+            "（②），持久化让「启动加载」便宜到秒级（③），编排让多个这样的服务协同（④）。",
+            "<strong>A notebook and a service live completely differently.</strong> In a notebook you <strong>run top to "
+            "bottom</strong>: the cell that builds the index runs <strong>once</strong>, and later <code>query</code> "
+            "calls reuse that in-memory index — <strong>running it once is enough</strong>. A service is <strong>long-lived "
+            "and concurrent</strong>: it sits resident in a process, takes many requests over HTTP <strong>at once</strong>, "
+            "tens of thousands a day. Here a pattern that <strong>looks harmless in a notebook</strong> turns fatal — "
+            "<strong>building the index inside the request handler</strong>. Building the library is the whole heavy chain "
+            "of <strong>read files → chunk → embed → write the vector store</strong>: <strong>slow, costly, and needed "
+            "only once</strong>; put it on every request's code path and you <strong>rebuild the entire library for every "
+            "single question</strong> — latency too high to use, embedding bills multiplying, and memory/compute "
+            "<strong>crushed by repeated rebuilds</strong> the moment concurrency rises. <strong>The fix is to fully "
+            "separate “build once” from “query many times”</strong>: at <strong>service startup</strong> (module load / "
+            "app startup) load the index into memory <strong>once</strong>, yielding a <strong>resident query "
+            "engine</strong>; then each request <strong>calls that already-existing engine</strong> to run the "
+            "<strong>light</strong> “retrieve + synthesize” part. In a line — <strong>keep the heavy work at startup, "
+            "leave only light work in the request</strong>. This rule runs through the next three sections: async makes "
+            "the “light work” run concurrently and stably (②), persistence makes “startup loading” cheap down to seconds "
+            "(③), and orchestration lets many such services cooperate (④).",
+        ),
+    )
+    + c.code(
+        "# pip install fastapi uvicorn  —— 以下为示例，FastAPI/llama-deploy 在 core 之外\n"
+        "from fastapi import FastAPI\n"
+        "from llama_index.core import StorageContext, load_index_from_storage\n\n"
+        "app = FastAPI()\n"
+        "index = load_index_from_storage(StorageContext.from_defaults(persist_dir=\"./store\"))  # 启动时一次加载\n"
+        "qe = index.as_query_engine()\n\n"
+        "@app.post(\"/query\")\n"
+        "async def query(q: str):\n"
+        "    return {\"answer\": str(await qe.aquery(q))}   # 异步，承 L24",
+        caption=L("示例服务：模块级一次 load_index_from_storage 常驻、引擎复用；请求里只 await aquery（FastAPI 在 core 之外）",
+                  "Illustrative service: module-level load_index_from_storage once and resident, engine reused; the request only awaits aquery (FastAPI is outside core)"),
+    )
+    + c.source_ref(
+        "indices/loading.py", "load_index_from_storage",
+        L("从磁盘恢复已建好的索引，服务启动时一次加载常驻。",
+          "restores a persisted index from disk — loaded once at service startup."),
+    )
+    + d.layers([
+        (L("HTTP 请求", "HTTP request"), L("FastAPI 路由", "FastAPI route")),
+        (L("常驻查询引擎", "long-lived query engine"), L("启动时一次加载索引", "index loaded once at boot")),
+        (L("检索 + 合成", "retrieve + synthesize"), L("异步/流式", "async/streaming")),
+        (L("LLM", "LLM"), L("生成答案", "generates answer")),
+    ], caption=L("上线关键：索引常驻、查询引擎复用，别每请求重建",
+                 "serving rule: keep the index resident and reuse the engine — don't rebuild per request"))
+    + c.section(
+        L("② 用 FastAPI 把查询引擎包成接口：async <code>aquery</code> / 流式扛并发（承 L24）",
+          "② Wrap the query engine as an endpoint with FastAPI: async <code>aquery</code> / streaming for concurrency (from L24)"),
+        L(
+            "有了常驻的查询引擎，<strong>剩下的只是「把它接到网上」</strong>。<strong>FastAPI</strong>（"
+            "<code>pip install fastapi uvicorn</code>，<strong>core 之外</strong>的 Web 框架，本课只作示例）正合适："
+            "它<strong>原生 async</strong>，和我们 L24 学的 <code>aquery</code> <strong>天生一对</strong>。为什么要 "
+            "async？因为 RAG 的一次查询，大半时间<strong>卡在等 LLM / 等向量库返回</strong>——这是 <strong>I/O 等待"
+            "</strong>，不是 CPU 在算。同步的 <code>query</code> 会<strong>把整个进程堵死</strong>在这一次等待上，后面"
+            "排队的请求只能干等；而 <code>async def</code> + <code>await qe.aquery(q)</code> 在等待时<strong>把控制权"
+            "交还事件循环</strong>，让<strong>别的请求继续跑</strong>——同样一台机器，并发吞吐立刻上一个台阶（承 L24 的"
+            "「异步/批」）。另一半是<strong>体验</strong>：用<strong>流式</strong>（承 L24）让答案<strong>逐 token 边生成"
+            "边吐</strong>，用户几百毫秒就看到第一个字，而不是干等整段生成完——<strong>首 token 延迟</strong>骤降，总"
+            "时长几乎不变。要记牢 L24 的那句话：<strong>流式优化的是「首字延迟」与体验，不是总耗时</strong>。<strong>"
+            "分清边界</strong>：<code>aquery</code> 是<strong>core 的真方法</strong>（它能直接收一个字符串问题）；"
+            "<code>FastAPI</code> / <code>uvicorn</code> 是<strong>外部工具</strong>，只是把这个 core 能力<strong>暴露成 "
+            "HTTP</strong>。",
+            "With a resident query engine, <strong>all that's left is “wiring it to the network”.</strong> "
+            "<strong>FastAPI</strong> (<code>pip install fastapi uvicorn</code>, a Web framework <strong>outside "
+            "core</strong>, illustrative here) fits well: it is <strong>natively async</strong> and a <strong>natural "
+            "match</strong> for the <code>aquery</code> we learned in L24. Why async? Because most of a RAG query's time "
+            "is <strong>spent waiting on the LLM / the vector store</strong> — that's <strong>I/O wait</strong>, not CPU "
+            "work. A synchronous <code>query</code> <strong>blocks the whole process</strong> on that one wait, so queued "
+            "requests just sit idle; whereas <code>async def</code> + <code>await qe.aquery(q)</code> <strong>yields "
+            "control back to the event loop</strong> while waiting, letting <strong>other requests keep running</strong> "
+            "— on the same machine, concurrent throughput jumps a level (L24's “async / batch”). The other half is "
+            "<strong>experience</strong>: <strong>streaming</strong> (from L24) emits the answer <strong>token by token "
+            "as it generates</strong>, so the user sees the first character in a few hundred milliseconds instead of "
+            "waiting for the whole thing — <strong>first-token latency</strong> drops sharply while total time barely "
+            "changes. Remember L24's line: <strong>streaming optimizes “first-token latency” and experience, not total "
+            "time</strong>. <strong>Keep the boundary clear</strong>: <code>aquery</code> is a <strong>real core "
+            "method</strong> (it takes a string question directly); <code>FastAPI</code> / <code>uvicorn</code> are "
+            "<strong>external tools</strong> that merely <strong>expose</strong> that core capability <strong>over "
+            "HTTP</strong>.",
+        ),
+    )
+    + c.section(
+        L("③ 持久化：<code>persist</code> / <code>load_index_from_storage</code> 让启动即秒级恢复（承 L11）",
+          "③ Persistence: <code>persist</code> / <code>load_index_from_storage</code> for second-level startup recovery (from L11)"),
+        L(
+            "「启动时一次加载」要真便宜，<strong>前提是别在启动时也重建一遍</strong>。如果每次服务启动都从原始文档"
+            "<strong>重新切块、重新 embedding</strong>，那「建库的重活」只是从「每请求」挪到了「每次重启 / 每次扩容」"
+            "——<strong>部署一次等几分钟、还白烧 embedding 钱</strong>。L11 的<strong>持久化</strong>正是为此：<strong>"
+            "建一次、落一次盘</strong>——<code>index.storage_context.persist(persist_dir=\"./store\")</code> 把 docstore / "
+            "index / 向量整套写到磁盘；之后服务启动只需 <code>load_index_from_storage(StorageContext.from_defaults("
+            "persist_dir=\"./store\"))</code>，<strong>秒级</strong>把索引读回内存，<strong>免去重建</strong>。这正是上面 "
+            "code① 启动那一行在做的事。这两个符号都是<strong>实打实的 core</strong>（<code>StorageContext</code> 来自 "
+            "<code>storage_context.py</code>、<code>load_index_from_storage</code> 来自 <code>indices/loading.py</code>），"
+            "不依赖任何外部框架。<strong>再往规模化看一步</strong>：当你跑<strong>多个副本</strong>（多进程 / 多机水平"
+            "扩展）时，别让每个副本各存一份本地索引，而是让它们<strong>共享同一份持久化存储</strong>，或干脆把向量接到"
+            "<strong>外置向量库</strong>（L09 学过的 Chroma / pgvector / Qdrant…）——这样「加载一次」对每个副本都成立，"
+            "数据也只有一处真相。",
+            "For “load once at startup” to be truly cheap, <strong>you must not rebuild at startup either</strong>. If "
+            "every service start <strong>re-chunks and re-embeds</strong> from the raw documents, the “build heavy "
+            "lifting” has merely moved from “per request” to “per restart / per scale-out” — <strong>minutes of wait per "
+            "deploy and wasted embedding spend</strong>. L11's <strong>persistence</strong> exists for this: "
+            "<strong>build once, write once</strong> — <code>index.storage_context.persist(persist_dir=\"./store\")</code> "
+            "writes the docstore / index / vectors to disk; afterward a service start only needs "
+            "<code>load_index_from_storage(StorageContext.from_defaults(persist_dir=\"./store\"))</code> to read the index "
+            "back into memory in <strong>seconds</strong>, <strong>skipping the rebuild</strong>. This is exactly what "
+            "the startup line in code① above does. Both symbols are <strong>genuine core</strong> "
+            "(<code>StorageContext</code> from <code>storage_context.py</code>, <code>load_index_from_storage</code> from "
+            "<code>indices/loading.py</code>), depending on no external framework. <strong>One step toward scale</strong>: "
+            "when you run <strong>multiple replicas</strong> (multi-process / multi-machine horizontal scaling), don't let "
+            "each replica keep its own local copy — have them <strong>share one persisted store</strong>, or connect "
+            "vectors to an <strong>external vector DB</strong> (the Chroma / pgvector / Qdrant… from L09) — so “load "
+            "once” holds for every replica and the data has a single source of truth.",
+        ),
+    )
+    + c.section(
+        L("④ 更进一步：<code>llama-deploy</code> 编排多 workflow/服务、<code>create-llama</code> 脚手架起项目",
+          "④ Going further: <code>llama-deploy</code> orchestrates multi-workflow services, <code>create-llama</code> scaffolds a project"),
+        L(
+            "一个 FastAPI 文件足够把<strong>单个</strong>查询引擎送上线；但当系统长大——L32 的<strong>多 agent / 多 "
+            "workflow</strong>、L33 的 <strong>HITL 审批</strong>都要协同时，你会想要<strong>编排</strong>而不是手搓。"
+            "这里有两件 <strong>core 之外</strong>的官方工具（同样只作示例）：<strong>① <code>llama-deploy</code></strong>"
+            "——把你写好的 <strong>workflow 部署成可独立伸缩、能互相通信的网络服务</strong>，多个 workflow/服务由它统一"
+            "编排、扩缩容，等于把 L26–L33 搭的那套<strong>从「一个进程里的对象」升级成「一组分布式服务」</strong>。"
+            "<strong>② <code>create-llama</code></strong>——一个<strong>脚手架 CLI</strong>（<code>npx create-llama"
+            "</code>），一条命令生成<strong>前端 + 后端 + 数据摄取</strong>的全栈起手项目，省去你手搓 API、UI、ingestion "
+            "的样板，<strong>几分钟就能跑起一个能问答的网站</strong>。<strong>务必记住边界</strong>：<code>llama-deploy"
+            "</code> / <code>create-llama</code> / <code>FastAPI</code> 都<strong>不是 core</strong>，它们是<strong>打包"
+            "与编排</strong>层；真正干活的<strong>核心始终没变</strong>——还是你早已会的<strong>索引、查询引擎、workflow"
+            "</strong>。<strong>怎么选</strong>：起步 / 单服务，<strong>FastAPI 足矣</strong>；要从零快速起一个全栈项目，"
+            "用 <strong>create-llama</strong> 脚手架；要把多个 workflow/服务编排成分布式系统，再上 <strong>llama-deploy"
+            "</strong>。",
+            "A single FastAPI file is enough to ship <strong>one</strong> query engine; but as the system grows — L32's "
+            "<strong>multi-agent / multi-workflow</strong> and L33's <strong>HITL approvals</strong> all need to cooperate "
+            "— you'll want <strong>orchestration</strong> rather than hand-wiring. Here are two <strong>out-of-core</strong> "
+            "official tools (again illustrative only): <strong>(1) <code>llama-deploy</code></strong> — deploys the "
+            "workflows you wrote as <strong>independently scalable, mutually communicating networked services</strong>, "
+            "orchestrating and autoscaling many workflows/services, effectively upgrading the L26–L33 stack <strong>from "
+            "“objects in one process” to “a set of distributed services”</strong>. <strong>(2) <code>create-llama</code>"
+            "</strong> — a <strong>scaffold CLI</strong> (<code>npx create-llama</code>) that generates a full-stack "
+            "starter with <strong>frontend + backend + ingestion</strong> in one command, sparing you the boilerplate of "
+            "hand-building API, UI, and ingestion, so <strong>a working Q&amp;A site runs in minutes</strong>. "
+            "<strong>Keep the boundary firmly in mind</strong>: <code>llama-deploy</code> / <code>create-llama</code> / "
+            "<code>FastAPI</code> are <strong>not core</strong> — they are a <strong>packaging and orchestration</strong> "
+            "layer; the <strong>core that does the real work never changed</strong> — still the <strong>index, query "
+            "engine, and workflow</strong> you already know. <strong>How to choose</strong>: for a start / single service, "
+            "<strong>FastAPI is enough</strong>; to spin up a full-stack project from scratch fast, use the "
+            "<strong>create-llama</strong> scaffold; to orchestrate many workflows/services into a distributed system, "
+            "reach for <strong>llama-deploy</strong>.",
+        ),
+    )
+    + d.flow([
+        ("nb", L("notebook 原型", "notebook prototype")),
+        ("api", L("FastAPI 服务", "FastAPI service"), L("并发/流式", "concurrent/streaming")),
+        ("deploy", L("llama-deploy / create-llama", "llama-deploy / create-llama"), L("编排/脚手架", "orchestration/scaffold")),
+    ], caption=L("从原型到生产服务的进阶路径", "the path from prototype to a production service"))
+    + c.analogy(L(
+        "把 RAG 上线，就像把<strong>实验台上的原型</strong>搬进一家<strong>7×24 营业的店面</strong>。在实验台上，原型"
+        "<strong>能点亮一次</strong>就算成功——你亲手接线、跑一遍、记下结果。可开门做生意完全是另一回事：店面要"
+        "<strong>常年不打烊</strong>、要<strong>同时接待很多客人</strong>、上菜要<strong>快</strong>。于是你不会"
+        "<strong>每来一位客人就重盖一次厨房</strong>（那就是「每请求重建索引」）——厨房<strong>开业前就装好、一直"
+        "备着</strong>（索引常驻），客人来了只管<strong>下单上菜</strong>（检索+合成）；还得能<strong>同时招呼多桌"
+        "</strong>（async 并发）、先<strong>端上一道前菜</strong>稳住客人（流式降首字延迟）；打烊重开也不必重装厨房"
+        "（持久化）。原型只要<strong>能跑一次</strong>，店面要<strong>稳、要快、要能同时接客</strong>——这一步之差，"
+        "就是 notebook 与服务的全部距离。",
+        "Shipping a RAG is like moving a <strong>prototype off the lab bench</strong> into a <strong>shop open "
+        "24/7</strong>. On the bench, lighting the prototype <strong>up once</strong> is success — you wire it by hand, "
+        "run it through, note the result. Opening for business is another matter entirely: the shop must <strong>never "
+        "close</strong>, <strong>serve many customers at once</strong>, and bring food out <strong>fast</strong>. So you "
+        "don't <strong>rebuild the kitchen for every customer who walks in</strong> (that's “rebuild the index per "
+        "request”) — the kitchen is <strong>installed before opening and kept ready</strong> (a resident index), and "
+        "each guest just <strong>orders and is served</strong> (retrieve + synthesize); you also <strong>wait many "
+        "tables at once</strong> (async concurrency) and <strong>bring out a starter first</strong> to settle them "
+        "(streaming cuts first-token latency); closing and reopening needn't reinstall the kitchen (persistence). A "
+        "prototype only has to <strong>run once</strong>; a shop has to be <strong>stable, fast, and able to serve many "
+        "at once</strong> — that gap is the whole distance between a notebook and a service.",
+    ))
+    + c.key_points([
+        L("<strong>索引常驻、引擎复用，别每请求重建</strong>：建库（读文件 / 切块 / embedding / 写库）是一次性重活，"
+          "摊进每次查询就又慢又浪费——启动时一次 <code>load_index_from_storage</code> 加载、查询引擎常驻，请求里只跑"
+          "「检索+合成」。",
+          "<strong>Keep the index resident, reuse the engine, don't rebuild per request</strong>: building the library "
+          "(read files / chunk / embed / write) is one-time heavy work, and smearing it across every query is slow and "
+          "wasteful — load once at startup with <code>load_index_from_storage</code>, keep the query engine resident, "
+          "and run only “retrieve + synthesize” in the request."),
+        L("<strong>FastAPI 只是示例 Web 框架（core 之外）</strong>：用 <code>async def</code> + "
+          "<code>await qe.aquery(q)</code> 扛并发、用流式降首 token 延迟（都承 L24）；真正的 core 是<strong>查询引擎与 "
+          "<code>aquery</code></strong>，FastAPI 只是把它暴露成 HTTP。",
+          "<strong>FastAPI is just an illustrative Web framework (outside core)</strong>: use <code>async def</code> + "
+          "<code>await qe.aquery(q)</code> for concurrency and streaming to cut first-token latency (both from L24); the "
+          "real core is the <strong>query engine and <code>aquery</code></strong>, FastAPI only exposes it over HTTP."),
+        L("<strong>持久化让「启动即恢复」便宜</strong>：<code>persist</code> 落盘、<code>load_index_from_storage</code> "
+          "秒级读回（承 L11），别在每次重启 / 扩容时重建；多副本应<strong>共享同一存储 / 外置向量库</strong>。",
+          "<strong>Persistence makes “restore at startup” cheap</strong>: <code>persist</code> to disk and "
+          "<code>load_index_from_storage</code> back in seconds (from L11), don't rebuild on every restart / scale-out; "
+          "replicas should <strong>share one store / an external vector DB</strong>."),
+        L("<strong>再进一步是编排，不是新核心</strong>：<code>llama-deploy</code> 把多 workflow/服务编排成分布式系统、"
+          "<code>create-llama</code> 脚手架快速起全栈项目——都在 core 之外、代码为示例。",
+          "<strong>The next step is orchestration, not a new core</strong>: <code>llama-deploy</code> orchestrates "
+          "multi-workflow services into a distributed system, <code>create-llama</code> scaffolds a full-stack project "
+          "fast — both outside core, illustrative code."),
+        L("<strong>分清 core 与外部工具</strong>：<code>StorageContext</code> / <code>load_index_from_storage</code> / "
+          "<code>as_query_engine</code> / <code>aquery</code> 是 core；<code>FastAPI</code> / <code>llama-deploy</code> / "
+          "<code>create-llama</code> 是外部工具，按需取用、别当核心内置。",
+          "<strong>Tell core from external tools</strong>: <code>StorageContext</code> / "
+          "<code>load_index_from_storage</code> / <code>as_query_engine</code> / <code>aquery</code> are core; "
+          "<code>FastAPI</code> / <code>llama-deploy</code> / <code>create-llama</code> are external tools — use on "
+          "demand, don't mistake them for core built-ins."),
+    ])
+    + c.design_highlight(L(
+        "上线这一课，<strong>几乎没有新的 RAG 概念</strong>——它的全部重量压在一句运维直觉上：<strong>把一次性的重活"
+        "留在启动，把高频的轻活留在请求</strong>。<strong>索引常驻、查询引擎复用，别每请求重建</strong>——这就是 "
+        "notebook 与服务之间唯一却致命的那道坎。想清楚这一点，剩下的拼图你<strong>早就备齐了</strong>：L24 的 "
+        "<strong>async <code>aquery</code> + 流式</strong>解决「同时接客」与「首字延迟」，L11 的 <strong>persist / "
+        "load</strong> 让「启动即恢复」便宜到秒级；FastAPI 只是把这套 core 能力<strong>接到网上</strong>的一层皮，"
+        "llama-deploy / create-llama 则在更高处<strong>编排与脚手架</strong>——它们都在 core 之外，核心始终是你<strong>"
+        "从第 1 课搭到第 33 课</strong>的那条 RAG 管线。而「上线」从来不是终点：服务跑起来之后，质量靠全书攒下的那套"
+        "<strong>纵深</strong>持续兜住——<strong>L22 回归闸</strong>在每次发布前挡住退化，<strong>L23 trace</strong> 在"
+        "出错时定位是检索还漏在生成，<strong>L25 护栏</strong>自动挡掉明显违规，必要时再用 <strong>L33 HITL</strong> 在"
+        "不可逆的关口让人拍板。一句话收束：<strong>上线不是写新魔法，而是把你已经会的东西，按「常驻 + 异步 + 持久化」"
+        "的纪律稳稳地摆上货架</strong>。",
+        "This shipping lesson brings <strong>almost no new RAG concept</strong> — its whole weight rests on one ops "
+        "instinct: <strong>keep the one-time heavy work at startup and the high-frequency light work in the "
+        "request</strong>. <strong>Keep the index resident, reuse the query engine, don't rebuild per request</strong> — "
+        "that is the single, fatal step between a notebook and a service. Get that, and the rest of the puzzle you "
+        "<strong>already have</strong>: L24's <strong>async <code>aquery</code> + streaming</strong> handles “serving "
+        "many at once” and “first-token latency”, and L11's <strong>persist / load</strong> makes “restore at startup” "
+        "cheap down to seconds; FastAPI is just a skin that <strong>wires this core capability to the network</strong>, "
+        "while llama-deploy / create-llama <strong>orchestrate and scaffold</strong> one level up — all outside core, "
+        "the core still being the RAG pipeline you <strong>built from L1 through L33</strong>. And “going live” is never "
+        "the finish line: once the service runs, quality is held up by the <strong>defense in depth</strong> the whole "
+        "book accumulated — <strong>L22's regression gate</strong> blocks regressions before each release, <strong>L23's "
+        "traces</strong> localize whether a miss was in retrieval or generation, <strong>L25's guardrails</strong> "
+        "auto-block obvious violations, and <strong>L33's HITL</strong> hands the call to a human at irreversible gates "
+        "when needed. To close in a line: <strong>shipping isn't writing new magic — it's placing what you already know "
+        "on the shelf, steadily, under the discipline of “resident + async + persistent”</strong>.",
+    ))
+)
 LESSON_35 = _skeleton("embed", "微调 embedding", "fine-tuning embeddings")

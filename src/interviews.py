@@ -2062,4 +2062,126 @@ INTERVIEW = {
             "approved once” (idempotent) so a retry doesn't <strong>execute a high-risk action twice</strong>."),
         },
     ],
+    "34-serving.html": [
+        {"q": L(
+            "你把 L20 的 capstone RAG 包成 FastAPI 服务上线，压测时发现：<strong>QPS 一高就雪崩</strong>，而且每次"
+            "<strong>重启都要等好几分钟</strong>才能接客。你会怎么定位并优化<strong>并发</strong>与<strong>冷启动</strong>？",
+            "You wrapped the L20 capstone RAG into a FastAPI service; under load testing you find it <strong>avalanches as "
+            "QPS rises</strong> and every <strong>restart takes minutes</strong> before it can serve. How would you "
+            "diagnose and optimize <strong>concurrency</strong> and <strong>cold start</strong>?"),
+         "answer": L(
+            "🔑 <strong>重点：先把「建一次」和「查很多次」彻底分开——索引<strong>常驻、只在启动加载一次</strong>；再让请求"
+            "路径全异步、把外部连接<strong>池化复用</strong>、启动时<strong>预热</strong>，并用<strong>限流</strong>给峰值"
+            "兜底。</strong>① <strong>查雪崩的根因</strong>：十有八九是<strong>把建索引 / 加载写进了请求处理函数</strong>"
+            "——每个请求都重切块、重 embedding，CPU 和内存被重复建库吃垮。把它<strong>提到模块级 / 启动钩子</strong>，"
+            "全局只 <code>load_index_from_storage</code> <strong>一次</strong>、查询引擎常驻复用。② <strong>请求路径全"
+            "异步</strong>：用 <code>async def</code> + <code>await qe.aquery(q)</code>（承 L24），别在 async 视图里夹"
+            "<strong>同步阻塞调用</strong>，否则照样堵死事件循环。③ <strong>连接池 / 复用</strong>：向量库、LLM 客户端"
+            "都用<strong>连接池</strong>，别每请求新建连接；embedding / LLM 尽量<strong>批量</strong>。④ <strong>治冷启动"
+            "</strong>：靠<strong>持久化</strong>（承 L11）让启动 <code>load</code> 是秒级而非重建；启动后<strong>预热"
+            "</strong>——先打一条假查询，把模型 / 缓存 / 连接热起来再挂上健康检查（readiness）接流量。⑤ <strong>限流 + "
+            "超时</strong>：给并发设上限、给慢请求设超时，峰值时<strong>排队或拒绝</strong>而不是拖垮整机；配合水平扩"
+            "容多副本共享同一份持久化存储。最后用 <strong>L23 的 trace</strong> 确认瓶颈到底在检索、LLM 还是 I/O 等待。",
+            "🔑 <strong>Key: first fully separate “build once” from “query many” — keep the index <strong>resident, loaded "
+            "only once at startup</strong>; then make the request path fully async, <strong>pool and reuse</strong> "
+            "external connections, <strong>warm up</strong> at boot, and add <strong>rate limiting</strong> for peaks."
+            "</strong> (1) <strong>Find the avalanche's root cause</strong>: nine times out of ten it's <strong>building / "
+            "loading the index inside the request handler</strong> — every request re-chunks and re-embeds, crushing CPU "
+            "and memory with repeated rebuilds. Hoist it to <strong>module level / a startup hook</strong> so globally "
+            "you <code>load_index_from_storage</code> <strong>once</strong> and reuse a resident query engine. (2) "
+            "<strong>Fully async request path</strong>: use <code>async def</code> + <code>await qe.aquery(q)</code> "
+            "(from L24), and never slip a <strong>synchronous blocking call</strong> into an async view or it still jams "
+            "the event loop. (3) <strong>Connection pooling / reuse</strong>: use <strong>pools</strong> for the vector "
+            "DB and LLM clients instead of a fresh connection per request, and <strong>batch</strong> embedding / LLM "
+            "calls where possible. (4) <strong>Cure cold start</strong>: lean on <strong>persistence</strong> (from L11) "
+            "so startup is a seconds-long <code>load</code>, not a rebuild; then <strong>warm up</strong> — fire one "
+            "dummy query to heat models / caches / connections before the readiness check lets traffic in. (5) "
+            "<strong>Rate limit + timeouts</strong>: cap concurrency and time out slow requests so peaks <strong>queue or "
+            "shed</strong> instead of toppling the box; pair with horizontal replicas sharing one persisted store. "
+            "Finally use <strong>L23's traces</strong> to confirm whether the bottleneck is retrieval, the LLM, or I/O "
+            "wait."),
+        },
+        {"q": L(
+            "服务上线只是开始。<strong>跑起来之后</strong>，你怎么<strong>持续保证质量</strong>，不让它悄悄退化、出了"
+            "错也能查、还能在关键处兜底？",
+            "Going live is just the start. <strong>Once it's running</strong>, how do you <strong>sustain quality</strong> "
+            "— keep it from silently regressing, stay able to debug failures, and have a fallback at the critical "
+            "points?"),
+         "answer": L(
+            "🔑 <strong>重点：把全书攒下的能力<strong>串成一条上线后的质量闭环</strong>——<strong>L22 回归闸</strong>在"
+            "发布前挡退化、<strong>L23 trace</strong> 在出错时定位、<strong>L25 护栏</strong>在运行时自动兜底、必要时"
+            "<strong>L33 HITL</strong> 在不可逆处让人拍板；越靠后越贵，所以越靠后用得越省。</strong>① <strong>发布前——"
+            "L22 回归闸</strong>：用 <code>BatchEvalRunner</code> 跑一组带标准答案的题，把 Faithfulness / 命中率聚成"
+            "<strong>通过率</strong>，<strong>低于阈值就挡下这次发布</strong>，别让改 prompt / 换模型悄悄把质量带崩。② "
+            "<strong>出错时——L23 可观测</strong>：全链路埋 trace，一条答错的 query 能摊开看<strong>检索召回了什么、"
+            "rerank 留了谁、LLM 烧了多少 token</strong>，分清是<strong>检索没召到</strong>还是<strong>生成没用好</strong>，"
+            "而不是瞎改。③ <strong>运行时——L25 护栏</strong>：输入挡注入 / 越权，输出挡 PII / 有害 / 离题，机器能判的"
+            "<strong>自动拦</strong>，根本不惊动人。④ <strong>灰色地带——L33 HITL</strong>：规则判不了、又不可逆 / 高风险"
+            "的，才在闸口让人点头。⑤ <strong>持续校准</strong>：把线上 trace 里暴露的坏例子<strong>回灌进 L22 的评估集"
+            "</strong>，让回归闸越用越严——质量不是上线那天的快照，而是一条<strong>测→观→兜→改</strong>的闭环。",
+            "🔑 <strong>Key: stitch the book's capabilities into a <strong>post-launch quality loop</strong> — <strong>L22's "
+            "regression gate</strong> blocks regressions before release, <strong>L23's traces</strong> localize failures, "
+            "<strong>L25's guardrails</strong> auto-catch at runtime, and <strong>L33's HITL</strong> hands irreversible "
+            "calls to a human when needed; each later layer is pricier, so each is used more sparingly.</strong> (1) "
+            "<strong>Before release — L22 regression gate</strong>: run a labeled question set with "
+            "<code>BatchEvalRunner</code>, aggregate Faithfulness / hit-rate into a <strong>pass rate</strong>, and "
+            "<strong>block the release below threshold</strong> so a prompt edit / model swap can't quietly tank quality. "
+            "(2) <strong>On failure — L23 observability</strong>: trace the whole chain so a wrong answer can be unfolded "
+            "to see <strong>what retrieval returned, what rerank kept, how many tokens the LLM burned</strong>, telling a "
+            "<strong>retrieval miss</strong> from <strong>poor generation</strong> instead of guessing. (3) <strong>At "
+            "runtime — L25 guardrails</strong>: block injection / over-reach on input and PII / harmful / off-topic on "
+            "output — what a machine can judge is <strong>auto-blocked</strong> and never bothers a human. (4) <strong>Gray "
+            "zone — L33 HITL</strong>: only the irreversible / high-risk cases a rule can't settle go to a human nod. (5) "
+            "<strong>Keep calibrating</strong>: feed the bad cases surfaced in production traces <strong>back into L22's "
+            "eval set</strong> so the gate tightens over time — quality isn't a launch-day snapshot but a <strong>test → "
+            "observe → guard → fix</strong> loop."),
+         "fig": d.flow([
+            ("gate", L("L22 回归闸", "L22 regression gate"), L("发布前挡退化", "block regressions pre-release")),
+            ("trace", L("L23 trace", "L23 traces"), L("出错时定位", "localize on failure")),
+            ("guard", L("L25 护栏", "L25 guardrails"), L("运行时自动兜底", "auto-catch at runtime")),
+            ("hitl", L("L33 HITL", "L33 HITL"), L("不可逆处人拍板", "human call on irreversible")),
+         ], caption=L("上线后的质量闭环：发布前测、出错时观、运行时兜、灰色地带人判",
+                      "Post-launch quality loop: test before release, observe on failure, guard at runtime, human-judge the gray zone")),
+        },
+        {"q": L(
+            "你的服务带<strong>有状态的 chat / workflow</strong>（多轮记忆、L33 那种挂起等人的审批流）。要把它<strong>"
+            "水平扩成多副本</strong>，光复制进程为什么不够？你会怎么改造？",
+            "Your service carries <strong>stateful chat / workflows</strong> (multi-turn memory, L33-style approval flows "
+            "that pause for a human). To <strong>scale horizontally to many replicas</strong>, why isn't just cloning the "
+            "process enough, and how would you re-architect it?"),
+         "answer": L(
+            "🔑 <strong>重点：水平扩展的前提是<strong>无状态的进程 + 外置的状态</strong>——把会话记忆、workflow 的 "
+            "<code>Context</code>、待批请求统统<strong>挪出内存、落到共享存储</strong>，让任意副本都能接住任意请求，"
+            "进程随时可重启 / 扩缩容而不丢状态。</strong>① <strong>为什么复制不够</strong>：状态<strong>粘在某个进程的"
+            "内存里</strong>——会话历史、挂起的 workflow 都在那一台上。负载均衡把下一轮打到<strong>另一副本</strong>就"
+            "<strong>读不到上下文</strong>；那台一重启，<strong>等人确认的审批流直接蒸发</strong>。② <strong>状态外置"
+            "</strong>：对话记忆放<strong>共享存储</strong>（Redis / DB），按 <code>session_id</code> 存取，请求进来先"
+            "<strong>load 记忆</strong>、答完<strong>写回</strong>，进程本身<strong>无状态</strong>。③ <strong>workflow "
+            "可持久化</strong>：承 L33——发出 <code>InputRequiredEvent</code> 挂起时，把 <code>Context</code> "
+            "<strong>序列化落库</strong>（<code>ctx.to_dict()</code>）、释放进程；人回来时<strong>任意副本</strong>用 "
+            "<code>Context.from_dict</code> 重建、灌 <code>HumanResponseEvent</code> 续跑——状态在<strong>库里</strong>"
+            "不在<strong>内存里</strong>。④ <strong>索引仍共享</strong>：多副本指向<strong>同一份持久化存储 / 外置向量库"
+            "</strong>（承 L11），别各建各的。⑤ <strong>配套</strong>：会话亲和（sticky session）可减跨副本抖动但<strong>"
+            "不能依赖</strong>它存状态；高风险动作要<strong>幂等</strong>，避免重试 / 故障转移把不可逆操作<strong>做两遍"
+            "</strong>。",
+            "🔑 <strong>Key: horizontal scaling needs <strong>stateless processes + externalized state</strong> — move "
+            "chat memory, the workflow <code>Context</code>, and pending approvals <strong>out of memory into shared "
+            "storage</strong> so any replica can pick up any request and processes can restart / autoscale without losing "
+            "state.</strong> (1) <strong>Why cloning isn't enough</strong>: state <strong>sticks in one process's "
+            "memory</strong> — conversation history and paused workflows live on that box. The load balancer routing the "
+            "next turn to <strong>another replica</strong> finds <strong>no context</strong>; restart that box and "
+            "<strong>an approval flow waiting on a human just evaporates</strong>. (2) <strong>Externalize state</strong>: "
+            "keep chat memory in <strong>shared storage</strong> (Redis / DB) keyed by <code>session_id</code> — a "
+            "request <strong>loads memory</strong> on entry and <strong>writes it back</strong> after answering, so the "
+            "process itself is <strong>stateless</strong>. (3) <strong>Persist the workflow</strong>: continuing L33 — "
+            "when an <code>InputRequiredEvent</code> pauses, <strong>serialize the <code>Context</code> to storage</strong> "
+            "(<code>ctx.to_dict()</code>) and release the process; when the human returns, <strong>any replica</strong> "
+            "rebuilds it with <code>Context.from_dict</code> and injects <code>HumanResponseEvent</code> to continue — "
+            "state lives in <strong>storage</strong>, not <strong>memory</strong>. (4) <strong>Share the index</strong>: "
+            "point all replicas at <strong>one persisted store / external vector DB</strong> (from L11) instead of each "
+            "building its own. (5) <strong>Supporting bits</strong>: sticky sessions can cut cross-replica churn but "
+            "<strong>must not be relied on</strong> to hold state; make high-risk actions <strong>idempotent</strong> so "
+            "a retry / failover doesn't <strong>execute an irreversible op twice</strong>."),
+        },
+    ],
 }

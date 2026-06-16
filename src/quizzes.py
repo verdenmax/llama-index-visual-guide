@@ -778,6 +778,42 @@ QUIZZES = {
                    "low-risk</strong> — retrieve / draft / compute — let them through; don't let HITL <strong>grind throughput</strong> or "
                    "<strong>annoy the human away</strong>)")],
     },
+    "34-serving.html": {
+        "mcq": [{
+            "q": L("把 RAG 上线成服务，<strong>最该避免</strong>的做法是？",
+                   "When shipping a RAG as a service, which practice should you <strong>most avoid</strong>?"),
+            "opts": [
+                L("每个请求都重新加载 / 重建索引", "reload / rebuild the index on every request"),
+                L("启动时加载一次、查询引擎常驻复用", "load once at startup and reuse a resident query engine"),
+                L("用 <code>aquery</code> 异步处理并发", "use <code>aquery</code> to handle concurrency asynchronously"),
+                L("把索引持久化到磁盘", "persist the index to disk"),
+            ],
+            "answer": 0,
+            "why": L("题目问的是「<strong>最该避免</strong>」。<strong>每个请求都重新加载 / 重建索引</strong>会把<strong>"
+                    "一次性建库成本</strong>（读文件 / 切块 / embedding / 写库）摊到<strong>每一次查询</strong>上——又慢"
+                    "又浪费，并发一上来就垮，正是上线第一大忌。其余三项<strong>恰恰都是该做的正解</strong>：「<strong>"
+                    "启动时加载一次、查询引擎常驻复用</strong>」把重活留在启动、请求里只剩轻活；「<strong>用 "
+                    "<code>aquery</code> 异步处理并发</strong>」在等 LLM / 向量库时让别的请求继续跑（承 L24）；「<strong>"
+                    "把索引持久化到磁盘</strong>」让启动用 <code>load_index_from_storage</code> 秒级恢复、免去重建"
+                    "（承 L11）。",
+                    "The question asks what to <strong>most avoid</strong>. <strong>Reloading / rebuilding the index on "
+                    "every request</strong> smears the <strong>one-time build cost</strong> (read files / chunk / embed "
+                    "/ write) across <strong>every single query</strong> — slow, wasteful, and collapsing under "
+                    "concurrency: the cardinal serving sin. The other three are exactly the <strong>right things to "
+                    "do</strong>: “<strong>load once at startup and reuse a resident query engine</strong>” keeps the "
+                    "heavy work at startup and leaves only light work in the request; “<strong>use <code>aquery</code> "
+                    "to handle concurrency</strong>” lets other requests run while waiting on the LLM / vector store "
+                    "(from L24); and “<strong>persist the index to disk</strong>” lets startup restore in seconds via "
+                    "<code>load_index_from_storage</code> instead of rebuilding (from L11)."),
+        }],
+        "open": [L("为什么服务里要用 <code>aquery</code> / 流式，而不是同步的 <code>query</code>？（提示：<strong>异步"
+                   "</strong>提升<strong>并发吞吐</strong>——一条请求等 LLM / 向量库时别的请求照跑；<strong>流式</strong>"
+                   "降低<strong>首 token 延迟</strong>、改善体验，但不缩总耗时——都承 L24）",
+                   "Why use <code>aquery</code> / streaming in a service instead of synchronous <code>query</code>? (Hint: "
+                   "<strong>async</strong> lifts <strong>concurrent throughput</strong> — while one request waits on the "
+                   "LLM / vector store others keep running; <strong>streaming</strong> cuts <strong>first-token "
+                   "latency</strong> for a better experience but doesn't shorten total time — both from L24)")],
+    },
 }
 
 
