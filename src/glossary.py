@@ -18,8 +18,8 @@ def _row(term, zh, en, num, fname, term_en=None):
 
 LESSON_21 = (
     c.lead(L(
-        "全书术语<strong>按数据流分组</strong>速查——基础 → 写入路径 → 查询路径 → 进阶。点“课”跳到对应讲解。",
-        "Every term, <strong>grouped by data flow</strong> — foundations → write path → query path → advanced. "
+        "全书术语<strong>按数据流分组</strong>速查——基础 → 写入路径 → 查询路径 → 进阶 → 生产 → 进阶专题。点“课”跳到对应讲解。",
+        "Every term, <strong>grouped by data flow</strong> — foundations → write path → query path → advanced → production → advanced topics. "
         "Click the lesson to jump.",
     ))
     + d.flow([
@@ -81,6 +81,20 @@ LESSON_21 = (
             _row("缓存 Caching", "复用 embedding / 响应以省成本降延迟", "reuse embeddings / responses to cut cost &amp; latency", "24", "24-cost-latency.html", term_en="Caching"),
             _row("多租户隔离 Multi-tenant Isolation", "强制按 tenant 过滤防越权", "enforce per-tenant filtering to prevent leakage", "25", "25-security.html", term_en="Multi-tenant Isolation"),
             _row("Agent / Workflow", "会决策的循环，按需用工具 / 多步", "a deciding loop that uses tools / multi-step on demand", "26", "26-agents-workflows.html"),
+        ]),
+    )
+    + c.section(
+        L("进阶专题", "Advanced topics"),
+        c.compare_table(_H, [
+            _row("图谱 RAG Graph RAG", "用 实体-关系-实体 多跳找连起来的事实", "multi-hop over entity-relation triples", "27", "27-graph-rag.html", term_en="Graph RAG"),
+            _row("text-to-SQL", "让 LLM 写 SQL，精确计算交数据库", "LLM writes SQL; the DB does exact compute", "28", "28-structured-data.html"),
+            _row("多模态 RAG Multimodal", "图文进同一向量空间，跨模态检索", "text &amp; images in one vector space for cross-modal retrieval", "29", "29-multimodal-rag.html", term_en="Multimodal RAG"),
+            _row("查询分解 Sub-Question", "把复杂问题拆成子问题分别检索再汇总", "split a complex query, retrieve each, aggregate", "30", "30-sub-question.html", term_en="Sub-Question"),
+            _row("结构化输出 Structured Output", "让 LLM 直接产出 Pydantic 对象", "LLM emits a typed Pydantic object", "31", "31-structured-outputs.html", term_en="Structured Output"),
+            _row("多智能体 Multi-agent", "多个 agent 分工 + 交接(handoff)", "multiple agents split work with handoffs", "32", "32-multi-agent.html", term_en="Multi-agent"),
+            _row("人在回路 HITL", "高风险动作前暂停等人确认", "pause for human confirmation on risky actions", "33", "33-human-in-the-loop.html", term_en="Human-in-the-loop"),
+            _row("服务化 Serving", "索引常驻、查询引擎包成服务", "keep the index resident; wrap the engine as a service", "34", "34-serving.html", term_en="Serving"),
+            _row("微调 embedding Fine-tuning", "用自家 QA 对校准领域语义", "calibrate domain semantics with your QA pairs", "35", "35-finetuning-embeddings.html", term_en="Fine-tuning embeddings"),
         ]),
     )
 )
