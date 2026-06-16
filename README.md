@@ -4,8 +4,8 @@
 [![Download PDF](https://img.shields.io/badge/%F0%9F%93%84-Download%20PDF-b4690e?style=for-the-badge)](https://github.com/verdenmax/llama-index-visual-guide/releases/latest/download/llama-index-visual-guide.pdf)
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
-![Lessons](https://img.shields.io/badge/lessons-21-blue.svg)
-![Parts](https://img.shields.io/badge/parts-6-9cf.svg)
+![Lessons](https://img.shields.io/badge/lessons-36-blue.svg)
+![Parts](https://img.shields.io/badge/parts-9-9cf.svg)
 ![Bilingual](https://img.shields.io/badge/docs-%E4%B8%AD%2FEN-orange.svg)
 ![Dependencies](https://img.shields.io/badge/build%20deps-none-brightgreen.svg)
 
@@ -31,14 +31,17 @@ citations, runnable code, design insights and quizzes. Toggle 中 / EN anytime.
 python -m http.server 8000   # then open http://localhost:8000/
 ```
 
-## 📚 教程结构（6 部分 · 21 课）
+## 📚 教程结构（9 部分 · 36 课）
 
 - **第一部分 · 宏观全景**：01 LlamaIndex 与 RAG 是什么 · 02 架构全景 · 03 一次 RAG 的生命周期
 - **第二部分 · 写入路径**：04 Document 与 Node · 05 Readers · 06 切块 Node Parsers · 07 元数据与抽取器 · 08 Embedding · 09 向量存储 · 10 索引抽象 · 11 Ingestion 与持久化
 - **第三部分 · 查询路径**：12 检索器 · 13 节点后处理 · 14 响应合成 · 15 查询引擎 · 16 聊天引擎
 - **第四部分 · 进阶**：17 Settings 与 Prompt · 18 进阶检索 · 19 评估
 - **第五部分 · 实战**：20 端到端 Capstone
-- **第六部分 · 速查**：21 术语表 · 概念索引
+- **第六部分 · 生产进阶**：21 生产级检索 · 22 规模化评估与 CI 闸 · 23 可观测与追踪 · 24 成本与延迟工程 · 25 安全与防护 · 26 Agent 与 Workflows
+- **第七部分 · 超越文本 RAG**：27 图谱 RAG · 28 结构化数据查询 · 29 多模态 RAG · 30 查询分解 · 31 结构化输出
+- **第八部分 · Agentic 进阶与上线**：32 多智能体与控制流 · 33 人在回路 · 34 上线服务 · 35 微调 Embedding
+- **第九部分 · 速查**：36 术语表 · 概念索引
 
 ## 🎨 每课包含
 

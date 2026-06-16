@@ -5,21 +5,6 @@ import i18n
 from i18n import L
 
 
-def _skeleton(stage, zh_topic, en_topic):
-    return (
-        c.pipeline(stage)
-        + c.lead(L(f"本课讲 <strong>{zh_topic}</strong>（内容完善中）。",
-                   f"This lesson covers <strong>{en_topic}</strong> (being written)."))
-        + d.flow([("a", L("场景", "Scenario")), ("b", L("做法", "Approach")), ("c", L("权衡", "Trade-off"))],
-                 caption=L("占位流程图", "placeholder flow"))
-        + d.compare2((L("不做", "Without"), i18n.render(L("有什么问题", "what breaks"))),
-                     (L("做了", "With"), i18n.render(L("解决什么", "what it fixes"))),
-                     caption=L("占位对照", "placeholder compare"))
-        + c.analogy(L("占位类比。", "Placeholder analogy."))
-        + c.key_points([L("本课要点占位。", "Key-points placeholder.")])
-    )
-
-
 LESSON_27 = (
     c.pipeline("index")
     + c.lead(L(
