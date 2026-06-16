@@ -713,6 +713,36 @@ QUIZZES = {
                    "(Hint: <strong>programmatically consumable downstream / validatable / monitorable, e.g. fall back on confidence"
                    "</strong>)")],
     },
+    "32-multi-agent.html": {
+        "mcq": [{
+            "q": L("<code>AgentWorkflow</code> 里的 handoff 指什么？",
+                   "What does a handoff mean in <code>AgentWorkflow</code>?"),
+            "opts": [
+                L("把当前任务移交给另一个更合适的 agent", "hand the current task to another, more suitable agent"),
+                L("关闭某个工具的调用", "disable calling a particular tool"),
+                L("压缩对话历史省 token", "compress the conversation history to save tokens"),
+                L("给 agent 切换更大的模型", "switch the agent to a bigger model"),
+            ],
+            "answer": 0,
+            "why": L("handoff 是多 agent 协作的核心——一个 agent 干完自己那段，把<strong>控制权和上下文</strong>交给下一个专精 agent；"
+                     "它与<strong>关工具、压历史、换模型</strong>都无关。把任务“<strong>移交给更合适的 agent</strong>”才是它的本义："
+                     "底层框架其实把 handoff 实现成一个<strong>自动注入的工具</strong>，被调用的“工具”是<strong>另一个 agent</strong>。"
+                     "“关闭某个工具的调用”是改工具集、“压缩对话历史省 token”是省上下文成本、“切换更大的模型”是换 LLM——三者都不是把"
+                     "任务<strong>交接</strong>给队友。",
+                     "A handoff is the core of multi-agent cooperation — one agent finishes its slice and passes <strong>control and "
+                     "context</strong> to the next, specialized agent; it has nothing to do with <strong>disabling a tool, compressing "
+                     "history, or switching models</strong>. Its real meaning is “<strong>handing the task to a more suitable agent</strong>”: "
+                     "under the hood the framework implements a handoff as an <strong>auto-injected tool</strong> whose “tool” is "
+                     "<strong>another agent</strong>. “Disable calling a tool” edits the toolset, “compress history to save tokens” trims "
+                     "context cost, and “switch to a bigger model” swaps the LLM — none of them <strong>hand the task off</strong> to a "
+                     "teammate."),
+        }],
+        "open": [L("什么时候该从单 agent 升级到多 agent？（提示：<strong>单 agent 工具 / 职责过载、prompt 太杂 / 任务能按角色清晰拆分 / "
+                   "需要不同专精、不同 system_prompt</strong>）",
+                   "When should you upgrade from a single agent to multiple agents? (Hint: <strong>one agent's tools / duties are "
+                   "overloaded and its prompt is a mess / the task splits cleanly by role / you need different specialties and different "
+                   "system prompts</strong>)")],
+    },
 }
 
 

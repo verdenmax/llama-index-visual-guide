@@ -1847,4 +1847,116 @@ INTERVIEW = {
             "“machine reading” — don't box in content meant for “human reading”</strong>."),
         },
     ],
+    "32-multi-agent.html": [
+        {"q": L(
+            "你把客服 RAG 从单 agent 改成多 agent（调研 / 撰写 / 审校三个 agent + handoff）：能力更强，但也更难控。"
+            "上线后你怎么<strong>评测</strong>和<strong>调试</strong>这套多 agent 系统——既看答得对不对，也看交接对不对、"
+            "有没有多花钱？",
+            "You turned your support RAG from a single agent into a multi-agent setup (research / write / review agents + "
+            "handoff): more capable, but harder to control. After launch, how do you <strong>evaluate</strong> and "
+            "<strong>debug</strong> it — checking not just whether answers are right, but whether handoffs are right and "
+            "whether it overspends?"),
+         "answer": L(
+            "🔑 <strong>重点：给每一次 handoff 和工具调用都加 trace（呼应 L23），把“谁、在第几步、为什么交接”记下来；"
+            "评测要落到<strong>任务级 / 端到端成功率</strong>，而不是只看某一步对不对。</strong>① <strong>先让它可观测"
+            "</strong>：多 agent 是黑箱叠黑箱，必须在每次 <strong>handoff</strong> 和<strong>工具调用</strong>上打点——"
+            "记录交接前后的 agent、传过去的上下文、每个 agent 用了哪些工具，否则出错你连“是哪个 agent 干的”都不知道。"
+            "② <strong>评端到端，而非单步</strong>：用 L22 的金标集看<strong>整条链</strong>的 <code>Correctness</code> / "
+            "<code>Faithfulness</code>——用户只在乎最终答案，单个 agent 答得漂亮但交接时丢了上下文，整体照样错。③ "
+            "<strong>评交接行为</strong>：统计<strong>交接对不对</strong>（该交给审校却交给了撰写？）、<strong>交接次数"
+            "</strong>分布、有没有<strong>在两个 agent 间反复踢皮球</strong>。④ <strong>评成本</strong>：每问的 LLM 调用次数、"
+            "token、p95 延迟，和<strong>单 agent 基线</strong>对比——每次 handoff 都是又一次 LLM 调用，要确认这份钱花得值。",
+            "🔑 <strong>Key: instrument every handoff and tool call with traces (echoing L23), recording “who, at which "
+            "step, and why it handed off”; evaluate at the <strong>task / end-to-end</strong> level, not just whether one "
+            "step was right.</strong> (1) <strong>Make it observable first</strong>: multi-agent is a black box stacked on "
+            "black boxes, so tap every <strong>handoff</strong> and <strong>tool call</strong> — log the agents before / "
+            "after a handoff, the context passed across, and which tools each agent used; otherwise on a failure you can't "
+            "even tell “which agent did it”. (2) <strong>Evaluate end-to-end, not per step</strong>: use L22's gold set for "
+            "<code>Correctness</code> / <code>Faithfulness</code> over the <strong>whole chain</strong> — the user only "
+            "cares about the final answer; one agent answering nicely but dropping context on handoff still makes the whole "
+            "thing wrong. (3) <strong>Evaluate handoff behavior</strong>: track whether handoffs are <strong>correct"
+            "</strong> (handed to write when it should have gone to review?), the <strong>distribution of handoff counts"
+            "</strong>, and any <strong>ping-ponging</strong> between two agents. (4) <strong>Evaluate cost</strong>: LLM "
+            "calls per question, tokens, p95 latency, versus the <strong>single-agent baseline</strong> — each handoff is "
+            "another LLM call, so confirm the spend is worth it."),
+         "fig": d.flow([
+            ("handoff", L("每次 handoff / 工具调用", "each handoff / tool call")),
+            ("trace", L("打点记录", "trace it"), L("谁→谁、传了什么上下文", "who→who, what context")),
+            ("e2e", L("端到端评测", "end-to-end eval"), L("金标集看整链 Correctness", "gold set: whole-chain Correctness")),
+            ("cost", L("对比成本基线", "compare cost baseline"), L("调用数 / token / p95", "calls / tokens / p95")),
+         ], active="trace", caption=L(
+            "多 agent 要靠 trace 才能调试：每次交接都留痕，评测落到端到端而非单步",
+            "Multi-agent is debuggable only via traces: leave a trail at every handoff, and evaluate end-to-end, not per step")),
+        },
+        {"q": L(
+            "为什么 LlamaIndex 的 Workflow 要用“事件驱动的 <code>@step</code>”来表达控制流，而不是直接写一长串 "
+            "<code>if-else</code>？这对<strong>调试和测试</strong>意味着什么？",
+            "Why does LlamaIndex's Workflow express control flow with “event-driven <code>@step</code>” instead of a long "
+            "chain of <code>if-else</code>? What does that mean for <strong>debugging and testing</strong>?"),
+         "answer": L(
+            "🔑 <strong>重点：事件驱动把分支 / 循环从“藏在一个大函数里的 if-else”<strong>显式化成事件</strong>——每个 "
+            "<code>@step</code> 收一种事件、发一种事件，于是每步都能<strong>单独单测</strong>、中间事件能<strong>流式观测"
+            "</strong>，整条控制流<strong>画得出、测得到</strong>。</strong>① <strong>控制流变成数据</strong>：一个 step 把"
+            "返回类型标成 <code>Retrieved | StopEvent</code>，就等于把“这里会分叉”写进了类型；框架据此连图，分支不再埋在"
+            "缩进里。② <strong>每步可单测</strong>：每个 step 是“<strong>输入事件 → 输出事件</strong>”的纯函数式小盒子，可以"
+            "<strong>单独喂一个事件、断言它发出的事件</strong>，不必把整条链跑起来——这是一长串 if-else 很难做到的。③ "
+            "<strong>可观测 / 可干预</strong>：事件在 step 间流转，框架能<strong>流式吐出中间事件</strong>，你能实时看到"
+            "“走到哪一步、产出了什么”，也方便<strong>插入 / 重排 / 并行</strong>新步骤（如加一步校验或重排）。④ <strong>一句"
+            "话</strong>：if-else 把流程<strong>焊死在控制流里</strong>，事件把流程<strong>摊开成可观察的数据流</strong>——"
+            "后者天然更好测、更好维护。",
+            "🔑 <strong>Key: event-driven turns branches / loops from “if-else buried in one big function” into "
+            "<strong>explicit events</strong> — each <code>@step</code> consumes one event and emits one, so every step is "
+            "<strong>unit-testable in isolation</strong>, intermediate events are <strong>streamable / observable</strong>, "
+            "and the whole control flow is <strong>drawable and testable</strong>.</strong> (1) <strong>Control flow becomes "
+            "data</strong>: a step annotated to return <code>Retrieved | StopEvent</code> writes “this forks” into the type; "
+            "the framework wires the graph from that, so the branch no longer hides in indentation. (2) <strong>Each step is "
+            "unit-testable</strong>: every step is a pure-functional box of “<strong>input event → output event</strong>”, "
+            "so you can <strong>feed it one event and assert the event it emits</strong> without running the whole chain — "
+            "hard to do with a long if-else. (3) <strong>Observable / interceptable</strong>: events flow between steps, the "
+            "framework can <strong>stream intermediate events</strong>, you see in real time “which step we're on and what "
+            "it produced”, and it's easy to <strong>insert / reorder / parallelize</strong> steps (e.g. add a validation or "
+            "re-rank step). (4) <strong>In a line</strong>: if-else <strong>welds the process into control flow</strong>, "
+            "while events <strong>spread it into an observable data flow</strong> — the latter is naturally more testable "
+            "and maintainable."),
+         "fig": d.compare2(
+            (L("一长串 if-else", "one long if-else"),
+             L("分支<strong>埋在缩进里</strong>，要测某条路得把整个函数跑起来；改一处易牵连全局。",
+               "branches <strong>hide in indentation</strong>; testing one path means running the whole function, and one change can ripple everywhere.").render(False)),
+            (L("事件驱动 @step", "event-driven @step"),
+             L("分支<strong>显式为事件</strong>，每个 step 单独可测、中间事件可观测、步骤可插入 / 重排。",
+               "branches are <strong>explicit events</strong>; each step is independently testable, intermediate events observable, steps insertable / reorderable.").render(False)),
+            caption=L("同一套分支 / 循环：if-else 焊死在函数里，事件摊开成可测、可观测的数据流",
+                      "Same branches / loops: if-else welds them into a function; events spread them into a testable, observable data flow")),
+        },
+        {"q": L(
+            "多 agent 自由地互相 handoff，可能<strong>交接给错的 agent、来回踢皮球、甚至绕圈不收敛</strong>，把延迟和成本"
+            "打爆。设计和上线时你怎么<strong>防</strong>，又怎么<strong>验证</strong>它不会失控？",
+            "Agents handing off freely may <strong>hand off to the wrong agent, ping-pong back and forth, or even loop "
+            "without converging</strong>, blowing up latency and cost. How do you <strong>prevent</strong> this in design "
+            "and at launch, and how do you <strong>verify</strong> it won't run away?"),
+         "answer": L(
+            "🔑 <strong>重点：给这支小队设“护栏”——用 <code>can_handoff_to</code> <strong>收窄交接路线</strong>、设<strong>最大"
+            "步数 / 超时 / 成本预算</strong>、做<strong>循环检测</strong>，并把<strong>高风险动作隔离</strong>（呼应 L25、铺垫 "
+            "L33）；上线靠 trace + 一组“刁钻用例”回归来验证不失控。</strong>① <strong>收窄路线</strong>：<code>can_handoff_to"
+            "</code> 只声明<strong>确有必要</strong>的交接，别让每个 agent 都能交给所有人——路线越少越不容易乱。② <strong>硬性"
+            "上限</strong>：最大交接 / 步数、超时、token 预算，越界就<strong>停下并降级</strong>（转固定管道或礼貌兜底）。③ "
+            "<strong>循环检测</strong>：同样的 handoff 在两个 agent 间反复出现就<strong>熔断</strong>。④ <strong>高风险动作"
+            "隔离</strong>：删除、下单、发信这类<strong>绝不</strong>让 agent 自己拍板（这正是 L33 要补的人在回路）。⑤ "
+            "<strong>怎么验证</strong>：维护一组<strong>容易诱发多次交接</strong>的刁钻用例纳入回归，断言<strong>交接次数、"
+            "成本、是否答对</strong>都在阈值内；线上监控每问<strong>步数与成本的 p95</strong>，越界即告警。",
+            "🔑 <strong>Key: give the team “guardrails” — narrow handoff routes with <code>can_handoff_to</code>, set a "
+            "<strong>max-step / timeout / cost budget</strong>, add <strong>loop detection</strong>, and <strong>isolate "
+            "high-risk actions</strong> (echoing L25, setting up L33); verify with traces plus a regression suite of "
+            "“tricky” cases.</strong> (1) <strong>Narrow the routes</strong>: have <code>can_handoff_to</code> declare only "
+            "the handoffs that are <strong>genuinely needed</strong>; don't let every agent hand off to everyone — fewer "
+            "routes, less chaos. (2) <strong>Hard caps</strong>: max handoffs / steps, timeout, token budget; on breach, "
+            "<strong>stop and degrade</strong> (fall back to a fixed pipeline or a polite default). (3) <strong>Loop "
+            "detection</strong>: trip a breaker when the same handoff recurs between two agents. (4) <strong>Isolate "
+            "high-risk actions</strong>: deletion, ordering, sending mail must <strong>never</strong> be the agent's own "
+            "call (exactly the human-in-the-loop L33 adds). (5) <strong>How to verify</strong>: keep a regression suite of "
+            "cases that <strong>easily trigger many handoffs</strong>, asserting <strong>handoff count, cost, and "
+            "correctness</strong> stay within thresholds; in production, monitor the <strong>p95 of steps and cost per "
+            "question</strong> and alert on breach."),
+        },
+    ],
 }
