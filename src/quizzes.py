@@ -743,6 +743,41 @@ QUIZZES = {
                    "overloaded and its prompt is a mess / the task splits cleanly by role / you need different specialties and different "
                    "system prompts</strong>)")],
     },
+    "33-human-in-the-loop.html": {
+        "mcq": [{
+            "q": L("在 LlamaIndex workflow 里，HITL（暂停等人确认）靠什么实现？",
+                   "In a LlamaIndex workflow, what implements HITL (pausing for a human's confirmation)?"),
+            "opts": [
+                L("一个 <code>@step</code> 返回 <code>InputRequiredEvent</code> 挂起、调用方回 <code>HumanResponseEvent</code> 恢复",
+                  "a <code>@step</code> returns <code>InputRequiredEvent</code> to pause; the caller sends back <code>HumanResponseEvent</code> to resume"),
+                L("关闭 LLM 调用", "disable the LLM call"),
+                L("用 rerank 重排候选", "re-rank candidates with a reranker"),
+                L("打开流式逐字输出", "turn on token-by-token streaming"),
+            ],
+            "answer": 0,
+            "why": L("HITL 的机制<strong>就是这一对事件</strong>：某个 <code>@step</code> <strong>返回 <code>InputRequiredEvent</code>"
+                     "</strong>——它被自动写入事件流、无需下游消费即<strong>挂起</strong>流程；调用方从流里取到后，回一个 "
+                     "<code>HumanResponseEvent(response=…)</code>，<strong>消费它的 <code>@step</code> 据此恢复或中止</strong>。"
+                     "“<strong>关闭 LLM 调用</strong>”只是不用模型、与“暂停等人”无关；“<strong>用 rerank 重排候选</strong>”是检索"
+                     "后处理（L13）、改的是结果顺序；“<strong>打开流式逐字输出</strong>”只是把答案一个字一个字地吐出来、是"
+                     "<strong>展示方式</strong>——三者都<strong>不会让流程停下来等人点头</strong>。",
+                     "HITL's mechanism <strong>is exactly this pair of events</strong>: a <code>@step</code> <strong>returns an "
+                     "<code>InputRequiredEvent</code></strong> — auto-written to the event stream and <strong>pausing</strong> the flow "
+                     "with no downstream consumer; the caller picks it up from the stream and sends back a "
+                     "<code>HumanResponseEvent(response=…)</code>, and <strong>the <code>@step</code> consuming it resumes or aborts"
+                     "</strong>. “<strong>Disabling the LLM call</strong>” just means not using the model — nothing to do with “pause for "
+                     "a human”; “<strong>re-ranking candidates with a reranker</strong>” is retrieval post-processing (L13) that reorders "
+                     "results; “<strong>turning on token-by-token streaming</strong>” merely emits the answer one token at a time, a "
+                     "<strong>display choice</strong> — none of the three <strong>stops the flow to wait for a human nod</strong>."),
+        }],
+        "open": [L("哪些动作<strong>该</strong>加人工确认、哪些<strong>不该</strong>？（提示：<strong>不可逆 / 高风险</strong>——删除 / 转账 / "
+                   "外发——该加闸；<strong>只读 / 可撤销 / 低风险</strong>——检索 / 起草 / 计算——放行；别让 HITL 把<strong>吞吐</strong>拖垮、"
+                   "把人<strong>烦走</strong>）",
+                   "Which actions <strong>should</strong> get a human confirm and which <strong>shouldn't</strong>? (Hint: "
+                   "<strong>irreversible / high-risk</strong> — delete / transfer / outbound — gate them; <strong>read-only / reversible / "
+                   "low-risk</strong> — retrieve / draft / compute — let them through; don't let HITL <strong>grind throughput</strong> or "
+                   "<strong>annoy the human away</strong>)")],
+    },
 }
 
 

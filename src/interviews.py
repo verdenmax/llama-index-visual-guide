@@ -1959,4 +1959,107 @@ INTERVIEW = {
             "question</strong> and alert on breach."),
         },
     ],
+    "33-human-in-the-loop.html": [
+        {"q": L(
+            "你给 agent 加了 HITL 后，QA 抱怨“太慢、老被弹窗打断”。在<strong>不牺牲安全</strong>的前提下，你怎么把对人的"
+            "<strong>打扰降到最低</strong>？",
+            "After you added HITL, QA complains it's “too slow, constantly interrupted by confirm dialogs”. "
+            "<strong>Without sacrificing safety</strong>, how do you cut the <strong>interruption to a human</strong> to a "
+            "minimum?"),
+         "answer": L(
+            "🔑 <strong>重点：HITL 的成本来自“弹窗的频率”，所以核心是<strong>少弹、晚弹、聪明地弹</strong>——只在不可逆 / 高风险 / "
+            "低置信处触发，能批量就批量，并给默认超时与回退，别让流程死等人。</strong>① <strong>收窄触发面</strong>：只给"
+            "<strong>真正不可逆 / 高风险</strong>的动作（删库、转账、外发）和<strong>低置信</strong>（分数过低、证据矛盾）加闸；"
+            "只读 / 可撤销的操作一律自动，别“凡事都问”。② <strong>批量确认</strong>：把一段时间内的多个待批<strong>聚成一屏"
+            "</strong>让人一次点完，而不是一个动作弹一次——既省打扰又省上下文切换。③ <strong>设默认与超时</strong>：给每个确认"
+            "配<strong>超时 + 默认策略</strong>（高风险默认“拒”、低风险默认“放”），人没在 N 分钟内回就走默认，<strong>绝不无限期"
+            "挂起</strong>。④ <strong>上下文一次给足</strong>：弹窗里<strong>把 prefix 写清楚</strong>（要做什么、影响什么、依据"
+            "是什么，呼应 L23 的 trace），让人<strong>一眼能判</strong>，减少来回追问。⑤ <strong>事后调阈值</strong>：统计"
+            "<strong>确认通过率</strong>——某类动作若人几乎总点“yes”，说明这道闸<strong>加得过密</strong>，可以放宽或撤掉。",
+            "🔑 <strong>Key: HITL's cost comes from “how often it pops up”, so the core is to <strong>pop up less, later, and "
+            "smarter</strong> — trigger only at irreversible / high-risk / low-confidence points, batch when you can, and give "
+            "defaults plus timeouts so the flow never dead-waits on a human.</strong> (1) <strong>Narrow the trigger surface"
+            "</strong>: gate only <strong>truly irreversible / high-risk</strong> actions (drop DB, transfer, outbound) and "
+            "<strong>low-confidence</strong> cases (score too low, conflicting evidence); auto-run read-only / reversible ops — "
+            "don't “ask about everything”. (2) <strong>Batch confirmations</strong>: collect several pending approvals over a "
+            "window into <strong>one screen</strong> to clear at once, instead of one popup per action — saving both "
+            "interruption and context-switching. (3) <strong>Defaults and timeouts</strong>: pair each confirm with a "
+            "<strong>timeout + default policy</strong> (high-risk defaults to “deny”, low-risk to “allow”); if no reply within "
+            "N minutes, take the default and <strong>never hang indefinitely</strong>. (4) <strong>Give full context once"
+            "</strong>: write a clear <strong>prefix</strong> (what it will do, what it affects, on what basis — echoing L23's "
+            "traces) so the human can <strong>judge at a glance</strong>, cutting back-and-forth. (5) <strong>Tune thresholds "
+            "afterward</strong>: track the <strong>approval rate</strong> — if a class of action is almost always “yes”, that "
+            "gate is <strong>too dense</strong> and can be loosened or removed."),
+        },
+        {"q": L(
+            "HITL 和你前面做的<strong>护栏（L25）</strong>、<strong>可观测（L23）</strong>是什么关系？它们是重复造轮子，还是"
+            "各司其职？",
+            "How does HITL relate to the <strong>guardrails (L25)</strong> and <strong>observability (L23)</strong> you built "
+            "earlier? Are they redundant, or does each play its own role?"),
+         "answer": L(
+            "🔑 <strong>重点：三者不是重复，而是<strong>三层纵深防御</strong>——护栏<strong>自动挡掉明显违规</strong>，trace "
+            "<strong>让人看清上下文</strong>，HITL 是最后那道<strong>“人来拍板”</strong>的闸；越往后越贵，所以越往后用得越省。"
+            "</strong>① <strong>L25 护栏：自动、廉价、挡明显的</strong>。规则 / 分类器能判定的（注入、越权、明显有害）就<strong>"
+            "直接拒</strong>，根本不该惊动人——机器能判的别劳烦人。② <strong>L23 可观测：让决定有依据</strong>。当事情<strong>落到"
+            "人</strong>手里，人得看到<strong>这一步要做什么、基于哪些证据、前面怎么走过来的</strong>——trace / 上下文就是人做"
+            "判断的<strong>仪表盘</strong>，没有它人只能瞎点。③ <strong>L33 HITL：灰色地带的最终裁决</strong>。规则<strong>判不了"
+            "</strong>、又<strong>不可逆 / 高风险</strong>的，才交给人点头——这是<strong>最贵</strong>的一层（要人、要等），所以"
+            "放在最后、用得最省。④ <strong>一句话</strong>：护栏管“<strong>明显该拦的</strong>”，HITL 管“<strong>该不该做得让人判"
+            "的</strong>”，可观测让这两件事都<strong>看得见、查得到</strong>——三层叠起来才既安全又不拖垮效率。",
+            "🔑 <strong>Key: the three aren't redundant but <strong>three layers of defense in depth</strong> — guardrails "
+            "<strong>auto-block obvious violations</strong>, traces <strong>let a human see the context</strong>, and HITL is "
+            "the final <strong>“human decides”</strong> gate; each later layer is pricier, so each is used more sparingly."
+            "</strong> (1) <strong>L25 guardrails: automatic, cheap, catch the obvious</strong>. What a rule / classifier can "
+            "judge (injection, over-reach, plainly harmful) is <strong>rejected outright</strong> and should never reach a "
+            "human — don't bother a person with what a machine can decide. (2) <strong>L23 observability: ground the decision"
+            "</strong>. When something <strong>does fall to a human</strong>, they need to see <strong>what this step will do, "
+            "on what evidence, and how it got here</strong> — traces / context are the human's <strong>dashboard</strong>; "
+            "without it they're just guessing. (3) <strong>L33 HITL: final ruling for the gray zone</strong>. Only the "
+            "<strong>irreversible / high-risk</strong> cases a rule <strong>can't</strong> settle go to a human nod — the "
+            "<strong>most expensive</strong> layer (needs a person, needs waiting), so it sits last and is used most sparingly. "
+            "(4) <strong>In a line</strong>: guardrails handle “<strong>the obviously blockable</strong>”, HITL handles "
+            "“<strong>whether-to-do that needs human judgment</strong>”, and observability makes both <strong>visible and "
+            "auditable</strong> — stacked, the three are safe without grinding down efficiency."),
+         "fig": d.layers([
+            (L("第 1 层 · 护栏 (L25)", "Layer 1 · Guardrails (L25)"),
+             L("自动挡掉明显违规——机器能判的不劳人", "auto-block obvious violations — no human for what a machine can judge")),
+            (L("第 2 层 · 可观测 (L23)", "Layer 2 · Observability (L23)"),
+             L("把上下文 / trace 摆到人面前，让拍板有依据", "put context / traces before the human so the call is grounded")),
+            (L("第 3 层 · HITL (L33)", "Layer 3 · HITL (L33)"),
+             L("闸口由人做最后拍板——最贵也最后的一层", "a human makes the final call at the gate — the last, most expensive layer")),
+         ], caption=L("三层纵深：护栏自动挡、trace 让人看清、HITL 最后由人拍板",
+                      "Defense in depth: guardrails auto-block, traces clarify, HITL leaves the final call to a human")),
+        },
+        {"q": L(
+            "现实里人可能<strong>几小时甚至隔天</strong>才点确认，可你的进程不能一直挂着干等。你怎么设计让 workflow 能"
+            "<strong>挂起、等很久、再恢复</strong>？",
+            "In reality a human may take <strong>hours or even a day</strong> to confirm, but your process can't sit there "
+            "blocking. How do you design the workflow to <strong>pause, wait a long time, then resume</strong>?"),
+         "answer": L(
+            "🔑 <strong>重点：把“等人”做成<strong>异步 + 可持久化</strong>——发出 <code>InputRequiredEvent</code> 后<strong>序列化 "
+            "workflow 的上下文（Context）落库</strong>，进程可以释放；人回来时再<strong>从存档恢复</strong>、灌入 "
+            "<code>HumanResponseEvent</code> 续跑，而不是让线程死等。</strong>① <strong>别阻塞等待</strong>：挂起点不该占着进程 / "
+            "线程空转。拿到 <code>InputRequiredEvent</code> 就把<strong>待批请求 + 上下文快照</strong>存起来（<code>ctx.to_dict()"
+            "</code> 落 DB / 队列），<strong>释放</strong>资源。② <strong>持久化状态</strong>：workflow 的 <code>Context</code> 可"
+            "序列化——这正是“等很久”的关键：状态在<strong>库里</strong>而不在<strong>内存里</strong>，进程重启 / 扩缩容都不丢。③ "
+            "<strong>回来再恢复</strong>：人在前端 / 审批系统点了确认，后端<strong>用存档重建 Context</strong>（"
+            "<code>Context.from_dict</code>），<code>send_event(HumanResponseEvent(response=…))</code> 让消费它的 step 续跑。④ "
+            "<strong>配套要有超时与对账</strong>：长时间没人理要能<strong>超时走默认</strong>或<strong>提醒重派</strong>，并保证"
+            "“同一请求只批一次”（幂等），别因为重试把高风险动作<strong>执行两遍</strong>。",
+            "🔑 <strong>Key: make “waiting on a human” <strong>async + persistable</strong> — after emitting "
+            "<code>InputRequiredEvent</code>, <strong>serialize the workflow's Context to storage</strong> and let the process "
+            "go; when the human returns, <strong>restore from that snapshot</strong> and inject the "
+            "<code>HumanResponseEvent</code> to continue, rather than blocking a thread.</strong> (1) <strong>Don't block-wait"
+            "</strong>: a pause point shouldn't hold a process / thread spinning. On <code>InputRequiredEvent</code>, persist "
+            "the <strong>pending request + a context snapshot</strong> (<code>ctx.to_dict()</code> to DB / queue) and "
+            "<strong>release</strong> resources. (2) <strong>Persist the state</strong>: the workflow's <code>Context</code> is "
+            "serializable — exactly what makes “wait a long time” possible: state lives in <strong>storage</strong>, not "
+            "<strong>memory</strong>, so restarts / autoscaling don't lose it. (3) <strong>Resume on return</strong>: when the "
+            "human confirms in a frontend / approval system, the backend <strong>rebuilds the Context from the snapshot"
+            "</strong> (<code>Context.from_dict</code>) and <code>send_event(HumanResponseEvent(response=…))</code> lets the "
+            "consuming step continue. (4) <strong>Pair it with timeouts and reconciliation</strong>: a long-unanswered request "
+            "must <strong>time out to a default</strong> or <strong>nudge / reassign</strong>, and guarantee “each request is "
+            "approved once” (idempotent) so a retry doesn't <strong>execute a high-risk action twice</strong>."),
+        },
+    ],
 }
