@@ -54,6 +54,15 @@ def test_design_highlight_card():
     assert "💡" in c.design_highlight(L("精妙", "elegant"))
 
 
+def test_alert_renders_kind_and_bilingual():
+    html = c.alert(L("注意这点", "note this"), kind="warn")
+    assert 'class="alert warn"' in html
+    assert "⚠️" in html
+    assert "注意这点" in html and "note this" in html
+    # default kind is tip with the 💡 icon
+    assert 'class="alert tip"' in c.alert(L("提示", "tip"))
+
+
 def test_pipeline_highlights_requested_stage_only():
     html = c.pipeline("embed")
     assert "stage on" in html

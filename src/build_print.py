@@ -24,7 +24,7 @@ html, body { height: auto !important; overflow: visible !important; background: 
 .hint { display: none !important; }
 .accordion > summary { cursor: default; }
 .accordion > summary::after { display: none; }
-.card, .codefile, pre.code, table.t, .pipeline, .accordion, .qa, .selftest, .quiz { break-inside: avoid; }
+.card, .codefile, pre.code, table.t, .pipeline, .accordion, .qa, .selftest, .quiz, .alert { break-inside: avoid; }
 h2, h3, h4 { break-after: avoid; }
 .print-cover { break-after: page; min-height: 90vh; display: flex; flex-direction: column;
   justify-content: center; text-align: center; }

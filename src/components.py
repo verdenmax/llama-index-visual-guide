@@ -54,6 +54,15 @@ def design_highlight(text):
     return f'<div class="card highlight"><div class="tag">{tag}</div>{render(text)}</div>'
 
 
+def alert(text, kind="tip"):
+    icons = {"tip": "💡", "warn": "⚠️", "note": "📌", "key": "🔑"}
+    icon = icons.get(kind, "💡")
+    return (
+        f'<div class="alert {kind}"><div class="ai" aria-hidden="true">{icon}</div>'
+        f'<div class="ac">{render(text)}</div></div>'
+    )
+
+
 def qa_item(label, body):
     return (
         f'<div class="qa"><div class="q">{render(label, block=False)}</div>'

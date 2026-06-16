@@ -390,6 +390,17 @@ EXTRA_CSS = r"""
 .cf-head{font-size:.78rem;color:var(--muted);margin-bottom:.3rem;}
 .card.keypts{border-left:3px solid var(--accent);}
 .card.highlight{border-left:3px solid var(--amber);background:var(--amber-soft);}
+/* ---- lightweight inline alert (lighter than .card) ---- */
+.alert{display:flex;gap:.55rem;align-items:flex-start;margin:.9rem 0;padding:.55rem .8rem;
+  border:1px solid var(--line);border-left:3px solid var(--faint);border-radius:10px;
+  background:var(--panel-2);font-size:.9rem;line-height:1.6;}
+.alert .ai{font-size:1rem;line-height:1.5;flex:0 0 auto;}
+.alert .ac{flex:1;min-width:0;}
+.alert .ac > div{margin:0;}
+.alert.tip{border-left-color:var(--accent);background:var(--accent-soft);}
+.alert.warn{border-left-color:var(--amber);background:var(--amber-soft);}
+.alert.note{border-left-color:var(--blue);background:var(--blue-soft);}
+.alert.key{border-left-color:var(--purple);background:var(--purple-soft);}
 """
 
 
