@@ -1742,4 +1742,109 @@ INTERVIEW = {
             "default</strong>."),
         },
     ],
+    "31-structured-outputs.html": [
+        {"q": L(
+            "你的结构化输出偶尔会<strong>不符合 schema</strong>——少字段、类型错、或多塞了一段解释导致解析失败。线上"
+            "你会怎么<strong>兜住</strong>，让它别把脏数据放进下游？",
+            "Your structured output occasionally <strong>violates the schema</strong> — a missing field, a wrong type, or "
+            "an extra paragraph of explanation that breaks parsing. In production, how would you <strong>catch it</strong> "
+            "so it doesn't push dirty data downstream?"),
+         "answer": L(
+            "🔑 <strong>重点：校验失败就<strong>重试/修复</strong>而不是放行；能用 <strong>function-calling 模式</strong>就优先"
+            "——它的约束来自模型<strong>原生能力</strong>，比纯 prompt 模板把 schema 写进提示更稳。</strong>① <strong>校验是"
+            "闸门</strong>：program 用 Pydantic 校验模型回的内容，<strong>不合格不放行</strong>——这一步本身就是“静默失败”的"
+            "解药（对比 L31 痛点里手工 parse 的悄悄返回默认值）；② <strong>失败就重试/修复</strong>：把校验错误<strong>回喂给"
+            "模型</strong>让它改（“你少了 <code>due_date</code> 字段，请补全”），或限定重试次数后降级；③ <strong>换更硬的约束"
+            "</strong>：纯 prompt 模板是“软约束”，模型容易多写少写——改用 <strong>FunctionCallingProgram / "
+            "<code>structured_predict</code></strong>，让模型在<strong>函数调用层</strong>按字段产出，跑偏概率大降；④ "
+            "<strong>schema 从简</strong>：字段越少越浅、类型越基础，模型越不容易填错；复杂结构先拆小再组合。一句话："
+            "<strong>校验当闸门、失败就重试、约束尽量硬、schema 尽量简</strong>。",
+            "🔑 <strong>Key: on a validation failure, <strong>retry/repair</strong> rather than let it through; prefer the "
+            "<strong>function-calling mode</strong> when you can — its constraint comes from the model's <strong>native "
+            "ability</strong>, steadier than writing the schema into a pure prompt template.</strong> (1) <strong>Validation "
+            "is the gate</strong>: the program validates the model's output with Pydantic and <strong>won't pass what "
+            "fails</strong> — that step is itself the antidote to “silent failure” (vs the manual parse in L31's pain point "
+            "that quietly returns a default); (2) <strong>retry/repair on failure</strong>: <strong>feed the validation "
+            "error back to the model</strong> to fix it (“you're missing <code>due_date</code>, please complete it”), or "
+            "degrade after a capped number of retries; (3) <strong>switch to a harder constraint</strong>: a pure prompt "
+            "template is a “soft” constraint and the model easily over/under-writes — use <strong>FunctionCallingProgram / "
+            "<code>structured_predict</code></strong> so the model emits by field at the <strong>function-calling layer</strong>, "
+            "sharply cutting drift; (4) <strong>keep the schema simple</strong>: fewer, shallower fields and basic types "
+            "are harder to misfill; split complex structures small first, then compose. In a line: <strong>gate on "
+            "validation, retry on failure, make the constraint as hard as you can, and keep the schema as simple as "
+            "possible</strong>."),
+         "fig": d.flow([
+            ("emit", L("LLM 产出", "LLM emits")),
+            ("check", L("Pydantic 校验", "Pydantic validates")),
+            ("retry", L("不合格→回喂重试", "invalid → feed back, retry"), L("修复/降级", "repair/degrade")),
+            ("pass", L("合格→交下游", "valid → hand downstream")),
+         ], active="retry", caption=L("校验当闸门：不合格就重试/修复，绝不把脏数据放进下游",
+                                       "validation as a gate: retry/repair on failure, never push dirty data downstream")),
+        },
+        {"q": L(
+            "面试官追问：<strong>structured output</strong> 和 <strong>function/tool calling</strong> 是什么关系？为什么说"
+            "搞懂前者就等于摸到了 <strong>Agent 工具调用</strong>的门？",
+            "The interviewer presses: what's the relationship between <strong>structured output</strong> and "
+            "<strong>function/tool calling</strong>, and why does grasping the former mean you've touched the door to "
+            "<strong>an Agent's tool calling</strong>?"),
+         "answer": L(
+            "🔑 <strong>重点：本质是<strong>同一种机制</strong>——都让模型产出“<strong>受约束的结构</strong>”；工具调用的<strong>"
+            "参数本身就是一个 schema</strong>，模型“按 Pydantic 模型填字段”和“按函数签名填实参”是同一件事——这正是 L32 "
+            "agent 工具调用的地基。</strong>① <strong>同一能力，两种用法</strong>：function-calling 路线的结构化输出，就是把你"
+            "的 Pydantic 模型<strong>当成一个“函数签名”</strong>交给模型，让它在 API 层产出合规的字段——这和 agent “<strong>调用"
+            "一个工具</strong>”时模型要产出“<strong>该工具的入参对象</strong>”是<strong>同一套机制</strong>；② <strong>差别只在"
+            "用途</strong>：结构化输出把这个“受约束的结构”<strong>当最终结果</strong>返回给你；agent 则把它<strong>当一次工具"
+            "调用的参数</strong>、拿去执行、再把结果喂回循环；③ <strong>所以是铺垫</strong>：你在本课学会“让模型可靠地产出一个"
+            "schema 对象”，到 L32 只是把这个对象<strong>接上一个可执行的工具</strong>，模型就从“填表”升级成“<strong>调工具</strong>”。"
+            "一句话：<strong>结构化输出是“静态的工具调用”，工具调用是“会执行的结构化输出”</strong>。",
+            "🔑 <strong>Key: they're <strong>the same mechanism</strong> — both make the model emit a “<strong>constrained "
+            "structure</strong>”; a tool call's <strong>arguments are themselves a schema</strong>, and “filling a Pydantic "
+            "model's fields” and “filling a function signature's arguments” are one and the same — exactly the bedrock of "
+            "L32's agent tool calling.</strong> (1) <strong>One ability, two uses</strong>: the function-calling route of "
+            "structured output hands your Pydantic model to the model <strong>as a “function signature”</strong> so it emits "
+            "conformant fields at the API level — <strong>the same machinery</strong> an agent uses when, to "
+            "“<strong>call a tool</strong>”, the model must produce “<strong>that tool's argument object</strong>”; (2) "
+            "<strong>the only difference is purpose</strong>: structured output returns that “constrained structure” to you "
+            "<strong>as the final result</strong>; an agent treats it <strong>as the arguments of a tool call</strong>, runs "
+            "the tool, and feeds the result back into the loop; (3) <strong>hence the setup</strong>: here you learn to “make "
+            "the model reliably emit a schema object”, and by L32 you simply <strong>wire that object to an executable "
+            "tool</strong>, upgrading the model from “filling a form” to “<strong>calling a tool</strong>”. In a line: "
+            "<strong>structured output is a “static tool call”, and a tool call is “structured output that executes”</strong>."),
+         "fig": d.compare2(
+            (L("结构化输出", "Structured output"),
+             L("Pydantic 模型 → 模型产出<strong>受约束对象</strong> → <strong>当结果</strong>返回",
+               "Pydantic model → model emits a <strong>constrained object</strong> → returned <strong>as the result</strong>").render(False)),
+            (L("工具调用（L32）", "Tool calling (L32)"),
+             L("函数签名 → 模型产出<strong>入参对象</strong> → <strong>执行工具</strong>再回喂循环",
+               "function signature → model emits an <strong>argument object</strong> → <strong>run the tool</strong>, feed back into the loop").render(False)),
+            caption=L("同一机制，差别只在“受约束结构”是当结果，还是当一次工具调用的参数",
+                      "same mechanism; the only difference is whether the constrained structure is the result or the args of a tool call")),
+        },
+        {"q": L(
+            "什么时候<strong>不该</strong>上结构化输出？给我一个会让它“看着省事、实则添乱”的反例。",
+            "When should you <strong>not</strong> reach for structured output? Give me a counter-example where it “looks "
+            "convenient but actually adds trouble”."),
+         "answer": L(
+            "🔑 <strong>重点：当输出本就是<strong>给人读的自由表达</strong>（解释、写作、开放对话），或 <strong>schema 复杂多变到"
+            "模型频繁填错</strong>时，硬套结构化输出只会增加重试与维护成本——结构化的收益是“<strong>下游要程序化消费</strong>”，"
+            "没有这个需求就别套。</strong>① <strong>自由表达类</strong>：让模型“解释这段代码”“写一段安抚用户的话”，答案的价值在"
+            "<strong>语言本身</strong>，塞进 <code>{summary: str}</code> 这种壳子既没增益、还可能截断表达；② <strong>schema 过重"
+            "</strong>：字段几十个、深层嵌套、还常改——模型填错率高、重试烧钱，维护 schema 比写正则还累，这时不如<strong>拆小"
+            "</strong>或只structured 关键几个字段；③ <strong>判断标准</strong>：问一句“<strong>下游是程序消费还是人消费</strong>”——"
+            "程序消费（写库、触发流程、按字段分支）才值得上；人消费就让它好好说话。一句话：<strong>结构化是为“机器读”服务的，"
+            "别拿它去框“人读”的内容</strong>。",
+            "🔑 <strong>Key: when the output is inherently <strong>free expression for a human to read</strong> (explanations, "
+            "writing, open conversation), or the <strong>schema is so complex and volatile that the model misfills it "
+            "often</strong>, forcing structured output only adds retry and maintenance cost — its payoff is “<strong>downstream "
+            "needs to consume it programmatically</strong>”, so without that need, don't force it.</strong> (1) <strong>Free-"
+            "expression cases</strong>: “explain this code”, “write a calming note to the user” — the value is in the "
+            "<strong>language itself</strong>, and cramming it into a <code>{summary: str}</code> shell adds nothing and may "
+            "truncate the expression; (2) <strong>over-heavy schema</strong>: dozens of fields, deep nesting, frequently "
+            "changing — high misfill rate, costly retries, and maintaining the schema is wearier than writing regex; better to "
+            "<strong>break it down</strong> or structure only the few key fields; (3) <strong>the test</strong>: ask “<strong>is "
+            "downstream a machine or a human</strong>” — machine consumption (writing to a store, triggering a flow, branching "
+            "on fields) earns it; human consumption should let the model just talk. In a line: <strong>structuring serves "
+            "“machine reading” — don't box in content meant for “human reading”</strong>."),
+        },
+    ],
 }

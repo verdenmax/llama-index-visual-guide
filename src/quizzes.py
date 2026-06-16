@@ -684,6 +684,35 @@ QUIZZES = {
                    "Why is “compare the breach-clause differences between contracts A and B” a good fit for sub-question? (Hint: "
                    "<strong>split into two sub-questions / retrieve each / then compare and aggregate</strong>)")],
     },
+    "31-structured-outputs.html": {
+        "mcq": [{
+            "q": L("为什么用 Pydantic program 而不是正则 parse LLM 的自由文本？",
+                   "Why use a Pydantic program instead of regex-parsing the LLM's free text?"),
+            "opts": [
+                L("输出有类型校验、契约稳定，下游可直接用", "the output is type-validated with a stable contract, ready for downstream use"),
+                L("更省 token", "it saves tokens"),
+                L("完全不需要 LLM", "it removes the need for an LLM entirely"),
+                L("自动获得多模态能力", "it automatically gains multimodal ability"),
+            ],
+            "answer": 0,
+            "why": L("正确的是“输出有类型校验、契约稳定，下游可直接用”：结构化输出的价值是“<strong>类型即契约</strong>”——LLM 直接产出"
+                     "<strong>校验过的对象</strong>，下游 <code>.total</code> 拿来就用，措辞一变也不再让解析崩。“更省 token”不对——把 "
+                     "schema 塞进提示反而<strong>多花</strong> token；“完全不需要 LLM”更不对——<strong>仍然要 LLM</strong> 来生成，只是把"
+                     "生成目标从“一段话”换成“一个对象”；“自动获得多模态能力”与结构化输出<strong>无关</strong>，那是另一回事（L29）。",
+                     "The right one is “the output is type-validated with a stable contract, ready for downstream use”: structured "
+                     "output's value is “<strong>the type is the contract</strong>” — the LLM emits a <strong>validated object</strong> "
+                     "directly, downstream <code>.total</code> just works, and shifting wording no longer breaks parsing. “It saves "
+                     "tokens” is wrong — stuffing the schema into the prompt actually <strong>spends more</strong> tokens; “it removes "
+                     "the need for an LLM entirely” is more wrong — you <strong>still need the LLM</strong> to generate, just with the "
+                     "target changed from “a paragraph” to “an object”; and “multimodal ability” is <strong>unrelated</strong> to "
+                     "structured output — that's a different topic (L29)."),
+        }],
+        "open": [L("把 RAG 的答案变成 <code>{answer, sources, confidence}</code> 结构有什么工程价值？（提示：<strong>下游可程序化消费 / "
+                   "可校验 / 可监控（如按 confidence 兜底）</strong>）",
+                   "What is the engineering value of turning a RAG answer into a <code>{answer, sources, confidence}</code> structure? "
+                   "(Hint: <strong>programmatically consumable downstream / validatable / monitorable, e.g. fall back on confidence"
+                   "</strong>)")],
+    },
 }
 
 

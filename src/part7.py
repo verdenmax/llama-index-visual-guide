@@ -938,4 +938,268 @@ LESSON_30 = (
         "with steadily rising flexibility.",
     ))
 )
-LESSON_31 = _skeleton("synthesize", "结构化输出", "structured outputs")
+LESSON_31 = (
+    c.pipeline("synthesize")
+    + c.lead(L(
+        "到这里，RAG 的输出一直是“<strong>一段自然语言</strong>”——给人读很顺，可一旦要把它<strong>接进下游程序"
+        "</strong>（写进数据库、触发工作流、做条件判断），麻烦就来了：你得用<strong>正则、字符串切割去“猜”</strong>"
+        "LLM 这次把金额写在哪一行、日期是什么格式。措辞一变、模型一升级，解析脚本就<strong>碎</strong>。这一课换"
+        "一种<strong>拿结果的方式</strong>：别让 LLM 写一段话你再去 parse，<strong>直接让它产出一个 Pydantic 对象"
+        "</strong>——字段和类型都是你<strong>预先声明</strong>的，模型必须照着填，框架还会<strong>校验</strong>。一句话："
+        "<strong>类型即契约</strong>，LLM 直接交回一个校验过的结构，下游 <code>invoice.total</code> 拿来就用，再没有"
+        "脆弱的解析这一环。",
+        "Up to here, RAG's output has always been “<strong>a piece of natural language</strong>” — nice for a human to "
+        "read, but the moment you need to <strong>feed it into downstream code</strong> (write to a database, trigger a "
+        "workflow, branch on a condition), the trouble starts: you must <strong>use regex and string-splitting to “guess”"
+        "</strong> which line the LLM put the amount on and what format the date took. Change the wording or upgrade the "
+        "model and the parsing script <strong>breaks</strong>. This lesson swaps the <strong>way you collect the result"
+        "</strong>: instead of having the LLM write prose you then parse, <strong>have it emit a Pydantic object directly"
+        "</strong> — the fields and types are <strong>declared up front</strong> by you, the model must fill them in, and "
+        "the framework <strong>validates</strong> them. In a line: <strong>the type is the contract</strong> — the LLM "
+        "hands back a validated structure, and downstream <code>invoice.total</code> just works, with the fragile parsing "
+        "step gone entirely.",
+    ))
+    + d.compare2(
+        (L("自由文本 + 手工 parse", "Free text + manual parse"),
+         i18n.render(L("LLM 写一段话 → 正则/分割提字段 → 措辞一变就<strong>碎</strong>",
+                       "LLM writes prose → regex/split fields → <strong>breaks</strong> when wording shifts"))),
+        (L("结构化输出", "Structured output"),
+         i18n.render(L("LLM 直接产出 <strong>Pydantic 对象</strong> → 类型校验 → 下游直接用",
+                       "LLM emits a <strong>Pydantic object</strong> → type-validated → ready downstream"))),
+        caption=L("把“解析自由文本”换成“契约化的类型”", "swap ‘parse free text’ for ‘a typed contract’"),
+    )
+    + c.section(
+        L("痛点：用正则/手工 parse 自由文本，脆弱易碎",
+          "The pain: parsing free text with regex/by hand is brittle"),
+        L(
+            "朴素做法是让 LLM“<strong>用文字描述</strong>”结果，再写代码把字段抠出来：正则匹配“总计：¥1,200”、按冒号切"
+            "“Vendor: Acme”…… demo 里跑得通，但有三个<strong>结构性脆点</strong>：① <strong>措辞漂移</strong>——同一个 "
+            "prompt，模型今天写“总计”、明天写“合计金额”，正则就漏了；② <strong>格式不稳</strong>——日期一会儿"
+            "“2024-01-05”、一会儿“Jan 5, 2024”，类型转换处处是坑；③ <strong>静默失败</strong>——parse 不到时往往返回空串或"
+            "默认值，错误一路混进下游，等发现时<strong>已经写进库</strong>。本质问题是：<strong>自由文本没有契约</strong>，你"
+            "在用字符串处理去<strong>逼近一个本该是结构化</strong>的东西——解析脚本永远在追着模型的措辞跑。",
+            "The naive approach has the LLM “<strong>describe the result in words</strong>” and then writes code to dig the "
+            "fields out: regex-match “Total: ¥1,200”, colon-split “Vendor: Acme”… it runs in a demo, but has three "
+            "<strong>structural weak points</strong>: (1) <strong>wording drift</strong> — with the same prompt the model "
+            "writes “Total” today and “Amount due” tomorrow, and the regex misses it; (2) <strong>unstable formats</strong> "
+            "— a date is “2024-01-05” one time and “Jan 5, 2024” the next, so type conversion is a minefield; (3) "
+            "<strong>silent failure</strong> — when a parse misses it often returns an empty string or a default, and the "
+            "error slips downstream until it has <strong>already been written to the store</strong>. The root issue: "
+            "<strong>free text has no contract</strong>, and you're using string handling to <strong>approximate something "
+            "that should have been structured</strong> — the parser is forever chasing the model's phrasing.",
+        ),
+    )
+    + c.section(
+        L("Pydantic program：直接让 LLM 产出对象，类型即契约",
+          "Pydantic program: have the LLM emit an object directly — the type is the contract"),
+        L(
+            "结构化输出把顺序<strong>倒过来</strong>：先用 Pydantic 的 <code>BaseModel</code> 把你要的<strong>形状</strong>"
+            "写成一个类——<code>Invoice</code> 有 <code>vendor: str</code>、<code>total: float</code>、"
+            "<code>due_date: str</code>——<strong>这个类就是契约</strong>。把它交给一个 <strong>program</strong>，program "
+            "负责把 schema <strong>塞进给 LLM 的指令</strong>、解析模型回的内容、再用 Pydantic <strong>校验</strong>，最后"
+            "交还一个真正的 <code>Invoice</code> 对象。于是下游不再 parse 字符串，而是直接 <code>invoice.total + tax</code>："
+            "字段一定存在、类型一定正确，是被<strong>校验保证</strong>过的。LLM 仍然在“生成”，但它生成的<strong>目标</strong>"
+            "从“一段话”变成了“<strong>一个对象</strong>”——你拿到的不再是<strong>待解析的文本</strong>，而是<strong>即用的"
+            "数据</strong>。",
+            "Structured output <strong>flips the order</strong>: first write the <strong>shape</strong> you want as a "
+            "Pydantic <code>BaseModel</code> class — <code>Invoice</code> has <code>vendor: str</code>, "
+            "<code>total: float</code>, <code>due_date: str</code> — and <strong>that class is the contract</strong>. Hand "
+            "it to a <strong>program</strong>, which <strong>injects the schema into the LLM's instructions</strong>, "
+            "parses what the model returns, <strong>validates</strong> it with Pydantic, and hands back an actual "
+            "<code>Invoice</code> object. Downstream no longer parses strings but writes <code>invoice.total + tax</code> "
+            "directly: the field is guaranteed to exist and the type to be right, because it was <strong>validation-"
+            "guaranteed</strong>. The LLM still “generates”, but the <strong>target</strong> of generation shifts from “a "
+            "paragraph” to “<strong>an object</strong>” — what you get back is no longer <strong>text to parse</strong> but "
+            "<strong>data ready to use</strong>.",
+        ),
+    )
+    + c.code(
+        'from pydantic import BaseModel\n'
+        'from llama_index.core.program import LLMTextCompletionProgram\n\n'
+        'class Invoice(BaseModel):\n'
+        '    vendor: str\n'
+        '    total: float\n'
+        '    due_date: str\n\n'
+        'program = LLMTextCompletionProgram.from_defaults(\n'
+        '    output_cls=Invoice,\n'
+        '    prompt_template_str="Extract the invoice fields from:\\n{doc}",\n'
+        ')\n'
+        'invoice = program(doc=text)     # -&gt; Invoice(vendor=..., total=..., due_date=...)',
+        caption=L("声明 Pydantic 模型 → 交给 program → 拿回校验过的对象：下游 invoice.total 直接用，没有正则",
+                  "Declare a Pydantic model → hand it to a program → get back a validated object: downstream invoice.total just works, no regex"),
+    )
+    + c.source_ref(
+        "program/llm_program.py", "LLMTextCompletionProgram",
+        L("按 Pydantic 模型约束 LLM 输出为结构化对象。",
+          "constrains LLM output to a structured Pydantic object."),
+    )
+    + c.section(
+        L("两条路：prompt 模板塞 schema vs 函数调用更稳",
+          "Two routes: stuff the schema into a prompt vs function calling for more stability"),
+        L(
+            "落地有两条路，区别在“<strong>怎么逼模型守约</strong>”。① <strong>LLMTextCompletionProgram</strong>（纯 prompt "
+            "模板路线）：把 schema 的描述<strong>写进提示词</strong>，请模型“按这个 JSON 形状回”，再解析它回的文本。胜在"
+            "<strong>不挑模型</strong>（任何会生成文本的 LLM 都能用），但约束是“<strong>软</strong>”的——模型可能多写一句"
+            "解释、少个引号，解析就得容错、重试。② <strong>FunctionCallingProgram</strong>（函数调用路线）：把 "
+            "Pydantic 模型当成一个“<strong>函数签名</strong>”交给模型<strong>原生的 function/tool calling 能力</strong>，"
+            "模型在 API 层就被约束着按字段产出，结构更稳、更少跑偏，代价是要模型<strong>支持函数调用</strong>。经验法则："
+            "<strong>模型支持就优先函数调用</strong>，更稳；要兼容老模型或本地小模型才退回纯 prompt 模板——而 "
+            "<code>llm.structured_predict</code> 正是把这条法则做成默认：它<strong>自动按模型能力选路</strong>（支持函数"
+            "调用就用，否则回退到 prompt 模板），不用你手动二选一。一个易错点：<code>structured_predict</code> 收的是一个 "
+            "<strong><code>PromptTemplate</code></strong>，不是裸字符串。",
+            "There are two routes in practice, differing in “<strong>how you force the model to honor the contract</strong>”. "
+            "(1) <strong>LLMTextCompletionProgram</strong> (pure prompt-template route): <strong>write the schema's "
+            "description into the prompt</strong>, ask the model to “reply in this JSON shape”, then parse the text it "
+            "returns. Its win is being <strong>model-agnostic</strong> (any text-generating LLM works), but the constraint "
+            "is “<strong>soft</strong>” — the model might add a sentence of explanation or drop a quote, so parsing needs "
+            "tolerance and retries. (2) <strong>FunctionCallingProgram</strong> "
+            "(function-calling route): hand the Pydantic model to the model's <strong>native function/tool-calling "
+            "ability</strong> as a “<strong>function signature</strong>”, so the model is constrained to emit by field at "
+            "the API level — more stable, less drift — at the cost of needing a model that <strong>supports function "
+            "calling</strong>. Rule of thumb: <strong>prefer function calling when the model supports it</strong>; fall "
+            "back to the pure prompt template only to support older or small local models — and "
+            "<code>llm.structured_predict</code> bakes that rule in as the default: it <strong>auto-picks the route by "
+            "model capability</strong> (function calling if supported, else falls back to the prompt-template route), so "
+            "you don't choose by hand. One easy slip: <code>structured_predict</code> takes a "
+            "<strong><code>PromptTemplate</code></strong>, not a bare string.",
+        ),
+        c.compare_table(
+            [L("对比项", "Aspect"), L("LLMTextCompletionProgram", "LLMTextCompletionProgram"),
+             L("FunctionCallingProgram", "FunctionCallingProgram")],
+            [
+                [L("约束来自", "Constraint from"), L("prompt 里塞 schema 描述（软约束）", "schema stuffed into the prompt (soft)"),
+                 L("模型原生函数调用（硬约束）", "the model's native function calling (hard)")],
+                [L("稳定性", "Stability"), L("较弱，需容错/重试", "weaker, needs tolerance/retries"),
+                 L("更稳，少跑偏", "steadier, less drift")],
+                [L("模型要求", "Model needs"), L("任何会生成文本的 LLM", "any text-generating LLM"),
+                 L("需支持 function/tool calling", "must support function/tool calling")],
+                [L("何时用", "When"), L("兼容老 / 本地小模型", "for older / small local models"),
+                 L("模型支持就优先", "prefer it when supported")],
+            ],
+        ),
+    )
+    + c.source_ref(
+        "program/function_program.py", "FunctionCallingProgram",
+        L("把 Pydantic 模型包成工具，用模型的函数调用能力产出结构——和 agent 调工具同源。",
+          "wraps the Pydantic model as a tool and uses the model's function-calling to emit structure — the same path as agent tool-calling."),
+    )
+    + c.code(
+        'from llama_index.core.prompts import PromptTemplate\n\n'
+        'invoice = llm.structured_predict(\n'
+        '    Invoice,\n'
+        '    PromptTemplate("Extract from: {doc}"),   # 收 PromptTemplate，不是裸字符串\n'
+        '    doc=text,\n'
+        ')',
+        caption=L("一行版：structured_predict 用模型的函数调用直接产出 Invoice——注意第二个参数是 PromptTemplate",
+                  "One-liner: structured_predict uses the model's function calling to emit Invoice directly — note the 2nd arg is a PromptTemplate"),
+    )
+    + d.flow([
+        ("schema", L("定义 Pydantic 模型", "define Pydantic model")),
+        ("prompt", L("Program 组 prompt", "program builds prompt")),
+        ("llm", L("LLM 产出", "LLM emits")),
+        ("valid", L("校验/重试", "validate/retry"), L("不合格再来", "retry if invalid")),
+        ("obj", L("类型化对象", "typed object")),
+    ], active="valid", caption=L("结构化输出管道：你的 Pydantic 类型即 schema，校验保证可用",
+                                 "structured-output pipeline: your Pydantic model is the schema; validation guarantees usability"))
+    + c.section(
+        L("用途：信息抽取、表单填充、把 RAG 答案结构化",
+          "Uses: information extraction, form-filling, structuring the RAG answer"),
+        L(
+            "结构化输出最实在的三类用途：① <strong>信息抽取</strong>——把发票、合同、简历、邮件里的关键字段一次性抽成对象，"
+            "替代成片的正则；② <strong>表单填充</strong>——让 LLM 读一段对话或文档，直接产出表单/API 需要的<strong>参数对象"
+            "</strong>，省掉中间的人工誊写；③ <strong>把 RAG 答案结构化</strong>——这是和前面 30 课最直接的衔接：与其让 RAG "
+            "回一段话，不如让它回 <code>{answer, sources, confidence}</code>——<code>answer</code> 给人看，"
+            "<code>sources</code> 让下游能<strong>溯源/展示引用</strong>，<code>confidence</code> 让程序能<strong>按阈值兜底"
+            "</strong>（低置信就转人工或追问）。一旦答案有了结构，RAG 就从“生成一段文字”变成“<strong>返回一个可被程序消费、"
+            "可校验、可监控的数据</strong>”——这才是把 RAG 接进真实系统的关键一步。",
+            "Structured output's three most concrete uses: (1) <strong>information extraction</strong> — pull the key fields "
+            "from invoices, contracts, résumés, and emails into an object in one shot, replacing sheets of regex; (2) "
+            "<strong>form-filling</strong> — have the LLM read a conversation or document and directly emit the "
+            "<strong>argument object</strong> a form/API needs, skipping the manual transcription in between; (3) "
+            "<strong>structuring the RAG answer</strong> — the most direct tie-in to the previous 30 lessons: rather than "
+            "letting RAG reply with a paragraph, have it return <code>{answer, sources, confidence}</code> — "
+            "<code>answer</code> for the human, <code>sources</code> so downstream can <strong>trace/show citations</strong>, "
+            "and <code>confidence</code> so code can <strong>fall back on a threshold</strong> (escalate to a human or "
+            "ask again when confidence is low). Once the answer has structure, RAG shifts from “generating text” to "
+            "“<strong>returning data that programs can consume, validate, and monitor</strong>” — the key step to wiring "
+            "RAG into a real system.",
+        ),
+    )
+    + d.annot(
+        L("RAG 答案对象", "RAG answer object"),
+        [
+            (L("<code>answer: str</code>", "<code>answer: str</code>"), L("给人读的最终回答", "the human-readable answer")),
+            (L("<code>sources: list</code>", "<code>sources: list</code>"),
+             L("引用来源，可溯源、可展示", "cited sources — traceable, displayable")),
+            (L("<code>confidence: float</code>", "<code>confidence: float</code>"),
+             L("置信度，低于阈值就兜底/转人工", "confidence — fall back / escalate below a threshold")),
+        ],
+        caption=L("把 RAG 答案从“一段话”变成可程序化消费的结构：可溯源、可校验、可按 confidence 兜底",
+                  "turn the RAG answer from “a paragraph” into a program-consumable structure: traceable, validatable, with confidence-based fallback"),
+    )
+    + c.analogy(L(
+        "与其让对方<strong>写一段话</strong>、你再从字里行间<strong>猜重点</strong>，不如直接递给他一张“<strong>表格</strong>”"
+        "让他逐格填——栏目（<strong>字段</strong>）和格式（<strong>类型</strong>）都是你定好的，他只能照着填。结构化输出就是"
+        "给 LLM <strong>递表格</strong>：你先把 <code>Invoice</code> 的“厂商 / 金额 / 到期日”这几栏画好，模型不再自由发挥"
+        "写小作文，而是把答案<strong>填进你的格子</strong>里，你拿到就能用。",
+        "Rather than having someone <strong>write a paragraph</strong> and then <strong>guessing the key points</strong> "
+        "between the lines, hand them a “<strong>form</strong>” to fill in box by box — the columns (<strong>fields</strong>) "
+        "and formats (<strong>types</strong>) are all set by you, and they can only fill them in. Structured output is "
+        "<strong>handing the LLM a form</strong>: you draw the “vendor / total / due-date” columns of <code>Invoice</code> "
+        "first, and instead of free-styling an essay the model <strong>drops its answer into your boxes</strong>, ready "
+        "to use.",
+    ))
+    + c.key_points([
+        L("自由文本 + 正则/手工 parse <strong>脆弱易碎</strong>：措辞一变、格式不稳、静默失败，错误一路混进下游。",
+          "Free text + regex/manual parsing is <strong>brittle</strong>: wording drifts, formats wobble, failures are "
+          "silent, and errors slip downstream."),
+        L("<strong>Pydantic program</strong>：先用 <code>BaseModel</code> 声明形状，让 LLM <strong>直接产出校验过的对象"
+          "</strong>——<strong>类型即契约</strong>，下游 <code>.total</code> 拿来就用。",
+          "<strong>Pydantic program</strong>: declare the shape with a <code>BaseModel</code> and have the LLM "
+          "<strong>emit a validated object directly</strong> — <strong>the type is the contract</strong>, downstream "
+          "<code>.total</code> just works."),
+        L("两条路：<strong>LLMTextCompletionProgram</strong>（prompt 塞 schema，软约束、不挑模型）vs <strong>"
+          "FunctionCallingProgram</strong>（函数调用，硬约束、更稳）；<code>structured_predict</code> <strong>自动按"
+          "模型能力选路</strong>，且收 <strong><code>PromptTemplate</code></strong> 而非裸字符串。",
+          "Two routes: <strong>LLMTextCompletionProgram</strong> (schema in the prompt, soft, model-agnostic) vs "
+          "<strong>FunctionCallingProgram</strong> (function calling, hard, steadier); <code>structured_predict</code> "
+          "<strong>auto-picks the route by model capability</strong> and takes a "
+          "<strong><code>PromptTemplate</code></strong>, not a bare string."),
+        L("用途：信息抽取、表单填充、把 RAG 答案结构化为 <code>{answer, sources, confidence}</code>——让答案<strong>可消费、"
+          "可校验、可监控</strong>。",
+          "Uses: information extraction, form-filling, and structuring the RAG answer into "
+          "<code>{answer, sources, confidence}</code> — making the answer <strong>consumable, validatable, monitorable"
+          "</strong>."),
+    ])
+    + c.design_highlight(L(
+        "结构化输出的精髓，是把“<strong>解析自由文本</strong>”这件脆活，换成“<strong>契约化的类型</strong>”这件稳活——"
+        "<strong>类型即契约</strong>。朴素 RAG 让 LLM 写一段话、你在下游用正则去猜字段，措辞一变就碎；结构化输出反过来："
+        "你先用 Pydantic <strong>声明结果的形状</strong>，LLM 直接产出<strong>被校验过的对象</strong>，下游 <code>.total"
+        "</code> 拿来就用，解析这一环<strong>整个消失</strong>。要记住三件事：① 两条路按“<strong>约束有多硬</strong>”分——"
+        "纯 prompt 模板（软约束、不挑模型）vs 函数调用（硬约束、更稳、要模型支持），<strong>能用函数调用就优先</strong>，"
+        "而 <code>structured_predict</code> 会<strong>自动按模型能力选路</strong>、替你执行这条法则；② 它<strong>不是免费"
+        "午餐</strong>——校验失败仍要重试/修复，schema 太复杂模型"
+        "也会填错，<strong>从简单字段做起</strong>；③ 它的工程价值是“<strong>让 LLM 的输出可被程序消费</strong>”——把 RAG "
+        "答案变成 <code>{answer, sources, confidence}</code> 才能接监控、接兜底、接工作流。而这一步——“<strong>把 Pydantic "
+        "模型当函数签名交给模型</strong>”——正是下一部分 <strong>Agent</strong> 的地基：<strong>工具调用的参数本质就是一个 "
+        "schema</strong>，“产出受约束的结构”和“调用一个工具”是<strong>同一种能力</strong>。L32 的多智能体，就是踩着结构化"
+        "输出这块砖往上走的。",
+        "The essence of structured output is swapping the brittle job of “<strong>parsing free text</strong>” for the "
+        "stable one of “<strong>a contracted type</strong>” — <strong>the type is the contract</strong>. Plain RAG has the "
+        "LLM write a paragraph and you guess fields downstream with regex, breaking when wording shifts; structured output "
+        "flips it: you <strong>declare the result's shape</strong> with Pydantic, the LLM emits a <strong>validated object"
+        "</strong> directly, downstream <code>.total</code> just works, and the parsing step <strong>vanishes entirely"
+        "</strong>. Remember three things: (1) the two routes split by “<strong>how hard the constraint is</strong>” — a "
+        "pure prompt template (soft, model-agnostic) vs function calling (hard, steadier, needs model support), and "
+        "<strong>prefer function calling when you can</strong>, while <code>structured_predict</code> <strong>auto-picks "
+        "the route by model capability</strong> for you; (2) it's <strong>no free lunch"
+        "</strong> — validation can still fail and need retries/repair, and an over-complex schema gets misfilled, so "
+        "<strong>start from simple fields</strong>; (3) its engineering value is “<strong>making the LLM's output "
+        "program-consumable</strong>” — turning the RAG answer into <code>{answer, sources, confidence}</code> is what lets "
+        "you wire in monitoring, fallbacks, and workflows. And that very move — “<strong>handing a Pydantic model to the "
+        "model as a function signature</strong>” — is the bedrock of the next part's <strong>Agents</strong>: <strong>a "
+        "tool call's arguments are themselves a schema</strong>, and “emitting a constrained structure” and “calling a "
+        "tool” are <strong>the same ability</strong>. L32's multi-agent systems are built standing on this structured-"
+        "output brick.",
+    ))
+)
