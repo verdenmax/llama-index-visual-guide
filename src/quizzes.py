@@ -658,6 +658,32 @@ QUIZZES = {
                    "Why is text-only RAG helpless on “what does this architecture diagram show”, and how does multimodal solve "
                    "it? (Hint: <strong>visual detail / same vector space / a vision-capable LLM</strong>)")],
     },
+    "30-sub-question.html": {
+        "mcq": [{
+            "q": L("<code>SubQuestionQueryEngine</code> 最擅长哪类问题？",
+                   "Which kind of question is <code>SubQuestionQueryEngine</code> best at?"),
+            "opts": [
+                L("单文档里的相似检索", "similarity retrieval inside a single document"),
+                L("跨多个来源的对比或多步问题", "comparison or multi-step questions across multiple sources"),
+                L("压缩 prompt 省 token", "compressing the prompt to save tokens"),
+                L("流式逐字输出", "streaming the output token by token"),
+            ],
+            "answer": 1,
+            "why": L("正确的是“跨多个来源的对比或多步问题”：sub-question 的价值正是把这类问题<strong>拆成子问、分别检索、再汇总</strong>，"
+                     "补上单次 top-k 答不全的部分。“单文档里的相似检索”普通 retriever 一次召回就够，用不上拆解；“压缩 prompt 省 token”是"
+                     "省成本的关注点（拆问反而会<strong>多花</strong> token），“流式逐字输出”是响应方式——两者都和“把复杂问题拆开”无关。",
+                     "The right one is “comparison or multi-step questions across multiple sources”: that's exactly sub-question's "
+                     "value — <strong>split such a question into sub-questions, retrieve each, then aggregate</strong>, covering what a "
+                     "single top-k can't. “Similarity retrieval inside a single document” is handled by an ordinary retriever in one "
+                     "recall and needs no decomposition; “compressing the prompt to save tokens” is a cost concern (splitting actually "
+                     "<strong>spends more</strong> tokens), and “streaming output token by token” is a delivery style — neither has "
+                     "anything to do with breaking a complex question apart."),
+        }],
+        "open": [L("“对比 A、B 两份合同的违约条款差异”为什么适合 sub-question？（提示：<strong>拆成两个子问 / 各自检索 / 再对比汇总"
+                   "</strong>）",
+                   "Why is “compare the breach-clause differences between contracts A and B” a good fit for sub-question? (Hint: "
+                   "<strong>split into two sub-questions / retrieve each / then compare and aggregate</strong>)")],
+    },
 }
 
 

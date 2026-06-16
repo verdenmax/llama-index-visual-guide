@@ -715,5 +715,227 @@ LESSON_29 = (
         "first, then let a model that can see answer</strong>.",
     ))
 )
-LESSON_30 = _skeleton("retrieve", "查询分解（Sub-Question）", "query decomposition (Sub-Question)")
+LESSON_30 = (
+    c.pipeline("retrieve")
+    + c.lead(L(
+        "到这里，检索路径上的每一课都默认同一个形状：<strong>一个问题 → 一次检索 → 取回 top-k → 合成答案</strong>。"
+        "可现实里有一整类问题，单次 top-k 天生答不全——“<strong>2023 的营收比 2022 增长了多少</strong>”“对比 A、B 两份"
+        "合同的违约条款差异”“先查 X 是什么、再查它的兼容机型”。这些是<strong>对比 / 跨源 / 多步</strong>问题：答案不在某一"
+        "段话里现成写着，而要<strong>分别查好几处、再把结果合起来</strong>。单次检索<strong>要么只召回一边</strong>（漏掉另一"
+        "边），<strong>要么把两边混在一起</strong>（固定的 top-k 名额被一方挤占）。<strong>SubQuestionQueryEngine</strong> 换"
+        "一种思路：先让 LLM 把母问题<strong>拆成几个子问题</strong>，每个子问题<strong>路由到对应的查询引擎工具</strong>各自"
+        "检索，最后把子答案<strong>汇总</strong>成一个答案。一句话：<strong>别让一次 top-k 硬扛对比题，拆成子问分别查、再合并</strong>。",
+        "Every lesson on the retrieval path so far assumed one shape: <strong>one question → one retrieval → fetch top-k → "
+        "synthesize</strong>. But a whole class of questions can't be answered by a single top-k — “<strong>how much did "
+        "revenue grow in 2023 vs 2022</strong>”, “compare the breach clauses in contracts A and B”, “first find what X is, "
+        "then find its compatible models”. These are <strong>comparison / cross-source / multi-step</strong> questions: the "
+        "answer isn't sitting ready in any one passage but must be <strong>looked up in several places and combined</strong>. "
+        "A single retrieval <strong>either recalls only one side</strong> (missing the other) <strong>or mixes both into one "
+        "bucket</strong> (the fixed top-k slots crowded out by one side). <strong>SubQuestionQueryEngine</strong> flips the "
+        "approach: first an LLM <strong>splits the parent question into sub-questions</strong>, each <strong>routed to its "
+        "matching query-engine tool</strong> to retrieve on its own, and finally the sub-answers are <strong>aggregated</strong> "
+        "into one answer. In a line: <strong>don't make a single top-k carry a comparison; split into sub-questions, retrieve "
+        "each, then combine</strong>.",
+    ))
+    + c.section(
+        L("痛点：对比 / 跨源 / 多步问题，单次 top-k 答不全",
+          "The pain: comparison / cross-source / multi-step questions a single top-k can't answer"),
+        L(
+            "朴素 RAG 的检索是“<strong>一次性</strong>”的：把问题编码成一个向量，取回最相似的 top-k 个片段，再让 LLM 据此"
+            "作答。对“X 的退款政策是什么”这种<strong>单点问题</strong>，这一次检索就够了。但碰到“2023 比 2022 营收增长多少”，"
+            "麻烦立刻显现：答案要<strong>同时拿到</strong>“2023 营收”和“2022 营收”两个事实、再相减，而它们往往<strong>分散在"
+            "两份文档</strong>（两年的财报）里。单次 top-k 只有<strong>固定的几个名额</strong>：要么向量更偏向其中一年、把另一"
+            "年挤出召回（<strong>漏一边</strong>），要么两年的片段混进同一批、彼此稀释，关键数字反而没进前 k（<strong>混在一"
+            "起</strong>）。<strong>跨源</strong>问题（“我们的产品和竞品在 X 上谁更强”要查两套资料）、<strong>并行多部分</strong>问题"
+            "（“把 2021、2022、2023 三年的营收各查一遍再汇总”——几个子问彼此独立、可并行）也都是同一个结构性短板：<strong>一个问题里其实"
+            "藏着好几个独立的检索需求</strong>，硬塞进一次 top-k 必然顾此失彼。",
+            "Plain RAG's retrieval is “<strong>one-shot</strong>”: encode the question into a vector, fetch the top-k most "
+            "similar chunks, then let the LLM answer from them. For a <strong>single-point question</strong> like “what is X's "
+            "refund policy”, that one retrieval suffices. But ask “how much did revenue grow in 2023 vs 2022” and the trouble "
+            "shows immediately: the answer needs <strong>two facts at once</strong> — “2023 revenue” and “2022 revenue” — then "
+            "a subtraction, and those usually <strong>sit in two different documents</strong> (two years' reports). A single "
+            "top-k has only <strong>a few fixed slots</strong>: either the vector leans toward one year and crowds the other "
+            "out of recall (<strong>missing one side</strong>), or both years' chunks land in the same batch and dilute each "
+            "other so the key number never makes the top-k (<strong>mixed together</strong>). <strong>Cross-source</strong> "
+            "questions (“are we or the competitor stronger on X” needs two sets of material) and <strong>parallel multi-part</strong> "
+            "questions (“look up revenue for 2021, 2022 and 2023 each, then combine” — the sub-questions are independent and run in parallel) "
+            "share the same structural weakness: <strong>one question actually hides several independent retrieval needs</strong>, "
+            "and forcing them into one top-k inevitably shortchanges some.",
+        ),
+    )
+    + d.compare2(
+        (L("单次 top-k", "Single top-k"),
+         i18n.render(L("问“2023 比 2022 增长多少”，固定名额里两年的营收<strong>互相挤占</strong>——要么漏一年，要么都没进前 k",
+                       "ask “growth 2023 vs 2022” and the two years' revenue <strong>crowd each other</strong> in the fixed slots — miss one year, or neither makes the top-k"))),
+        (L("Sub-Question", "Sub-Question"),
+         i18n.render(L("拆成“2023 营收？”“2022 营收？”两个子问，<strong>各查各的文档</strong>，都召回后再相减",
+                       "split into “2023 revenue?” and “2022 revenue?”, <strong>retrieve each from its own doc</strong>, recall both, then subtract"))),
+        caption=L("同一个对比题：单次 top-k 顾此失彼，Sub-Question 拆开各查再合并",
+                  "Same comparison: a single top-k shortchanges one side; Sub-Question splits, retrieves each, then combines"),
+    )
+    + c.section(
+        L("SubQuestion：拆母问题 → 路由到各工具 → 各自检索 → 汇总",
+          "SubQuestion: split the parent → route to tools → retrieve each → aggregate"),
+        L(
+            "<code>SubQuestionQueryEngine</code> 把“一次检索”换成“<strong>先拆、再分别查、最后合</strong>”四步。① <strong>拆"
+            "</strong>：把母问题连同<strong>每个工具的名字与描述</strong>一起交给 LLM，让它生成一组<strong>子问题</strong>，并为"
+            "每个子问题<strong>指定该用哪个工具</strong>（这一步是 LLM 驱动的）；② <strong>路由</strong>：每个子问题被发往它对应"
+            "的 <code>QueryEngineTool</code>——工具其实就是“<strong>一个查询引擎 + 一段说明它擅长什么的 metadata</strong>”，描述"
+            "写得准不准，<strong>直接决定子问会不会被送对地方</strong>；③ <strong>各自检索</strong>：每个工具在自己的数据上独立"
+            "跑一次检索与作答，互不干扰，于是“2023 营收”只在 2023 的库里找、“2022 营收”只在 2022 的库里找；④ <strong>汇总"
+            "</strong>：引擎把所有子问题的答案收集起来，作为上下文交给 LLM <strong>合成最终答案</strong>（比如把两年的营收相减）。"
+            "关键在于：母问题里“藏着的几个检索需求”被<strong>显式拆成了独立的几次检索</strong>，<strong>每一次都拥有自己完整的"
+            "top-k 名额</strong>，谁也不挤占谁。"
+            "注意：Sub-Question 是<strong>一次性并行</strong>拆解，不能把某个子答案回填进下一个子问；真正"
+            "“前一步答案喂下一步”的<strong>依赖链</strong>要交给 Agent（见 L32）。",
+            "<code>SubQuestionQueryEngine</code> replaces “one retrieval” with four steps — <strong>split, route, retrieve "
+            "separately, combine</strong>. (1) <strong>Split</strong>: hand the parent question plus <strong>each tool's name "
+            "and description</strong> to the LLM and have it generate a set of <strong>sub-questions</strong>, each tagged with "
+            "<strong>which tool to use</strong> (this step is LLM-driven); (2) <strong>route</strong>: each sub-question goes to "
+            "its matching <code>QueryEngineTool</code> — a tool is just “<strong>a query engine plus metadata describing what "
+            "it's good at</strong>”, and how accurately that description is written <strong>directly decides whether the "
+            "sub-question is sent to the right place</strong>; (3) <strong>retrieve separately</strong>: each tool runs its own "
+            "retrieval and answer over its own data independently, so “2023 revenue” is sought only in the 2023 store and “2022 "
+            "revenue” only in the 2022 store; (4) <strong>aggregate</strong>: the engine collects every sub-answer and feeds them "
+            "as context to the LLM to <strong>synthesize the final answer</strong> (e.g. subtract the two years). The key: the "
+            "“several retrieval needs hidden in the parent” are <strong>made explicit as several independent retrievals</strong>, "
+            "<strong>each with its own full top-k budget</strong>, none crowding out another. "
+            "Note: Sub-Question splits <strong>once, in parallel</strong> — it cannot feed one sub-answer into the "
+            "next sub-question; a true <strong>dependent chain</strong> (step 2 needs step 1's answer) belongs to an "
+            "Agent (see L32).",
+        ),
+    )
+    + c.code(
+        'from llama_index.core.query_engine import SubQuestionQueryEngine\n'
+        'from llama_index.core.tools import QueryEngineTool, ToolMetadata\n\n'
+        'tools = [\n'
+        '    QueryEngineTool(query_engine=qe_2022, metadata=ToolMetadata(name="y2022", description="2022 年财报")),\n'
+        '    QueryEngineTool(query_engine=qe_2023, metadata=ToolMetadata(name="y2023", description="2023 年财报")),\n'
+        ']\n'
+        'engine = SubQuestionQueryEngine.from_defaults(query_engine_tools=tools)\n'
+        'print(engine.query("2023 年的营收比 2022 年增长了多少？"))   # 自动拆成两个子问题再相减',
+        caption=L("两个引擎各包成带 description 的工具，SubQuestion 自动拆问、路由、各查、汇总——描述决定路由",
+                  "Wrap each engine as a tool with a description; SubQuestion auto-splits, routes, retrieves each, aggregates — the description drives routing"),
+    )
+    + c.source_ref(
+        "query_engine/sub_question_query_engine.py", "SubQuestionQueryEngine",
+        L("把复杂问题拆成子问题分别路由检索再汇总。",
+          "splits a complex question into sub-questions, routes each, then aggregates."),
+    )
+    + d.vflow([
+        (L("母问题：2023 比 2022 增长多少？", "Q: growth 2023 vs 2022?"), L("LLM 拆解", "LLM decomposes")),
+        (L("子问 q1：2023 营收？ → y2023 工具", "sub-q1: 2023 revenue? → y2023"),),
+        (L("子问 q2：2022 营收？ → y2022 工具", "sub-q2: 2022 revenue? → y2022"),),
+        (L("汇总两答相减 → 最终答案", "combine the two → final answer"),),
+    ], caption=L("Sub-Question：拆 → 各自检索 → 汇总，单次 top-k 做不到的对比题这样答",
+                 "Sub-Question: split → retrieve each → combine; answers comparisons a single top-k can't"))
+    + d.annot(
+        L("母问题", "parent question"),
+        [
+            (L("子问题 1", "sub-question 1"), L("→ 工具 A", "→ tool A")),
+            (L("子问题 2", "sub-question 2"), L("→ 工具 B", "→ tool B")),
+            (L("汇总", "aggregate"), L("综合作答", "synthesize")),
+        ],
+        caption=L("一个母问题并行扇出到多个数据源工具，再收敛成一个答案（子问彼此独立、并行）",
+                  "one parent question fans out in parallel to several source tools, then converges to one answer (the sub-questions are independent and parallel)"),
+    )
+    + c.section(
+        L("与 L18 的区别：换更强的检索器 vs 拆问题 + 多引擎编排",
+          "vs L18: a stronger retriever vs decomposing the question + orchestrating engines"),
+        L(
+            "这一课很容易和 <strong>L18 的进阶检索</strong>搞混，但两者其实在<strong>不同维度</strong>上发力。L18（混合检索、"
+            "rerank、HyDE）解决的是“<strong>同一次检索，怎么找得更准</strong>”——它换的是<strong>检索器本身</strong>：多一路 "
+            "BM25、加一层交叉编码器精排、先造个假设文档再查，目标是让那<strong>一批 top-k 的质量更高</strong>。但无论检索器多"
+            "强，它仍是“<strong>一个问题、一次检索</strong>”——对“2023 比 2022 增长多少”这种内含多个子需求的问题，再准的单次"
+            "召回也答不全。SubQuestion 动的是<strong>另一个维度</strong>：它<strong>不改检索器</strong>，而是改“<strong>检索的"
+            "次数与编排</strong>”——把一个问题<strong>拆成多个子问题</strong>、分别<strong>路由到多个引擎</strong>、最后<strong>"
+            "汇总</strong>。所以两者<strong>正交、可叠加</strong>：每个子问题底下，完全可以挂一个用了 L18 全套（混合 + rerank）的"
+            "强检索引擎——SubQuestion 负责“<strong>拆对、问对引擎</strong>”，L18 负责“<strong>每一问都查得准</strong>”。",
+            "This lesson is easy to confuse with <strong>L18's advanced retrieval</strong>, but the two work on <strong>different "
+            "axes</strong>. L18 (hybrid retrieval, rerank, HyDE) solves “<strong>within one retrieval, how to find more "
+            "accurately</strong>” — it swaps the <strong>retriever itself</strong>: add a BM25 path, layer on a cross-encoder "
+            "rerank, draft a hypothetical document first — all to make that <strong>one batch of top-k higher quality</strong>. "
+            "But however strong the retriever, it's still “<strong>one question, one retrieval</strong>” — and for a question "
+            "like “growth 2023 vs 2022” that hides several sub-needs, even a perfect single recall can't answer it fully. "
+            "SubQuestion moves a <strong>different axis</strong>: it <strong>doesn't change the retriever</strong>, it changes "
+            "“<strong>how many retrievals and how they're orchestrated</strong>” — <strong>splitting</strong> one question into "
+            "sub-questions, <strong>routing</strong> each to a different engine, and <strong>aggregating</strong>. So the two are "
+            "<strong>orthogonal and stackable</strong>: under each sub-question you can absolutely hang a strong engine running "
+            "L18's full kit (hybrid + rerank) — SubQuestion handles “<strong>split right, ask the right engine</strong>”, L18 "
+            "handles “<strong>each question retrieves accurately</strong>”.",
+        ),
+        c.compare_table(
+            [L("对比项", "Aspect"), L("L18 进阶检索", "L18 advanced retrieval"), L("L30 Sub-Question", "L30 Sub-Question")],
+            [
+                [L("解决的问题", "Solves"), L("一次检索怎么找得更准", "how one retrieval finds more accurately"),
+                 L("多需求问题怎么答得全", "how a multi-need question gets answered fully")],
+                [L("改动对象", "What it changes"), L("检索器（+BM25 / +rerank / +HyDE）", "the retriever (+BM25 / +rerank / +HyDE)"),
+                 L("检索的次数与编排（拆 + 路由 + 汇总）", "count &amp; orchestration of retrievals (split + route + aggregate)")],
+                [L("检索次数", "Retrievals"), L("一次", "one"), L("多次（每个子问一次）", "many (one per sub-question)")],
+                [L("最擅长", "Best at"), L("单点问题召回得更精准", "single-point questions, more precise recall"),
+                 L("对比 / 跨源 / 多步问题", "comparison / cross-source / multi-step questions")],
+            ],
+        ),
+    )
+    + c.analogy(L(
+        "像做一道复杂的大题：与其抱着一本书从头翻到尾、想<strong>一次找全</strong>（单次 top-k），不如先把大题<strong>拆成几个"
+        "小问</strong>——“2023 年营收是多少？”“2022 年营收是多少？”——分别翻到对应的那一章查清楚，最后把两个小答案<strong>合起来"
+        "相减</strong>得出大题的答案。复杂问题难的从来不是某一小步，而是“<strong>得分头查好几处再合并</strong>”；SubQuestion "
+        "干的就是替你<strong>拆题、分头查、再合卷</strong>。",
+        "Like solving a hard exam problem: rather than thumbing through one whole book hoping to <strong>find everything in a "
+        "single pass</strong> (one top-k), first <strong>break it into small questions</strong> — “what was 2023 revenue?”, "
+        "“what was 2022 revenue?” — look each up in its own chapter, then <strong>combine and subtract</strong> the two small "
+        "answers into the big one. The hard part of a complex question was never any single step but “<strong>looking several "
+        "places up separately and merging</strong>”; SubQuestion does exactly that for you — <strong>split, look up separately, "
+        "then collate</strong>.",
+    ))
+    + c.key_points([
+        L("<strong>对比 / 跨源 / 多步</strong>问题，单次 top-k 天生答不全——要么<strong>漏一边</strong>，要么两边<strong>混在一起"
+          "</strong>挤占名额。",
+          "<strong>Comparison / cross-source / multi-step</strong> questions are inherently beyond a single top-k — it "
+          "<strong>misses one side</strong> or <strong>mixes both</strong> and crowds the slots."),
+        L("<code>SubQuestionQueryEngine</code>：LLM 把母问题<strong>拆成子问题</strong> → 每个子问<strong>路由到对应 "
+          "<code>QueryEngineTool</code></strong> → <strong>各自检索作答</strong> → <strong>汇总</strong>成最终答案。",
+          "<code>SubQuestionQueryEngine</code>: the LLM <strong>splits the parent into sub-questions</strong> → each "
+          "<strong>routes to its matching <code>QueryEngineTool</code></strong> → <strong>each retrieves and answers</strong> → "
+          "<strong>aggregate</strong> into the final answer."),
+        L("<code>QueryEngineTool</code> = 查询引擎 + <code>ToolMetadata</code>（<code>name</code> / <code>description</code>）；"
+          "<strong>description 写准与否直接决定子问路由对不对</strong>。",
+          "A <code>QueryEngineTool</code> = a query engine + <code>ToolMetadata</code> (<code>name</code> / "
+          "<code>description</code>); <strong>how accurately the description is written directly decides whether a "
+          "sub-question routes correctly</strong>."),
+        L("与 L18 <strong>正交</strong>：L18 换<strong>更强的检索器</strong>（让一次检索更准），SubQuestion 改<strong>检索的次数"
+          "与编排</strong>（拆 + 路由 + 汇总）；子问底下可<strong>叠加</strong> L18 强引擎。",
+          "Orthogonal to L18: L18 swaps in a <strong>stronger retriever</strong> (one retrieval, more accurate), SubQuestion "
+          "changes the <strong>count and orchestration of retrievals</strong> (split + route + aggregate); you can <strong>stack"
+          "</strong> an L18 engine under each sub-question."),
+    ])
+    + c.design_highlight(L(
+        "Sub-Question 的精髓，是把检索从“<strong>一个问题配一次 top-k</strong>”升级成“<strong>一个问题配一套检索计划</strong>”。"
+        "朴素 RAG 默认每个问题只对应一次召回，于是凡是内含多个独立事实的问题——对比、跨源、多步——都被那固定的 top-k 名额卡住："
+        "召回一方就漏另一方。Sub-Question 让 LLM 先把问题<strong>拆解成几个能被单独回答的子问</strong>，每个子问拥有<strong>自己"
+        "完整的检索预算</strong>、被路由到<strong>最懂它的引擎</strong>，最后再汇总——本质上是把“<strong>检索</strong>”从一个固定"
+        "动作，变成了一段可由 LLM 规划的<strong>编排</strong>。要记住三件事：① 它和 L18 <strong>正交</strong>——L18 让每一次检索"
+        "更准，Sub-Question 决定要检索几次、各问谁，两者叠加最强；② 成本是<strong>实打实多花的</strong>——拆问要一次 LLM 调用，"
+        "n 个子问就是 n 次检索 + 多次生成，延迟和 token 都翻几倍，<strong>别为单点问题滥用</strong>；③ 路由的命脉是<strong>工具的"
+        "description</strong>——描述写歪了，子问就被送错引擎，再好的拆解也白费。一句话：<strong>当一个问题其实是好几个问题时，先"
+        "替它拆题、分头查、再合并</strong>。它也为后面的 <strong>Router</strong>（选一条路）与 <strong>Agent</strong>（动态多步循环）"
+        "埋下伏笔——同样是“编排多个能力”，只是编排的灵活度一路递增。",
+        "The essence of Sub-Question is upgrading retrieval from “<strong>one question, one top-k</strong>” to “<strong>one "
+        "question, a retrieval plan</strong>”. Plain RAG assumes each question maps to a single recall, so any question hiding "
+        "several independent facts — comparison, cross-source, multi-step — gets stuck in those fixed top-k slots: recall one "
+        "side and you miss the other. Sub-Question has the LLM first <strong>decompose the question into sub-questions that can "
+        "each be answered on their own</strong>, give each its <strong>own full retrieval budget</strong> routed to the "
+        "<strong>engine that knows it best</strong>, then aggregate — turning “<strong>retrieval</strong>” from one fixed action "
+        "into an <strong>orchestration</strong> the LLM can plan. Remember three things: (1) it's <strong>orthogonal to L18"
+        "</strong> — L18 makes each retrieval more accurate, Sub-Question decides how many retrievals and whom to ask; stacked, "
+        "they're strongest; (2) the cost is <strong>real and additive</strong> — splitting takes an LLM call, and n sub-questions "
+        "mean n retrievals plus several generations, multiplying latency and tokens, so <strong>don't overuse it on single-point "
+        "questions</strong>; (3) routing lives or dies by the <strong>tool's description</strong> — write it wrong and "
+        "sub-questions go to the wrong engine, wasting even a perfect split. In a line: <strong>when one question is really "
+        "several, split it, look each up separately, then combine</strong>. It also sets up the later <strong>Router</strong> "
+        "(pick one path) and <strong>Agent</strong> (a dynamic multi-step loop) — all “orchestrating multiple capabilities”, just "
+        "with steadily rising flexibility.",
+    ))
+)
 LESSON_31 = _skeleton("synthesize", "结构化输出", "structured outputs")

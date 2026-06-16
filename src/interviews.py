@@ -1641,4 +1641,105 @@ INTERVIEW = {
                       "Two routes: captioning is lossy — cheap but drops detail; true multimodal is lossless but pricier and slower")),
         },
     ],
+    "30-sub-question.html": [
+        {"q": L(
+            "你的 <code>SubQuestionQueryEngine</code> 经常<strong>拆错</strong>——要么子问跑偏、答非所问，要么把一个简单问题拆成"
+            "一堆没必要的子问。你会怎么<strong>定位</strong>并<strong>控住</strong>？",
+            "Your <code>SubQuestionQueryEngine</code> often <strong>splits badly</strong> — sub-questions drift off-target, or a "
+            "simple question gets shattered into needless sub-questions. How would you <strong>localize</strong> and "
+            "<strong>rein it in</strong>?"),
+         "answer": L(
+            "🔑 <strong>重点：拆解和路由都由 LLM + 工具描述驱动，所以先把“工具 description 写准”（决定路由对不对），再限定子问数量、"
+            "给每个子问加 trace 让它可观测（呼应 L23）。</strong>① <strong>工具 description 写准</strong>：子问被送到哪个引擎，全看工具"
+            "的 <code>ToolMetadata.description</code>——把每个工具“擅长什么、覆盖什么数据”写清楚、彼此<strong>边界不重叠</strong>，子问"
+            "才不会被路由错（这是最常见的“跑偏”根因）；② <strong>限定子问数量 / 收敛拆解</strong>：约束最多拆几个子问，避免把单点问题"
+            "<strong>过度拆解</strong>，既省成本又减少噪声；③ <strong>每个子问加 trace、可观测</strong>：接入 L23 的可观测（回调 / "
+            "Phoenix 等），把“拆出了哪些子问、各路由到哪个工具、各自召回了什么”一条条打出来——拆错时一眼看出是“<strong>拆的步骤错</strong>”"
+            "还是“<strong>某个子问检索错</strong>”，分而治之；④ <strong>评估闭环</strong>：用一组多步 / 对比金标问题看端到端答案对不对，"
+            "针对错例回去改工具描述或拆解提示。一句话：<strong>拆错先别怪模型，多半是工具描述没写清、或没给它可观测的眼睛</strong>。",
+            "🔑 <strong>Key: both the split and the routing are driven by the LLM plus the tool descriptions, so first “get the "
+            "tool descriptions right” (they decide whether routing is correct), then cap the number of sub-questions and add a "
+            "trace to each so it's observable (echoing L23).</strong> (1) <strong>Write tool descriptions accurately</strong>: "
+            "which engine a sub-question goes to depends entirely on each tool's <code>ToolMetadata.description</code> — state "
+            "clearly what each tool is good at and which data it covers, with <strong>non-overlapping boundaries</strong>, so "
+            "sub-questions don't get misrouted (the most common “drift” root cause); (2) <strong>cap the sub-question count / "
+            "tame the split</strong>: constrain how many sub-questions can be produced, avoiding <strong>over-splitting</strong> a "
+            "single-point question — saving cost and cutting noise; (3) <strong>add a trace to each sub-question</strong>: wire in "
+            "L23's observability (callbacks / Phoenix, etc.) and print out “which sub-questions were produced, which tool each was "
+            "routed to, what each recalled” — when it splits wrong you see at a glance whether it's “<strong>the split step</strong>” "
+            "or “<strong>one sub-question's retrieval</strong>”, and divide and conquer; (4) <strong>an eval loop</strong>: use a set "
+            "of multi-step / comparison gold questions, check end-to-end answer correctness, and fix tool descriptions or the split "
+            "prompt on the failures. In a line: <strong>don't blame the model first — bad splits are usually unclear tool "
+            "descriptions or missing observability</strong>."),
+        },
+        {"q": L(
+            "<code>SubQuestionQueryEngine</code> 和 <strong>Router</strong>（L18）、<strong>Agent</strong>（L26/L32）听起来都在"
+            "“编排多个引擎”。它们到底有什么<strong>区别</strong>？你会怎么按问题选？",
+            "<code>SubQuestionQueryEngine</code>, a <strong>Router</strong> (L18) and an <strong>Agent</strong> (L26/L32) all "
+            "sound like “orchestrating multiple engines”. What's the actual <strong>difference</strong>, and how would you choose "
+            "by question?"),
+         "answer": L(
+            "🔑 <strong>重点：三者在“编排灵活度”上递增——Router 从多条路里<strong>选一条</strong>走；SubQuestion 一次把问题<strong>拆成"
+            "多条、并行各查、再汇总</strong>（固定的一轮）；Agent 则<strong>动态循环多步</strong>，边做边决定下一步（为 L32 铺垫）。</strong>"
+            "① <strong>Router（选一条）</strong>：一个问题 → 选择器挑<strong>最合适的那一个</strong>引擎/工具 → 走完即止；适合“这问题该"
+            "归谁管”清晰、但本质还是单路的场景。② <strong>SubQuestion（拆多条、一轮汇总）</strong>：一个问题 → 拆成<strong>若干并行子问"
+            "</strong> → 各自检索 → 一次性汇总；适合“<strong>对比 / 跨源 / 多步</strong>但步骤可预先拆清”的问题，编排是<strong>固定的一轮"
+            "</strong>、不回头。③ <strong>Agent（动态多步循环）</strong>：在一个 <strong>think → act → observe 的循环</strong>里，<strong>"
+            "根据上一步结果再决定下一步</strong>，可调工具、可回退、可迭代；适合步骤<strong>事先不知道、要边走边定</strong>的开放任务，代价"
+            "是更慢更贵更难控。<strong>怎么选</strong>：单路分流用 Router；能预先拆成几问、一轮合并用 SubQuestion；步骤不确定、需要反复试探"
+            "才用 Agent——别用大锤敲钉子。",
+            "🔑 <strong>Key: the three rise in “orchestration flexibility” — a Router <strong>picks one path</strong> among many; "
+            "SubQuestion <strong>splits one question into several, retrieves them in parallel, then aggregates</strong> (a fixed "
+            "single round); an Agent runs a <strong>dynamic multi-step loop</strong>, deciding the next step as it goes (setting up "
+            "L32).</strong> (1) <strong>Router (pick one)</strong>: one question → the selector picks the <strong>single most "
+            "suitable</strong> engine/tool → done; good when “who should handle this” is clear but it's still single-path. (2) "
+            "<strong>SubQuestion (split many, one-round aggregate)</strong>: one question → split into <strong>several parallel "
+            "sub-questions</strong> → retrieve each → aggregate once; good for <strong>comparison / cross-source / multi-step</strong> "
+            "questions whose steps can be split up front, with a <strong>fixed single round</strong> and no looping back. (3) "
+            "<strong>Agent (dynamic multi-step loop)</strong>: inside a <strong>think → act → observe loop</strong> it <strong>decides "
+            "the next step from the last result</strong>, calling tools, backtracking, iterating; good for open tasks whose steps "
+            "<strong>aren't known in advance</strong>, at the cost of more latency, money and harder control. <strong>How to "
+            "choose</strong>: single-path dispatch → Router; can be pre-split into a few questions merged in one round → "
+            "SubQuestion; uncertain steps needing trial and error → Agent — don't swing a sledgehammer at a tack."),
+         "fig": d.grid(
+            [L("编排方式", "Orchestration"), L("怎么走", "How it goes"), L("灵活度", "Flexibility"), L("最适合", "Best for")],
+            [
+                [L("Router（选一条）", "Router (pick one)"), L("多路里选 1 条", "pick 1 of many paths"),
+                 L("低（单路）", "low (single path)"), L("该归谁管很清晰", "who-handles-this is clear")],
+                [L("SubQuestion（拆多条）", "SubQuestion (split many)"), L("拆成并行子问 → 汇总", "split into parallel sub-qs → aggregate"),
+                 L("中（固定一轮）", "mid (fixed round)"), L("对比/跨源/多步、可预先拆", "comparison/cross-source/multi-step, pre-splittable")],
+                [L("Agent（动态循环）", "Agent (dynamic loop)"), L("think→act→observe 反复多步", "think→act→observe, repeated steps"),
+                 L("高（动态）", "high (dynamic)"), L("步骤事先不知、边走边定", "steps unknown, decided on the fly")],
+            ],
+            caption=L("三者在“编排灵活度”上递增：Router 选一条 → SubQuestion 拆一轮 → Agent 动态多步",
+                      "The three rise in orchestration flexibility: Router picks one → SubQuestion splits one round → Agent loops dynamically")),
+        },
+        {"q": L(
+            "上线后发现接入 SubQuestion 让<strong>延迟和成本明显上升</strong>。你会怎么判断“<strong>哪些查询真的需要拆</strong>”、把这份"
+            "开销花在刀刃上？",
+            "After launch you find SubQuestion noticeably <strong>raised latency and cost</strong>. How would you decide "
+            "“<strong>which queries truly need splitting</strong>” and spend that overhead only where it pays off?"),
+         "answer": L(
+            "🔑 <strong>重点：拆解不是免费的——一次拆题 LLM 调用 + n 个子问 = n 次检索 + 多次生成，单点问题根本不该走它；用“问题类型"
+            "路由 + 数据定阈值”只把对比/多步问题送去拆。</strong>① <strong>先分流再拆</strong>：用一个轻量分类/路由（回想 L18）判断问题"
+            "是不是“对比 / 跨源 / 多步”——是才交给 SubQuestion，普通单点问题走一次普通检索就好，别让所有查询都付拆解的钱；② <strong>"
+            "限子问数量</strong>：约束最多拆几个子问，n 越大成本越线性上涨；③ <strong>能并行就并行</strong>：子问之间无依赖时并行检索，"
+            "能砍掉大部分串行延迟（真正的依赖链需要串行、按上一步结果决定下一步，那是 Agent 的活，不是 Sub-Question）；④ <strong>用数据定阈值</strong>：统计真实流量里对比/多步问题的占比，"
+            "对比“全走 SubQuestion vs 仅这一小撮走”的答对率增量与延迟/成本差，确认这份开销值得；⑤ <strong>缓存子答案</strong>：高频子问"
+            "（如“2022 营收”）可缓存复用。一句话：<strong>SubQuestion 是给“真有多个子需求”的问题用的精装件，别默认全开</strong>。",
+            "🔑 <strong>Key: splitting isn't free — one split LLM call + n sub-questions = n retrievals plus several generations, "
+            "so single-point questions shouldn't go through it at all; use “question-type routing + data-set thresholds” to send "
+            "only comparison/multi-step questions to be split.</strong> (1) <strong>Route before splitting</strong>: a lightweight "
+            "classifier/router (recall L18) decides whether a question is “comparison / cross-source / multi-step” — only then hand "
+            "it to SubQuestion, while ordinary single-point questions take one plain retrieval; don't make every query pay the split "
+            "tax; (2) <strong>cap the sub-question count</strong>: constrain how many sub-questions are allowed — cost rises roughly "
+            "linearly with n; (3) <strong>parallelize when you can</strong>: when sub-questions are independent, retrieve them in "
+            "parallel to cut most of the serial latency (a true dependent chain must run serially, deciding each step from the last result — that's an Agent's job, not Sub-Question's); (4) <strong>set the "
+            "threshold with data</strong>: measure the share of comparison/multi-step questions in real traffic and compare “all "
+            "through SubQuestion vs only that minority” on answer-accuracy lift versus latency/cost delta to confirm the overhead "
+            "pays; (5) <strong>cache sub-answers</strong>: frequent sub-questions (e.g. “2022 revenue”) can be cached and reused. In "
+            "a line: <strong>SubQuestion is a premium part for questions that really have several sub-needs — don't leave it on by "
+            "default</strong>."),
+        },
+    ],
 }
