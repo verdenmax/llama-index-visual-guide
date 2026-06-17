@@ -703,6 +703,16 @@ LESSON_07 = (
         "Extractors and splitters are both <strong>transformations</strong> you can chain freely — metadata enrichment "
         "becomes a pluggable link in the pipeline.",
     ))
+    + d.trace([
+        ('① 原始文档 / Original Document',
+         'text: "RAG系统通过检索增强生成。它先检索相关文档，再用LLM生成答案。"\nmetadata: {}'),
+        ('② QuestionsAnsweredExtractor 提取 / Extracts',
+         'questions_this_excerpt_can_answer:\n  1. 什么是RAG系统？\n  2. RAG的工作流程是什么？\n  1. What is a RAG system?\n  2. What is the RAG workflow?',
+         '自动生成节点可以回答的问题 / Auto-generates answerable questions'),
+        ('③ 添加到节点 / Add to Node',
+         'text: "RAG系统..."\nmetadata: {\n  "questions": ["什么是RAG?", "RAG的工作流程?"],\n  "title": "RAG系统概述"\n}',
+         '丰富的元数据提升检索准确率 / Rich metadata improves retrieval')
+    ], caption='元数据提取：自动生成问题 / Metadata Extraction: Auto-Generate Questions')
 )
 LESSON_08 = (
     c.pipeline("embed")
