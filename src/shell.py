@@ -401,6 +401,65 @@ EXTRA_CSS = r"""
 .alert.warn{border-left-color:var(--amber);background:var(--amber-soft);}
 .alert.note{border-left-color:var(--blue);background:var(--blue-soft);}
 .alert.key{border-left-color:var(--purple);background:var(--purple-soft);}
+/* Trace diagrams - worked examples with real data */
+.trace-badge {
+  display: inline-block;
+  background: rgba(0,0,0,0.05);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85em;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+.trace {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+}
+.trace h4 {
+  color: var(--accent);
+  font-size: 1em;
+  margin: 16px 0 8px 0;
+  font-weight: 600;
+}
+.trace h4:first-child {
+  margin-top: 0;
+}
+.trace .value {
+  background: rgba(34,197,94,0.08);
+  border-left: 3px solid rgb(34,197,94);
+  padding: 12px;
+  border-radius: 4px;
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 0.9em;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 8px;
+}
+.trace small {
+  display: block;
+  color: #6b7280;
+  font-size: 0.85em;
+  margin-bottom: 12px;
+  font-style: italic;
+}
+@media (prefers-color-scheme: dark) {
+  .trace-badge {
+    background: rgba(255,255,255,0.1);
+  }
+  .trace {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  .trace .value {
+    background: rgba(34,197,94,0.12);
+  }
+  .trace small {
+    color: #9ca3af;
+  }
+}
 """
 
 

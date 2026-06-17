@@ -130,6 +130,39 @@ def scatter(doc_pts, query_pt, k=3, caption=None):
     return fig(f'<div class="fscatterwrap">{"".join(svg)}{legend}</div>', caption)
 
 
+def trace(steps, caption=None):
+    """Worked-example trace diagram showing real data flow.
+
+    Args:
+        steps: list of (title, value_html) or (title, value_html, note).
+            title/note are L/str and follow the 中/EN toggle; title should embed
+            its own step number (e.g. "① 原始文本 / Original Text").
+            value_html is raw HTML for the green monospace value block.
+        caption: Optional bilingual caption "zh / en"
+
+    Returns:
+        HTML string with badge + steps + green value blocks
+    """
+    body = '<div class="trace-badge">🔍 示例 worked example</div>\n'
+    body += '<div class="trace">\n'
+
+    for step in steps:
+        if len(step) == 2:
+            title, value_html = step
+            note = None
+        else:
+            title, value_html, note = step
+
+        body += f'  <h4>{render(title, block=False)}</h4>\n'
+        body += f'  <div class="value">{value_html}</div>\n'
+        if note:
+            body += f'  <small>{render(note, block=False)}</small>\n'
+
+    body += '</div>\n'
+
+    return fig(body, caption)
+
+
 DIAGRAM_CSS = r"""
 /* ===== diagram primitives ===== */
 .fig{margin:1.1rem 0;padding:.9rem;background:var(--panel-2);border:1px solid var(--line);
