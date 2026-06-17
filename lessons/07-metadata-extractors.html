@@ -441,25 +441,25 @@ doc.excluded_embed_metadata_keys = ['internal_id']
 doc.excluded_llm_metadata_keys = ['internal_id']
 print(doc.get_content(metadata_mode=MetadataMode.EMBED))  # internal_id 不污染向量</pre></div><div class="card keypts"><div class="tag"><span data-lang="zh">✅ 本课要点</span><span data-lang="en">✅ Key points</span></div><ul><li><span data-lang="zh">元数据是<strong>检索的第二通道</strong>：不止向量相似，还能按标签/来源过滤。</span><span data-lang="en">Metadata is retrieval's <strong>second channel</strong>: beyond vector similarity, filter by tag/source.</span></li><li><span data-lang="zh"><code>QuestionsAnsweredExtractor</code> 让“问题↔片段”更易对齐。</span><span data-lang="en"><code>QuestionsAnsweredExtractor</code> aligns “question ↔ chunk” better.</span></li><li><span data-lang="zh">抽取器是 LLM 调用，有<strong>成本</strong>——按需启用。</span><span data-lang="en">Extractors call the LLM, so they cost tokens — enable selectively.</span></li></ul></div><div class="card highlight"><div class="tag"><span data-lang="zh">💡 设计亮点</span><span data-lang="en">💡 Design insight</span></div><div data-lang="zh">Extractor 与 Splitter 都是 <strong>transformation</strong>，可任意串联——元数据增强变成管道里可插拔的一环。</div><div data-lang="en">Extractors and splitters are both <strong>transformations</strong> you can chain freely — metadata enrichment becomes a pluggable link in the pipeline.</div></div><div class="fig"><div class="trace-badge">🔍 示例 worked example</div>
 <div class="trace">
-  <h4>① 原始文档 / Original Document</h4>
+  <h4><span data-lang="zh">① 原始文档</span><span data-lang="en">① Original Document</span></h4>
   <div class="value">text: "RAG系统通过检索增强生成。它先检索相关文档，再用LLM生成答案。"
 metadata: {}</div>
-  <h4>② QuestionsAnsweredExtractor 提取 / Extracts</h4>
+  <h4><span data-lang="zh">② QuestionsAnsweredExtractor 提取</span><span data-lang="en">② Extracts</span></h4>
   <div class="value">questions_this_excerpt_can_answer:
   1. 什么是RAG系统？
   2. RAG的工作流程是什么？
   1. What is a RAG system?
   2. What is the RAG workflow?</div>
-  <small>自动生成节点可以回答的问题 / Auto-generates answerable questions</small>
-  <h4>③ 添加到节点 / Add to Node</h4>
+  <small><span data-lang="zh">自动生成节点可以回答的问题</span><span data-lang="en">Auto-generates answerable questions</span></small>
+  <h4><span data-lang="zh">③ 添加到节点</span><span data-lang="en">③ Add to Node</span></h4>
   <div class="value">text: "RAG系统..."
 metadata: {
   "questions": ["什么是RAG?", "RAG的工作流程?"],
   "title": "RAG系统概述"
 }</div>
-  <small>丰富的元数据提升检索准确率 / Rich metadata improves retrieval</small>
+  <small><span data-lang="zh">丰富的元数据提升检索准确率</span><span data-lang="en">Rich metadata improves retrieval</span></small>
 </div>
-<div class="figcap">元数据提取：自动生成问题 / Metadata Extraction: Auto-Generate Questions</div></div><div class="selftest">
+<div class="figcap"><span data-lang="zh">元数据提取：自动生成问题</span><span data-lang="en">Metadata Extraction: Auto-Generate Questions</span></div></div><div class="selftest">
 <h2><span data-lang="zh">🧪 自测 · 想一想为什么这么设计</span><span data-lang="en">🧪 Self-check · think about the design</span></h2>
 <div class="quiz">
   <div class="qn">1. <span data-lang="zh">给 Node 加 metadata 的主要价值是？</span><span data-lang="en">What's the main value of adding metadata to Nodes?</span></div>

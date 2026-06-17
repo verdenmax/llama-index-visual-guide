@@ -442,21 +442,21 @@ retriever = AutoMergingRetriever(
 merged = retriever.retrieve('保修条款有哪些例外情况？')
 print(len(merged))</pre></div><div class="card keypts"><div class="tag"><span data-lang="zh">✅ 本课要点</span><span data-lang="en">✅ Key points</span></div><ul><li><span data-lang="zh">进阶检索针对“召回不全/碎片化/多库”等基础 top-k 的短板。</span><span data-lang="en">Advanced retrieval targets top-k's weak spots: missed recall, fragmentation, multiple corpora.</span></li><li><span data-lang="zh">它们都实现 <code>BaseRetriever</code>，可<strong>无缝</strong>接入现有 QueryEngine。</span><span data-lang="en">All implement <code>BaseRetriever</code>, so they <strong>drop into</strong> an existing QueryEngine.</span></li><li><span data-lang="zh">Fusion 用改写+融合提升召回；AutoMerging 用关系合并提升上下文完整度。</span><span data-lang="en">Fusion lifts recall via rephrase+merge; AutoMerging lifts context completeness via relationships.</span></li></ul></div><div class="card highlight"><div class="tag"><span data-lang="zh">💡 设计亮点</span><span data-lang="en">💡 Design insight</span></div><div data-lang="zh">进阶检索没有免费的午餐：fusion 多跑几轮检索来提召回，但更慢更贵；auto-merging 合并父块补上下文，却可能引入冗余。每一种都是在用更多计算换更好结果。</div><div data-lang="en">Advanced retrieval is no free lunch: fusion runs extra retrieval passes to lift recall but costs more and runs slower; auto-merging merges parent blocks to restore context but can add redundancy. Each trades more compute for better results.</div></div><div class="fig"><div class="trace-badge">🔍 示例 worked example</div>
 <div class="trace">
-  <h4>① 用户问题 / User Question</h4>
+  <h4><span data-lang="zh">① 用户问题</span><span data-lang="en">① User Question</span></h4>
   <div class="value">"LlamaIndex支持哪些向量数据库？"
 "Which vector databases does LlamaIndex support?"</div>
-  <h4>② LLM 生成假设答案 / Generate Hypothetical Answer</h4>
+  <h4><span data-lang="zh">② LLM 生成假设答案</span><span data-lang="en">② Generate Hypothetical Answer</span></h4>
   <div class="value">"LlamaIndex支持多种向量数据库，包括Pinecone、Weaviate、Qdrant和Chroma。"
 
 "LlamaIndex supports multiple vector databases including Pinecone, Weaviate, Qdrant, and Chroma."</div>
-  <small>HyDE 生成假设的理想答案 / Generates hypothetical ideal answer</small>
-  <h4>③ 用假设答案检索 / Retrieve with Hypothesis</h4>
+  <small><span data-lang="zh">HyDE 生成假设的理想答案</span><span data-lang="en">Generates hypothetical ideal answer</span></small>
+  <h4><span data-lang="zh">③ 用假设答案检索</span><span data-lang="en">③ Retrieve with Hypothesis</span></h4>
   <div class="value">hypothetical_embedding: [0.34, -0.12, 0.56, ...]
 → 检索到包含 Pinecone/Qdrant 的文档
 → Retrieves docs mentioning Pinecone/Qdrant</div>
-  <small>假设答案比问题包含更多关键词 / Hypothesis contains more keywords than query</small>
+  <small><span data-lang="zh">假设答案比问题包含更多关键词</span><span data-lang="en">Hypothesis contains more keywords than query</span></small>
 </div>
-<div class="figcap">HyDE：用假设答案增强检索 / HyDE: Hypothetical Document Embeddings</div></div><div class="selftest">
+<div class="figcap"><span data-lang="zh">HyDE：用假设答案增强检索</span><span data-lang="en">HyDE: Hypothetical Document Embeddings</span></div></div><div class="selftest">
 <h2><span data-lang="zh">🧪 自测 · 想一想为什么这么设计</span><span data-lang="en">🧪 Self-check · think about the design</span></h2>
 <div class="quiz">
   <div class="qn">1. <span data-lang="zh">为什么进阶检索器能直接替换基础检索器、塞进原来的 QueryEngine？</span><span data-lang="en">Why can advanced retrievers drop into an existing QueryEngine in place of the basic one?</span></div>

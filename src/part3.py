@@ -168,12 +168,12 @@ LESSON_12 = (
         "right content?” — without ever touching the LLM.",
     ))
     + d.trace([
-        ('① 用户查询 / User Query',
+        (L('① 用户查询', '① User Query'),
          '"什么是向量数据库？"\n"What is a vector database?"'),
-        ('② 向量化查询 / Embed Query',
-         'query_embedding: [0.23, -0.45, 0.67, ...]  (384 dims)',
-         'OpenAIEmbedding 将查询转为向量 / Converts query to vector'),
-        ('③ 相似度检索 / Similarity Search',
+        (L('② 向量化查询', '② Embed Query'),
+         'query_embedding: [0.23, -0.45, 0.67, ...]  (1536 dims)',
+         L('OpenAIEmbedding 将查询转为向量', 'Converts query to vector')),
+        (L('③ 相似度检索', '③ Similarity Search'),
          '<table style="width:100%; border-collapse:collapse; margin-top:8px;">\n'
          '  <tr style="border-bottom:1px solid #ddd;">\n'
          '    <th style="text-align:left; padding:4px;">节点 Node</th>\n'
@@ -183,8 +183,8 @@ LESSON_12 = (
          '  <tr><td style="padding:4px;">node_3</td><td style="text-align:right; padding:4px;">0.76</td></tr>\n'
          '  <tr><td style="padding:4px;">node_12</td><td style="text-align:right; padding:4px;">0.71</td></tr>\n'
          '</table>',
-         'VectorStoreIndex 返回 top-3 / Returns top-3 nodes')
-    ], caption='检索器流程：查询 → 向量化 → 检索 / Retriever: Query → Embed → Search')
+         L('VectorStoreIndex 返回 top-3', 'Returns top-3 nodes'))
+    ], caption=L('检索器流程：查询 → 向量化 → 检索', 'Retriever: Query → Embed → Search'))
 )
 LESSON_13 = (
     c.pipeline("postprocess")
@@ -333,19 +333,19 @@ LESSON_13 = (
         "lowest cost — <strong>no retraining, no model swap</strong>. The best bang-for-buck in RAG tuning.",
     ))
     + d.trace([
-        ('① 检索结果 (top-5) / Retrieval Results',
+        (L('① 检索结果 (top-5)', '① Retrieval Results'),
          'node_a: 0.89  |  node_b: 0.76  |  node_c: 0.71\n'
          'node_d: 0.68  |  node_e: 0.52'),
-        ('② SimilarityPostprocessor (cutoff=0.7)',
+        (L('② 相似度过滤 SimilarityPostprocessor (cutoff=0.7)', '② Filter by Similarity'),
          '✓ 保留 Keep: node_a (0.89), node_b (0.76), node_c (0.71)\n'
          '✗ 丢弃 Drop: node_d (0.68), node_e (0.52)',
-         '低于阈值的节点被过滤 / Nodes below threshold filtered out'),
-        ('③ LLM Rerank 重排 / Re-rank',
+         L('低于阈值的节点被过滤', 'Nodes below threshold filtered out')),
+        (L('③ LLM Rerank 重排', '③ Re-rank'),
          'node_b: 0.91 ⬆️  |  node_a: 0.88  |  node_c: 0.73\n\n'
          '<small>CrossEncoder 用问题与节点重算相关性 / '
          'CrossEncoder recalculates relevance with query</small>',
-         'node_b 从第2升到第1 / node_b promoted from #2 to #1'),
-    ], caption='后处理流程：过滤 + 重排 / Postprocessing: Filter + Rerank')
+         L('node_b 从第2升到第1', 'node_b promoted from #2 to #1')),
+    ], caption=L('后处理流程：过滤 + 重排', 'Postprocessing: Filter + Rerank'))
 )
 LESSON_14 = (
     c.pipeline("synthesize")

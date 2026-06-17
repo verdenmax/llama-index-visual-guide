@@ -321,18 +321,18 @@ LESSON_32 = (
         ))
     )
     + d.trace([
-        ('① 用户请求 / User Request',
+        (L('① 用户请求', '① User Request'),
          '"写一份X-2000芯片的技术简报。"\n"Write a technical brief on the X-2000 chip."'),
-        ('② Research Agent 调研 / Research',
+        (L('② Research Agent 调研', '② Research'),
          'ResearchAgent:\n→ 搜索X-2000规格 Searches for specs\n→ 收集性能数据 Collects benchmarks\n→ 输出研究报告 Outputs research notes',
-         'Handoff to WriteAgent 交接给写作 agent / Handoff to writer'),
-        ('③ Write Agent 撰写 / Write',
+         L('Handoff to WriteAgent 交接给写作 agent', 'Handoff to writer')),
+        (L('③ Write Agent 撰写', '③ Write'),
          'WriteAgent (receives research):\n→ 根据调研撰写简报初稿 Drafts brief from research\n→ 结构化内容 Structures content\n→ 输出草稿 Outputs draft',
-         'Handoff to ReviewAgent 交接给审核 agent / Handoff to reviewer'),
-        ('④ Review Agent 审核 / Review',
+         L('Handoff to ReviewAgent 交接给审核 agent', 'Handoff to reviewer')),
+        (L('④ Review Agent 审核', '④ Review'),
          'ReviewAgent (receives draft):\n→ 检查事实准确性 Checks factual accuracy\n→ 优化表达 Polishes language\n→ 输出最终版本 Outputs final brief',
-         'Workflow 完成 / Workflow completes')
-    ], caption='多 Agent 协作：调研 → 撰写 → 审核 / Multi-Agent: Research → Write → Review')
+         L('Workflow 完成', 'Workflow completes'))
+    ], caption=L('多 Agent 协作：调研 → 撰写 → 审核', 'Multi-Agent: Research → Write → Review'))
 )
 LESSON_33 = (
     c.pipeline("answer")

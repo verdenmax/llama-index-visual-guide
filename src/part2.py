@@ -511,19 +511,19 @@ LESSON_06 = (
         "is <strong>free</strong> — the payoff of “standardize the interface first, then vary the strategy”.",
     ))
     + d.trace([
-        ('① 原始文本 / Original Text',
+        (L('① 原始文本', '① Original Text'),
          'RAG系统将文档切成小块。每块通常512 token。\n相邻块会有20%重叠，避免语义断裂。\n\nRAG systems split documents into chunks. Each chunk is typically 512 tokens.\nAdjacent chunks have 20% overlap to avoid breaking semantics.'),
-        ('② SentenceSplitter 切分 / Splits',
+        (L('② SentenceSplitter 切分', '② Splits'),
          '<strong>Chunk 1:</strong> "RAG系统将文档切成小块。每块通常512 token。"\n'
          '<strong>Chunk 2:</strong> "每块通常512 token。相邻块会有20%重叠，避免语义断裂。"\n\n'
          '<span style="background:rgba(251,191,36,0.3); padding:2px 4px; border-radius:3px;">'
          '重叠部分 Overlap: "每块通常512 token。"</span>',
-         '重叠部分在两个 chunk 中都出现 / Overlapping text appears in both chunks'),
-        ('③ 添加元数据 / Add Metadata',
+         L('重叠部分在两个 chunk 中都出现', 'Overlapping text appears in both chunks')),
+        (L('③ 添加元数据', '③ Add Metadata'),
          'node_1: {text: "RAG系统...", start_char: 0, end_char: 28}\n'
          'node_2: {text: "每块通常...", start_char: 18, end_char: 68}',
-         '记录原文位置便于溯源 / Record position for source tracking'),
-    ], caption='切块举例：重叠保留上下文 / Chunking Example: Overlap Preserves Context')
+         L('记录原文位置便于溯源', 'Record position for source tracking')),
+    ], caption=L('切块举例：重叠保留上下文', 'Chunking Example: Overlap Preserves Context'))
 )
 LESSON_07 = (
     c.pipeline("split")
@@ -704,15 +704,15 @@ LESSON_07 = (
         "becomes a pluggable link in the pipeline.",
     ))
     + d.trace([
-        ('① 原始文档 / Original Document',
+        (L('① 原始文档', '① Original Document'),
          'text: "RAG系统通过检索增强生成。它先检索相关文档，再用LLM生成答案。"\nmetadata: {}'),
-        ('② QuestionsAnsweredExtractor 提取 / Extracts',
+        (L('② QuestionsAnsweredExtractor 提取', '② Extracts'),
          'questions_this_excerpt_can_answer:\n  1. 什么是RAG系统？\n  2. RAG的工作流程是什么？\n  1. What is a RAG system?\n  2. What is the RAG workflow?',
-         '自动生成节点可以回答的问题 / Auto-generates answerable questions'),
-        ('③ 添加到节点 / Add to Node',
+         L('自动生成节点可以回答的问题', 'Auto-generates answerable questions')),
+        (L('③ 添加到节点', '③ Add to Node'),
          'text: "RAG系统..."\nmetadata: {\n  "questions": ["什么是RAG?", "RAG的工作流程?"],\n  "title": "RAG系统概述"\n}',
-         '丰富的元数据提升检索准确率 / Rich metadata improves retrieval')
-    ], caption='元数据提取：自动生成问题 / Metadata Extraction: Auto-Generate Questions')
+         L('丰富的元数据提升检索准确率', 'Rich metadata improves retrieval'))
+    ], caption=L('元数据提取：自动生成问题', 'Metadata Extraction: Auto-Generate Questions'))
 )
 LESSON_08 = (
     c.pipeline("embed")
@@ -1370,14 +1370,14 @@ LESSON_11 = (
         "works” to “maintainable in production” — data changes daily, but only the deltas are recomputed.",
     ))
     + d.trace([
-        ('① 第一次摄取 doc_123 / First Ingestion',
+        (L('① 第一次摄取 doc_123', '① First Ingestion'),
          'doc_id: "doc_123"\nhash: "a7f3c9..."\n→ 计算 embedding → 存入 cache',
-         'Embedding 计算耗时 ~200ms / Embedding takes ~200ms'),
-        ('② 第二次摄取相同文档 / Second Ingestion (same doc)',
+         L('Embedding 计算耗时 ~200ms', 'Embedding takes ~200ms')),
+        (L('② 第二次摄取相同文档', '② Second Ingestion (same doc)'),
          'doc_id: "doc_123"\nhash: "a7f3c9..."\n→ cache_collection.get(hash) → 命中！ Hit!',
-         '跳过 embedding，直接复用 / Skip embedding, reuse cached'),
-        ('③ 性能对比 / Performance Comparison',
+         L('跳过 embedding，直接复用', 'Skip embedding, reuse cached')),
+        (L('③ 性能对比', '③ Performance Comparison'),
          '无缓存 No cache: 200ms\n有缓存 With cache: 2ms (100× faster)',
-         'IngestionCache 用 doc_id + hash 去重 / Deduplicates by doc_id + hash')
-    ], caption='摄取缓存：避免重复计算 / Ingestion Cache: Avoid Redundant Computation')
+         L('IngestionCache 用 doc_id + hash 去重', 'Deduplicates by doc_id + hash'))
+    ], caption=L('摄取缓存：避免重复计算', 'Ingestion Cache: Avoid Redundant Computation'))
 )

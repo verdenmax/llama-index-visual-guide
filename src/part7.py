@@ -522,18 +522,18 @@ LESSON_28 = (
         ))
     )
     + d.trace([
-        ('① 用户问题 / User Question',
+        (L('① 用户问题', '① User Question'),
          '"华东区2023年销售额是多少？"\n"What was the sales revenue in East China region for 2023?"'),
-        ('② LLM 生成 SQL / Generates SQL',
+        (L('② LLM 生成 SQL', '② Generates SQL'),
          'SELECT SUM(amount) AS total\nFROM sales\nWHERE region = \'华东\'\n  AND year = 2023;',
-         'NLStructStoreQueryEngine 将自然语言转为 SQL / Converts natural language to SQL query'),
-        ('③ 执行查询 / Execute Query',
+         L('NLSQLTableQueryEngine 将自然语言转为 SQL', 'Converts natural language to SQL query')),
+        (L('③ 执行查询', '③ Execute Query'),
          'total\n---------\n1240000',
-         '数据库返回聚合结果 / Database returns aggregated result'),
-        ('④ 合成答案 / Synthesize Answer',
+         L('数据库返回聚合结果', 'Database returns aggregated result')),
+        (L('④ 合成答案', '④ Synthesize Answer'),
          '"华东区2023年销售额约124万元。"\n"The sales revenue in East China for 2023 was approximately 1.24 million."',
-         'LLM 将数字转为自然语言 / LLM converts number to natural language')
-    ], caption='Text-to-SQL 完整流程 / Full Text-to-SQL Pipeline')
+         L('LLM 将数字转为自然语言', 'LLM converts number to natural language'))
+    ], caption=L('Text-to-SQL 完整流程', 'Full Text-to-SQL Pipeline'))
 )
 LESSON_29 = (
     c.pipeline("embed")
@@ -1323,14 +1323,14 @@ LESSON_31 = (
         ))
     )
     + d.trace([
-        ('① 简历文本 / Resume Text',
+        (L('① 简历文本', '① Resume Text'),
          '"张三，5年Python开发经验，熟悉Django/Flask框架，参与过电商和金融项目。"\n\n'
          '"Zhang San, 5 years of Python development experience, proficient in Django/Flask, participated in e-commerce and fintech projects."'),
-        ('② Pydantic Schema',
+        (L('② Pydantic 模型', '② Pydantic Schema'),
          'class Person(BaseModel):\n    name: str\n    years_exp: int\n    skills: list[str]\n    domains: list[str]',
-         '定义输出结构 / Define output structure'),
-        ('③ LLM 提取 / LLM Extracts',
+         L('定义输出结构', 'Define output structure')),
+        (L('③ LLM 提取', '③ LLM Extracts'),
          'Person(\n    name="张三",\n    years_exp=5,\n    skills=["Python", "Django", "Flask"],\n    domains=["电商", "金融"]\n)',
-         'PydanticOutputParser 确保类型正确 / Ensures type safety')
-    ], caption='结构化输出：文本 → 类型安全对象 / Structured Output: Text → Type-Safe Object')
+         L('PydanticOutputParser 确保类型正确', 'Ensures type safety'))
+    ], caption=L('结构化输出：文本 → 类型安全对象', 'Structured Output: Text → Type-Safe Object'))
 )

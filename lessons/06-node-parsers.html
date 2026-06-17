@@ -441,24 +441,24 @@ engine = index.as_query_engine(
     node_postprocessors=[MetadataReplacementPostProcessor(target_metadata_key='window')])
 print(engine.query('退款多久到账？'))</pre></div><div class="card keypts"><div class="tag"><span data-lang="zh">✅ 本课要点</span><span data-lang="en">✅ Key points</span></div><ul><li><span data-lang="zh">切块决定“检索能命中多准”——RAG 质量的第一旋钮。</span><span data-lang="en">Chunking decides how precisely retrieval can hit — RAG quality's first knob.</span></li><li><span data-lang="zh"><code>chunk_overlap</code> 防止把完整语义从中间切断。</span><span data-lang="en"><code>chunk_overlap</code> keeps a complete thought from being cut in half.</span></li><li><span data-lang="zh">句窗切块：用<strong>单句</strong>精准检索，再用<strong>窗口</strong>补回上下文。</span><span data-lang="en">Sentence-window: retrieve precisely on a <strong>single sentence</strong>, then restore context via the <strong>window</strong>.</span></li></ul></div><div class="card highlight"><div class="tag"><span data-lang="zh">💡 设计亮点</span><span data-lang="en">💡 Design insight</span></div><div data-lang="zh">切块器都实现同一个 <code>get_nodes_from_documents</code> 接口，所以换切块策略<strong>零成本</strong>——这正是“先标准化接口，再谈策略”的威力。</div><div data-lang="en">Every splitter implements the same <code>get_nodes_from_documents</code> interface, so swapping strategies is <strong>free</strong> — the payoff of “standardize the interface first, then vary the strategy”.</div></div><div class="fig"><div class="trace-badge">🔍 示例 worked example</div>
 <div class="trace">
-  <h4>① 原始文本 / Original Text</h4>
+  <h4><span data-lang="zh">① 原始文本</span><span data-lang="en">① Original Text</span></h4>
   <div class="value">RAG系统将文档切成小块。每块通常512 token。
 相邻块会有20%重叠，避免语义断裂。
 
 RAG systems split documents into chunks. Each chunk is typically 512 tokens.
 Adjacent chunks have 20% overlap to avoid breaking semantics.</div>
-  <h4>② SentenceSplitter 切分 / Splits</h4>
+  <h4><span data-lang="zh">② SentenceSplitter 切分</span><span data-lang="en">② Splits</span></h4>
   <div class="value"><strong>Chunk 1:</strong> "RAG系统将文档切成小块。每块通常512 token。"
 <strong>Chunk 2:</strong> "每块通常512 token。相邻块会有20%重叠，避免语义断裂。"
 
 <span style="background:rgba(251,191,36,0.3); padding:2px 4px; border-radius:3px;">重叠部分 Overlap: "每块通常512 token。"</span></div>
-  <small>重叠部分在两个 chunk 中都出现 / Overlapping text appears in both chunks</small>
-  <h4>③ 添加元数据 / Add Metadata</h4>
+  <small><span data-lang="zh">重叠部分在两个 chunk 中都出现</span><span data-lang="en">Overlapping text appears in both chunks</span></small>
+  <h4><span data-lang="zh">③ 添加元数据</span><span data-lang="en">③ Add Metadata</span></h4>
   <div class="value">node_1: {text: "RAG系统...", start_char: 0, end_char: 28}
 node_2: {text: "每块通常...", start_char: 18, end_char: 68}</div>
-  <small>记录原文位置便于溯源 / Record position for source tracking</small>
+  <small><span data-lang="zh">记录原文位置便于溯源</span><span data-lang="en">Record position for source tracking</span></small>
 </div>
-<div class="figcap">切块举例：重叠保留上下文 / Chunking Example: Overlap Preserves Context</div></div><div class="selftest">
+<div class="figcap"><span data-lang="zh">切块举例：重叠保留上下文</span><span data-lang="en">Chunking Example: Overlap Preserves Context</span></div></div><div class="selftest">
 <h2><span data-lang="zh">🧪 自测 · 想一想为什么这么设计</span><span data-lang="en">🧪 Self-check · think about the design</span></h2>
 <div class="quiz">
   <div class="qn">1. <span data-lang="zh"><code>chunk_overlap</code> 的主要作用是？</span><span data-lang="en">What is the main purpose of <code>chunk_overlap</code>?</span></div>

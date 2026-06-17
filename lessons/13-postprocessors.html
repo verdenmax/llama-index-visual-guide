@@ -441,20 +441,20 @@ engine = index.as_query_engine(
     node_postprocessors=[MetadataReplacementPostProcessor(target_metadata_key='window')],
 )</pre></div><div class="card keypts"><div class="tag"><span data-lang="zh">✅ 本课要点</span><span data-lang="en">✅ Key points</span></div><ul><li><span data-lang="zh">后处理在<strong>检索之后、生成之前</strong>，调整喂给 LLM 的 Node。</span><span data-lang="en">Postprocessing sits <strong>after retrieval, before generation</strong>, shaping the Nodes the LLM sees.</span></li><li><span data-lang="zh"><code>similarity_cutoff</code> 滤噪；rerank 提相关性；窗口替换补上下文。</span><span data-lang="en"><code>similarity_cutoff</code> denoises; rerank lifts relevance; window replacement restores context.</span></li><li><span data-lang="zh">它便宜（多为非 LLM 或一次轻量调用）却常带来明显提升。</span><span data-lang="en">It's cheap (often non-LLM or one light call) yet frequently a clear win.</span></li></ul></div><div class="card highlight"><div class="tag"><span data-lang="zh">💡 设计亮点</span><span data-lang="en">💡 Design insight</span></div><div data-lang="zh">把“检索后、生成前”抽象成一串可插拔 postprocessor，让你<strong>在不重训、不换模型</strong>的情况下，用最低成本提升答案质量——RAG 调优性价比最高的一环。</div><div data-lang="en">Modeling “after retrieval, before generation” as pluggable postprocessors lets you raise answer quality at the lowest cost — <strong>no retraining, no model swap</strong>. The best bang-for-buck in RAG tuning.</div></div><div class="fig"><div class="trace-badge">🔍 示例 worked example</div>
 <div class="trace">
-  <h4>① 检索结果 (top-5) / Retrieval Results</h4>
+  <h4><span data-lang="zh">① 检索结果 (top-5)</span><span data-lang="en">① Retrieval Results</span></h4>
   <div class="value">node_a: 0.89  |  node_b: 0.76  |  node_c: 0.71
 node_d: 0.68  |  node_e: 0.52</div>
-  <h4>② SimilarityPostprocessor (cutoff=0.7)</h4>
+  <h4><span data-lang="zh">② 相似度过滤 SimilarityPostprocessor (cutoff=0.7)</span><span data-lang="en">② Filter by Similarity</span></h4>
   <div class="value">✓ 保留 Keep: node_a (0.89), node_b (0.76), node_c (0.71)
 ✗ 丢弃 Drop: node_d (0.68), node_e (0.52)</div>
-  <small>低于阈值的节点被过滤 / Nodes below threshold filtered out</small>
-  <h4>③ LLM Rerank 重排 / Re-rank</h4>
+  <small><span data-lang="zh">低于阈值的节点被过滤</span><span data-lang="en">Nodes below threshold filtered out</span></small>
+  <h4><span data-lang="zh">③ LLM Rerank 重排</span><span data-lang="en">③ Re-rank</span></h4>
   <div class="value">node_b: 0.91 ⬆️  |  node_a: 0.88  |  node_c: 0.73
 
 <small>CrossEncoder 用问题与节点重算相关性 / CrossEncoder recalculates relevance with query</small></div>
-  <small>node_b 从第2升到第1 / node_b promoted from #2 to #1</small>
+  <small><span data-lang="zh">node_b 从第2升到第1</span><span data-lang="en">node_b promoted from #2 to #1</span></small>
 </div>
-<div class="figcap">后处理流程：过滤 + 重排 / Postprocessing: Filter + Rerank</div></div><div class="selftest">
+<div class="figcap"><span data-lang="zh">后处理流程：过滤 + 重排</span><span data-lang="en">Postprocessing: Filter + Rerank</span></div></div><div class="selftest">
 <h2><span data-lang="zh">🧪 自测 · 想一想为什么这么设计</span><span data-lang="en">🧪 Self-check · think about the design</span></h2>
 <div class="quiz">
   <div class="qn">1. <span data-lang="zh"><code>SimilarityPostprocessor(similarity_cutoff=0.7)</code> 的作用是？</span><span data-lang="en">What does <code>SimilarityPostprocessor(similarity_cutoff=0.7)</code> do?</span></div>

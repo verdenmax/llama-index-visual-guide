@@ -344,16 +344,16 @@ LESSON_18 = (
         "compute for better results.",
     ))
     + d.trace([
-        ('① 用户问题 / User Question',
+        (L('① 用户问题', '① User Question'),
          '"LlamaIndex支持哪些向量数据库？"\n"Which vector databases does LlamaIndex support?"'),
-        ('② LLM 生成假设答案 / Generate Hypothetical Answer',
+        (L('② LLM 生成假设答案', '② Generate Hypothetical Answer'),
          '"LlamaIndex支持多种向量数据库，包括Pinecone、Weaviate、Qdrant和Chroma。"\n\n'
          '"LlamaIndex supports multiple vector databases including Pinecone, Weaviate, Qdrant, and Chroma."',
-         'HyDE 生成假设的理想答案 / Generates hypothetical ideal answer'),
-        ('③ 用假设答案检索 / Retrieve with Hypothesis',
+         L('HyDE 生成假设的理想答案', 'Generates hypothetical ideal answer')),
+        (L('③ 用假设答案检索', '③ Retrieve with Hypothesis'),
          'hypothetical_embedding: [0.34, -0.12, 0.56, ...]\n→ 检索到包含 Pinecone/Qdrant 的文档\n→ Retrieves docs mentioning Pinecone/Qdrant',
-         '假设答案比问题包含更多关键词 / Hypothesis contains more keywords than query')
-    ], caption='HyDE：用假设答案增强检索 / HyDE: Hypothetical Document Embeddings')
+         L('假设答案比问题包含更多关键词', 'Hypothesis contains more keywords than query'))
+    ], caption=L('HyDE：用假设答案增强检索', 'HyDE: Hypothetical Document Embeddings'))
 )
 LESSON_19 = (
     c.pipeline(None)
