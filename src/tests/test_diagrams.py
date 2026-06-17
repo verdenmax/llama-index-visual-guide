@@ -65,7 +65,7 @@ def test_no_third_party_imports():
     import ast
     import pathlib
 
-    tree = ast.parse(pathlib.Path("diagrams.py").read_text(encoding="utf-8"))
+    tree = ast.parse(pathlib.Path("src/diagrams.py").read_text(encoding="utf-8"))
     mods = []
     for n in ast.walk(tree):
         if isinstance(n, ast.Import):
