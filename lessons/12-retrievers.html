@@ -284,6 +284,65 @@ table.t td.mono, table.t td .mono { font-family: ui-monospace, monospace; font-s
 .alert.warn{border-left-color:var(--amber);background:var(--amber-soft);}
 .alert.note{border-left-color:var(--blue);background:var(--blue-soft);}
 .alert.key{border-left-color:var(--purple);background:var(--purple-soft);}
+/* Trace diagrams - worked examples with real data */
+.trace-badge {
+  display: inline-block;
+  background: rgba(0,0,0,0.05);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85em;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+.trace {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+}
+.trace h4 {
+  color: var(--accent);
+  font-size: 1em;
+  margin: 16px 0 8px 0;
+  font-weight: 600;
+}
+.trace h4:first-child {
+  margin-top: 0;
+}
+.trace .value {
+  background: rgba(34,197,94,0.08);
+  border-left: 3px solid rgb(34,197,94);
+  padding: 12px;
+  border-radius: 4px;
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 0.9em;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 8px;
+}
+.trace small {
+  display: block;
+  color: #6b7280;
+  font-size: 0.85em;
+  margin-bottom: 12px;
+  font-style: italic;
+}
+@media (prefers-color-scheme: dark) {
+  .trace-badge {
+    background: rgba(255,255,255,0.1);
+  }
+  .trace {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  .trace .value {
+    background: rgba(34,197,94,0.12);
+  }
+  .trace small {
+    color: #9ca3af;
+  }
+}
 
 /* ===== diagram primitives ===== */
 .fig{margin:1.1rem 0;padding:.9rem;background:var(--panel-2);border:1px solid var(--line);
@@ -369,7 +428,27 @@ for n in nodes:
 retriever = VectorIndexRetriever(index=index, similarity_top_k=4)
 for n in retriever.retrieve('国际订单的退款要多久？'):
     print(f'{n.score:.3f}  {n.node.get_content()[:50]}')
-    print('  来源:', n.node.metadata.get('file_name'))</pre></div><div class="card keypts"><div class="tag"><span data-lang="zh">✅ 本课要点</span><span data-lang="en">✅ Key points</span></div><ul><li><span data-lang="zh">Retriever 返回 <strong>top-k 个带分数的 Node</strong>，不产生最终答案。</span><span data-lang="en">A Retriever returns the <strong>top-k scored Nodes</strong>, not the final answer.</span></li><li><span data-lang="zh"><code>similarity_top_k</code> 太小漏召回、太大引噪声。</span><span data-lang="en">Too small a <code>similarity_top_k</code> misses; too large adds noise.</span></li><li><span data-lang="zh">检索与生成<strong>解耦</strong>，便于单独调试与评估检索质量。</span><span data-lang="en">Decoupling retrieval from generation lets you debug and evaluate retrieval on its own.</span></li></ul></div><div class="card highlight"><div class="tag"><span data-lang="zh">💡 设计亮点</span><span data-lang="en">💡 Design insight</span></div><div data-lang="zh">把“取相关片段”独立成 Retriever，意味着你能在不动 LLM 的前提下，专门优化“召回了对的内容没有”这一核心问题。</div><div data-lang="en">Isolating “fetch relevant pieces” as a Retriever means you can optimize the core question — “did we recall the right content?” — without ever touching the LLM.</div></div><div class="selftest">
+    print('  来源:', n.node.metadata.get('file_name'))</pre></div><div class="card keypts"><div class="tag"><span data-lang="zh">✅ 本课要点</span><span data-lang="en">✅ Key points</span></div><ul><li><span data-lang="zh">Retriever 返回 <strong>top-k 个带分数的 Node</strong>，不产生最终答案。</span><span data-lang="en">A Retriever returns the <strong>top-k scored Nodes</strong>, not the final answer.</span></li><li><span data-lang="zh"><code>similarity_top_k</code> 太小漏召回、太大引噪声。</span><span data-lang="en">Too small a <code>similarity_top_k</code> misses; too large adds noise.</span></li><li><span data-lang="zh">检索与生成<strong>解耦</strong>，便于单独调试与评估检索质量。</span><span data-lang="en">Decoupling retrieval from generation lets you debug and evaluate retrieval on its own.</span></li></ul></div><div class="card highlight"><div class="tag"><span data-lang="zh">💡 设计亮点</span><span data-lang="en">💡 Design insight</span></div><div data-lang="zh">把“取相关片段”独立成 Retriever，意味着你能在不动 LLM 的前提下，专门优化“召回了对的内容没有”这一核心问题。</div><div data-lang="en">Isolating “fetch relevant pieces” as a Retriever means you can optimize the core question — “did we recall the right content?” — without ever touching the LLM.</div></div><div class="fig"><div class="trace-badge">🔍 示例 worked example</div>
+<div class="trace">
+  <h4>① 用户查询 / User Query</h4>
+  <div class="value">"什么是向量数据库？"
+"What is a vector database?"</div>
+  <h4>② 向量化查询 / Embed Query</h4>
+  <div class="value">query_embedding: [0.23, -0.45, 0.67, ...]  (384 dims)</div>
+  <small>OpenAIEmbedding 将查询转为向量 / Converts query to vector</small>
+  <h4>③ 相似度检索 / Similarity Search</h4>
+  <div class="value"><table style="width:100%; border-collapse:collapse; margin-top:8px;">
+  <tr style="border-bottom:1px solid #ddd;">
+    <th style="text-align:left; padding:4px;">节点 Node</th>
+    <th style="text-align:right; padding:4px;">相似度 Similarity</th>
+  </tr>
+  <tr><td style="padding:4px;">node_7</td><td style="text-align:right; padding:4px;">0.89</td></tr>
+  <tr><td style="padding:4px;">node_3</td><td style="text-align:right; padding:4px;">0.76</td></tr>
+  <tr><td style="padding:4px;">node_12</td><td style="text-align:right; padding:4px;">0.71</td></tr>
+</table></div>
+  <small>VectorStoreIndex 返回 top-3 / Returns top-3 nodes</small>
+</div>
+<div class="figcap">检索器流程：查询 → 向量化 → 检索 / Retriever: Query → Embed → Search</div></div><div class="selftest">
 <h2><span data-lang="zh">🧪 自测 · 想一想为什么这么设计</span><span data-lang="en">🧪 Self-check · think about the design</span></h2>
 <div class="quiz">
   <div class="qn">1. <span data-lang="zh">调用 <code>retriever.retrieve(q)</code> 之后，得到的是？</span><span data-lang="en">After calling <code>retriever.retrieve(q)</code>, what do you get?</span></div>

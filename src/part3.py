@@ -167,6 +167,24 @@ LESSON_12 = (
         "Isolating “fetch relevant pieces” as a Retriever means you can optimize the core question — “did we recall the "
         "right content?” — without ever touching the LLM.",
     ))
+    + d.trace([
+        ('① 用户查询 / User Query',
+         '"什么是向量数据库？"\n"What is a vector database?"'),
+        ('② 向量化查询 / Embed Query',
+         'query_embedding: [0.23, -0.45, 0.67, ...]  (384 dims)',
+         'OpenAIEmbedding 将查询转为向量 / Converts query to vector'),
+        ('③ 相似度检索 / Similarity Search',
+         '<table style="width:100%; border-collapse:collapse; margin-top:8px;">\n'
+         '  <tr style="border-bottom:1px solid #ddd;">\n'
+         '    <th style="text-align:left; padding:4px;">节点 Node</th>\n'
+         '    <th style="text-align:right; padding:4px;">相似度 Similarity</th>\n'
+         '  </tr>\n'
+         '  <tr><td style="padding:4px;">node_7</td><td style="text-align:right; padding:4px;">0.89</td></tr>\n'
+         '  <tr><td style="padding:4px;">node_3</td><td style="text-align:right; padding:4px;">0.76</td></tr>\n'
+         '  <tr><td style="padding:4px;">node_12</td><td style="text-align:right; padding:4px;">0.71</td></tr>\n'
+         '</table>',
+         'VectorStoreIndex 返回 top-3 / Returns top-3 nodes')
+    ], caption='检索器流程：查询 → 向量化 → 检索 / Retriever: Query → Embed → Search')
 )
 LESSON_13 = (
     c.pipeline("postprocess")
