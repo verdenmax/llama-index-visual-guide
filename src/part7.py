@@ -1322,4 +1322,15 @@ LESSON_31 = (
             "L32's multi-agent systems are built standing on this structured-output brick.",
         ))
     )
+    + d.trace([
+        ('① 简历文本 / Resume Text',
+         '"张三，5年Python开发经验，熟悉Django/Flask框架，参与过电商和金融项目。"\n\n'
+         '"Zhang San, 5 years of Python development experience, proficient in Django/Flask, participated in e-commerce and fintech projects."'),
+        ('② Pydantic Schema',
+         'class Person(BaseModel):\n    name: str\n    years_exp: int\n    skills: list[str]\n    domains: list[str]',
+         '定义输出结构 / Define output structure'),
+        ('③ LLM 提取 / LLM Extracts',
+         'Person(\n    name="张三",\n    years_exp=5,\n    skills=["Python", "Django", "Flask"],\n    domains=["电商", "金融"]\n)',
+         'PydanticOutputParser 确保类型正确 / Ensures type safety')
+    ], caption='结构化输出：文本 → 类型安全对象 / Structured Output: Text → Type-Safe Object')
 )
