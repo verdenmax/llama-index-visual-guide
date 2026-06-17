@@ -492,7 +492,7 @@ def index_page(lesson_prefix=""):
     )
     hero_lead = i18n.render(L(
         "这套教程跟着<strong>两条数据流</strong>带你走：先看一份文档如何<strong>写入索引</strong>"
-        "（加载→切块→Embedding→存储→索引），再看一个问题如何<strong>查出答案</strong>"
+        "（加载→切块→向量化→存储→索引），再看一个问题如何<strong>查出答案</strong>"
         "（检索→后处理→合成→回答）。每课都配真实源码对应、可运行代码与设计亮点。",
         "This guide follows <strong>two data flows</strong>: how a document gets <strong>written into "
         "an index</strong> (load→split→embed→store→index), then how a question gets <strong>answered"
@@ -507,7 +507,7 @@ def index_page(lesson_prefix=""):
         "📌 Anchored to <strong>llama-index-core 0.14.22</strong> / Python 3.10+ · verified 2026-06 · "
         "source cited as “file · symbol” (line numbers drift upstream)",
     ))
-    desc = "跟着写入路径与查询路径，一步步理解 LlamaIndex 的 RAG：27 课，每课配真实源码对应、可运行代码与设计亮点。"
+    desc = f"跟着写入路径与查询路径，一步步理解 LlamaIndex 的 RAG：{total} 课，每课配真实源码对应、可运行代码与设计亮点。"
     return f"""<!DOCTYPE html>
 <html lang="zh-CN" data-uilang="zh" data-title-zh="{_attr(SITE + ' · 从数据流理解 RAG')}" data-title-en="{_attr('LlamaIndex RAG Visual Guide')}"><head>
 <meta charset="utf-8">

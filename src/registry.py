@@ -49,5 +49,5 @@ CONTENT = {
     "33-human-in-the-loop.html": part8.LESSON_33,
     "34-serving.html": part8.LESSON_34,
     "35-finetuning-embeddings.html": part8.LESSON_35,
-    "36-glossary.html": glossary.LESSON_21,
+    "36-glossary.html": glossary.LESSON_36,
 }

@@ -1,7 +1,7 @@
 """Build the LlamaIndex RAG visual guide as a standalone static site.
 
     index.html           entry point (table of contents)
-    lessons/NN-*.html    the 21 lesson pages
+    lessons/NN-*.html    the 36 lesson pages
 
 Pages use relative links so the site works via file:// or any static server.
 Usage: cd src && python build.py

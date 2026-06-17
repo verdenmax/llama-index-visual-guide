@@ -430,10 +430,10 @@ LESSON_14 = (
     + c.section(
         L("把三课串成一条查询路径", "Threading lessons 12–14 into one query path"),
         L(
-            "第 12、13、14 课各自从 <code>index.as_retriever</code> 起步，读起来像三段彼此独立的代码。其实一次 "
+            "第 12、13 课从 <code>index.as_retriever</code> 起步、第 14 课从 <code>index.as_query_engine</code> 起步，读起来像三段彼此独立的代码。其实一次 "
             "<code>.query()</code> 就把它们串成一条流水线：同一批 Node 被检索取回、被后处理筛选、再交合成器落笔，"
             "一路传递下去。",
-            "Lessons 12, 13 and 14 each start over at <code>index.as_retriever</code>, so they read like three "
+            "Lessons 12 and 13 start at <code>index.as_retriever</code> and Lesson 14 at <code>index.as_query_engine</code>, so they read like three "
             "disconnected snippets. In reality one <code>.query()</code> threads them into a single pipeline: the same "
             "batch of Nodes is retrieved, filtered by post-processing, then handed to the synthesizer — flowing straight "
             "through.",

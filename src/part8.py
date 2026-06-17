@@ -81,17 +81,17 @@ LESSON_32 = (
         ), kind="note"),
     )
     + c.section(
-        L("② <code>AgentWorkflow</code> 编排多 agent：name / system_prompt / tools / can_handoff_to",
-          "② <code>AgentWorkflow</code> orchestrates the agents: name / system_prompt / tools / can_handoff_to"),
+        L("② <code>AgentWorkflow</code> 编排多 agent：name / description / system_prompt / tools / can_handoff_to",
+          "② <code>AgentWorkflow</code> orchestrates the agents: name / description / system_prompt / tools / can_handoff_to"),
         L(
             "把这支小队<strong>编排</strong>起来的，是 <code>AgentWorkflow</code>。每个成员是一个 <code>FunctionAgent</code>，"
-            "四样东西定义它的角色：<strong>name</strong>（队友靠名字点名交接）、<strong>system_prompt</strong>（它这段的"
+            "五样东西定义它的角色：<strong>name</strong>（队友靠名字点名交接）、<strong>description</strong>（一句话说明它负责什么，handoff 时别的 agent 据此判断要不要把任务交给它）、<strong>system_prompt</strong>（它这段的"
             "职责与风格）、<strong>tools</strong>（它能用的工具，撰稿 agent 可以一个都不带）、<strong>can_handoff_to"
             "</strong>（它<strong>允许</strong>把任务交给哪些 agent——交接路线是你<strong>显式声明</strong>的，不是模型乱传）。"
             "构造时把所有 agent 放进 <code>agents=[...]</code>，再指定 <strong>root_agent</strong> 作为<strong>入口</strong>"
             "（第一个接手的人）。",
             "What <strong>orchestrates</strong> this team is <code>AgentWorkflow</code>. Each member is a "
-            "<code>FunctionAgent</code> defined by four things: <strong>name</strong> (teammates hand off by name), "
+            "<code>FunctionAgent</code> defined by five things: <strong>name</strong> (teammates hand off by name), <strong>description</strong> (one line on what it does — other agents use it to decide whether to hand the task to it), "
             "<strong>system_prompt</strong> (its slice's duty and style), <strong>tools</strong> (the tools it may use "
             "— a writing agent can carry none), and <strong>can_handoff_to</strong> (which agents it is <strong>allowed"
             "</strong> to pass the task to — the handoff routes are <strong>declared by you</strong>, not improvised by "
@@ -265,9 +265,9 @@ LESSON_32 = (
           "下一个更合适的。",
           "One agent with too many tools / duties gets messy; split into <strong>multiple specialized agents</strong> and "
           "use <strong>handoff</strong> to pass the task to the next, more suitable one."),
-        L("<strong>AgentWorkflow</strong> 编排多 agent：每个 <code>FunctionAgent</code> 有 <code>name</code> / "
+        L("<strong>AgentWorkflow</strong> 编排多 agent：每个 <code>FunctionAgent</code> 有 <code>name</code> / <code>description</code> / "
           "<code>system_prompt</code> / <code>tools</code> / <code>can_handoff_to</code>，<code>root_agent</code> 是入口。",
-          "<strong>AgentWorkflow</strong> orchestrates the agents: each <code>FunctionAgent</code> has <code>name</code> / "
+          "<strong>AgentWorkflow</strong> orchestrates the agents: each <code>FunctionAgent</code> has <code>name</code> / <code>description</code> / "
           "<code>system_prompt</code> / <code>tools</code> / <code>can_handoff_to</code>, and <code>root_agent</code> is "
           "the entry."),
         L("agent 底层跑在 <strong>workflow</strong> 上；用 <code>@step</code> + 事件把<strong>分支 / 循环</strong>这类控制流"

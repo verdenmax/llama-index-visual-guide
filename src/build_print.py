@@ -1,4 +1,4 @@
-"""Build a single print-ready HTML (all 21 lessons, accordions expanded).
+"""Build a single print-ready HTML (all 36 lessons, accordions expanded).
 
 Output: ``print.html`` at the project root. Render to PDF with headless
 Chromium. The root carries ``data-uilang="zh"`` so the PDF is Chinese-only.

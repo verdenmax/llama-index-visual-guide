@@ -404,7 +404,7 @@ LESSON_28 = (
         ),
     )
     + c.code(
-        '# pip install llama-index-experimental  —— core 0.14.22 仅留会抛弃用警告的占位实现\n'
+        '# pip install llama-index-experimental  —— core 0.14.22 仅留会抛出弃用警告的占位实现\n'
         'from llama_index.experimental.query_engine import PandasQueryEngine\n\n'
         'qe = PandasQueryEngine(df=df, verbose=True)   # ⚠️ 会 eval LLM 生成的 Python，仅用于可信环境\n'
         'print(qe.query("销量最高的 3 个产品是哪些？"))',
@@ -450,7 +450,7 @@ LESSON_28 = (
             "</strong>, never wire such an engine straight to anonymous users.",
         ),
         L(
-            "事实上，<code>llama-index-core 0.14.22</code> 已经把 <code>PandasQueryEngine</code> 做成<strong>会抛弃用警告"
+            "事实上，<code>llama-index-core 0.14.22</code> 已经把 <code>PandasQueryEngine</code> 做成<strong>会抛出弃用警告"
             "的占位实现</strong>，把真正能跑的版本挪到了 <code>llama-index-experimental</code>（<code>from "
             "llama_index.experimental.query_engine import PandasQueryEngine</code>），并白纸黑字写明“<strong>会任意执行"
             "代码、请在安全环境使用</strong>”——库本身就用这种“默认不让用”的姿态提醒你：方便和危险是绑在一起的。",

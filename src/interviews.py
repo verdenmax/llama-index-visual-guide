@@ -212,12 +212,12 @@ INTERVIEW = {
             "weigh; (3) what <strong>metric</strong> proves the new split is better?"),
          "answer": L(
             "🔑 <strong>重点：按内容结构定大小、受 embedding token 上限约束，并用“改前改后命中率/Faithfulness”证明。</strong>"
-            "① 手册偏小、叙事偏大；太大→噪声多还挤占上下文，太小→语义被切碎；多数 embedding 上限 ~512 token。"
+            "① 手册偏小、叙事偏大；太大→噪声多还挤占上下文，太小→语义被切碎；许多开源 embedding 上限 ~512 token。"
             "② 替代：SentenceSplitter(通用)、TokenTextSplitter(严格控长)、SemanticSplitter(按语义断点、贵)、SentenceWindow(检索/上下文解耦)。"
             "③ 固定一组带 gold 块的查询，比较改前/改后的<strong>检索命中率</strong>与<strong>Faithfulness</strong>，看趋势而非单点。",
             "🔑 <strong>Key: size by content structure, bounded by the embedding token limit, and prove it with before/after "
             "hit-rate / Faithfulness.</strong> (1) manuals smaller, narrative larger; too large → noise + context bloat, too "
-            "small → shredded meaning; most embeddings cap ~512 tokens. (2) Alternatives: SentenceSplitter (general), "
+            "small → shredded meaning; many open-source embeddings cap ~512 tokens. (2) Alternatives: SentenceSplitter (general), "
             "TokenTextSplitter (strict length), SemanticSplitter (semantic breakpoints, costly), SentenceWindow (decouples "
             "retrieval from context). (3) On a fixed gold-chunk query set, compare <strong>hit-rate</strong> and "
             "<strong>Faithfulness</strong> before vs after — trends, not a single point."),
@@ -411,10 +411,10 @@ INTERVIEW = {
             "(Chroma/pgvector) — what must you watch on load?"),
          "answer": L(
             "🔑 <strong>重点：默认三件套——docstore(Node 内容)、index store(索引结构)、vector store(向量)。</strong>"
-            "换生产库后，向量由<strong>外部数据库托管</strong>，本地不再是 vector_store.json；加载时 <code>StorageContext</code> 必须连回<strong>同一个</strong>库，且查询用与建索引相同的 embedding 模型。",
+            "换生产库后，向量由<strong>外部数据库托管</strong>，本地不再是 default__vector_store.json；加载时 <code>StorageContext</code> 必须连回<strong>同一个</strong>库，且查询用与建索引相同的 embedding 模型。",
             "🔑 <strong>Key: by default three pieces — docstore (Node content), index store (index structure), vector store "
             "(vectors).</strong> With a production store the vectors live in an <strong>external DB</strong>, not a local "
-            "vector_store.json; on load the <code>StorageContext</code> must reconnect to the <strong>same</strong> store, and "
+            "default__vector_store.json; on load the <code>StorageContext</code> must reconnect to the <strong>same</strong> store, and "
             "queries must use the same embedding model the index was built with."),
         },
     ],
@@ -1228,7 +1228,7 @@ INTERVIEW = {
             "contains them. How would you do <strong>PII redaction</strong> in RAG — at which step? How does it pair "
             "with grounding (cite only, refuse when thin)? And how do you <strong>verify</strong> it?"),
          "answer": L(
-            "🔑 <strong>重点：用 PIINodePostprocessor 在检索后、喂 LLM 前脱敏（日志同样要脱），再配 grounding 只据证据"
+            "🔑 <strong>重点：用 NERPIINodePostprocessor 在检索后、喂 LLM 前脱敏（日志同样要脱），再配 grounding 只据证据"
             "作答、不足则拒答；用 PII 检出率 + 抽检 + 回归用例验证。</strong>① <strong>放哪一步</strong>：PII 不能进 "
             "prompt，所以脱敏要在<strong>检索之后、合成之前</strong>——把 <code>NERPIINodePostprocessor</code> 挂为 "
             "<code>node_postprocessor</code>，用 NER 找出人名 / 邮箱 / 手机号 / 证件号替换成占位符，再送进 LLM。② "
@@ -1236,7 +1236,7 @@ INTERVIEW = {
             "配合</strong>：答案只引用召回证据并标出处，<strong>证据不足就拒答</strong>，既防编造、也避免“为了答而"
             "泄露”。④ <strong>怎么验证</strong>：用带 PII 的样本测<strong>检出 / 脱敏率</strong>，对输出做<strong>抽样"
             "核对</strong>，把“合规红线”问题纳入回归——<strong>宁可拒答，也不泄露</strong>。",
-            "🔑 <strong>Key: redact with PIINodePostprocessor after retrieval and before the LLM (logs too), pair it "
+            "🔑 <strong>Key: redact with NERPIINodePostprocessor after retrieval and before the LLM (logs too), pair it "
             "with grounding that answers only from evidence and refuses when thin, and verify with PII detection rate "
             "+ spot-checks + regression cases.</strong> (1) <strong>Where</strong>: PII must not enter the prompt, so "
             "redact <strong>after retrieval, before synthesis</strong> — attach <code>NERPIINodePostprocessor</code> "

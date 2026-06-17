@@ -158,6 +158,7 @@ LESSON_04 = (
         "from llama_index.core import VectorStoreIndex\n"
         "from llama_index.core.schema import NodeRelationship\n"
         "from llama_index.core.vector_stores import MetadataFilters, MetadataFilter\n\n"
+        "nodes = [n1, n2]                       # 上一段创建的两个 Node\n"
         "index = VectorStoreIndex(nodes)\n\n"
         "# 只在 metadata['page'] == 2 的 Node 里检索（元数据过滤）\n"
         "flt = MetadataFilters(filters=[MetadataFilter(key='page', value=2)])\n"
@@ -389,7 +390,7 @@ LESSON_06 = (
             [
                 [L("SentenceSplitter", "SentenceSplitter"), L("按句子凑到 chunk_size", "sentences up to chunk_size"), L("通用默认", "general default")],
                 [L("TokenTextSplitter", "TokenTextSplitter"), L("按 token 数硬切", "by token count"), L("严格控长", "strict length control")],
-                [L("SemanticSplitterNodeParser", "SemanticSplitterNodeParser"), L("按语义相似度断点", "at semantic breakpoints"), L("主题清晰的长文", "topically varied text")],
+                [L("SemanticSplitterNodeParser", "SemanticSplitterNodeParser"), L("按语义相似度断点", "at semantic breakpoints"), L("主题多变的长文", "topically varied text")],
                 [L("SentenceWindowNodeParser", "SentenceWindowNodeParser"), L("单句为节点+窗口上下文", "one sentence + window"), L("精检索后补上下文", "precise hit, fuller context")],
             ],
         ),
@@ -398,13 +399,13 @@ LESSON_06 = (
         L("chunk_size / chunk_overlap 的权衡", "The chunk_size / chunk_overlap trade-off"),
         L(
             "chunk_size 太大，块里混入大量无关内容，检索噪声多、还挤占 LLM 上下文；而且块再大也不能超过 "
-            "<strong>embedding 模型的 token 上限</strong>——常见模型大多在 <strong>512 token</strong> 左右"
+            "<strong>embedding 模型的 token 上限</strong>——不少开源句向量模型在 <strong>512 token</strong> 左右"
             "（详见第 8 课），超出的部分会被悄悄截断、白白丢失。太小，完整语义被切碎，"
             "块与块之间断裂、读不成句。chunk_overlap 用少量冗余换“不把一句话切两半”。这对“精准命中 vs 保留上下文”"
             "的张力，sentence-window 给了一个漂亮的折中：用单句去检索（足够精准），却把前后句组成的窗口喂给 "
             "LLM（补回上下文）。",
             "Too large a chunk_size mixes in lots of irrelevant text — noisy retrieval that also hogs LLM context; and "
-            "a chunk can never exceed the <strong>embedding model's token limit</strong> either — most models cap "
+            "a chunk can never exceed the <strong>embedding model's token limit</strong> either — many open-source embedders cap "
             "around <strong>512 tokens</strong> (see Lesson 8), and anything past that is silently truncated and lost. "
             "Too small and a complete thought is shredded, with chunks that break mid-sentence. chunk_overlap trades a "
             "little redundancy for “never cut a sentence in half”. For the tension between “precise hits vs. retained "
@@ -1239,7 +1240,7 @@ LESSON_11 = (
                 (L("persist(persist_dir)", "persist(persist_dir)"), L("把内存中的索引整体写到磁盘", "writes the in-memory index to disk")),
                 (L("docstore.json", "docstore.json"), L("Node 正文与元数据", "Node text and metadata")),
                 (L("index_store.json", "index_store.json"), L("索引结构（谁指向谁）", "the index structure (what points to what)")),
-                (L("vector_store.json", "vector_store.json"), L("向量数据", "the vectors")),
+                (L("default__vector_store.json", "default__vector_store.json"), L("向量数据", "the vectors")),
                 (L("load_index_from_storage", "load_index_from_storage"), L("从三件套重建索引，秒级开门", "rebuilds the index from the three — open in seconds")),
             ],
             caption=L(

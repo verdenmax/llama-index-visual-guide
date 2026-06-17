@@ -1,4 +1,4 @@
-"""Part 7 (reference): lesson 27 glossary. Content filled task-by-task."""
+"""Part 9 (reference): lesson 36 glossary. Content filled task-by-task."""
 import components as c
 import diagrams as d
 from i18n import L
@@ -16,7 +16,7 @@ def _row(term, zh, en, num, fname, term_en=None):
     return [L(term, term_en or term), _term(zh, en), L(link, link)]
 
 
-LESSON_21 = (
+LESSON_36 = (
     c.lead(L(
         "全书术语<strong>按数据流分组</strong>速查——基础 → 写入路径 → 查询路径 → 进阶 → 生产 → 进阶专题。点“课”跳到对应讲解。",
         "Every term, <strong>grouped by data flow</strong> — foundations → write path → query path → advanced → production → advanced topics. "

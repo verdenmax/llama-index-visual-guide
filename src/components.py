@@ -82,7 +82,7 @@ def accordion(summary, *items):
 
 # The RAG pipeline strip; ``stage`` highlights one step (or None).
 _WRITE = [
-    ("load", "加载", "Load"), ("split", "切块", "Split"), ("embed", "Embed", "Embed"),
+    ("load", "加载", "Load"), ("split", "切块", "Split"), ("embed", "向量化", "Embed"),
     ("store", "存储", "Store"), ("index", "索引", "Index"),
 ]
 _QUERY = [
