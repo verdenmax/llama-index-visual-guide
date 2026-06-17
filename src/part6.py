@@ -1736,4 +1736,16 @@ LESSON_26 = (
             "it, don't reach for an agent.",
         ))
     )
+    + d.trace([
+        ('① Thought 思考 / Reasoning',
+         'Thought: "用户想知道Python 3.11的新特性，我需要搜索官方文档。"\nThought: "User wants Python 3.11 new features, I need to search official docs."'),
+        ('② Action 执行工具 / Execute Tool',
+         'Action: search_tool\nAction Input: {"query": "Python 3.11 new features"}\n→ 调用搜索工具 / Call search tool',
+         'ReActAgent 选择合适的工具 / Selects appropriate tool'),
+        ('③ Observation 观察结果 / Observe Result',
+         'Observation: "Python 3.11带来了性能提升、更好的错误信息、新的tomllib模块..."\nObservation: "Python 3.11 brings performance improvements, better error messages, new tomllib..."'),
+        ('④ Next Thought 下一轮 / Next Round',
+         'Thought: "我已获得足够信息，可以回答用户。"\nAnswer: "Python 3.11的主要新特性包括..."',
+         'Agent 决定停止循环并回答 / Decides to stop loop and answer')
+    ], caption='Agent 推理循环：Thought → Action → Observation / Agent Loop: Think → Act → Observe')
 )

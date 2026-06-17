@@ -284,6 +284,65 @@ table.t td.mono, table.t td .mono { font-family: ui-monospace, monospace; font-s
 .alert.warn{border-left-color:var(--amber);background:var(--amber-soft);}
 .alert.note{border-left-color:var(--blue);background:var(--blue-soft);}
 .alert.key{border-left-color:var(--purple);background:var(--purple-soft);}
+/* Trace diagrams - worked examples with real data */
+.trace-badge {
+  display: inline-block;
+  background: rgba(0,0,0,0.05);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85em;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+.trace {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+}
+.trace h4 {
+  color: var(--accent);
+  font-size: 1em;
+  margin: 16px 0 8px 0;
+  font-weight: 600;
+}
+.trace h4:first-child {
+  margin-top: 0;
+}
+.trace .value {
+  background: rgba(34,197,94,0.08);
+  border-left: 3px solid rgb(34,197,94);
+  padding: 12px;
+  border-radius: 4px;
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 0.9em;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 8px;
+}
+.trace small {
+  display: block;
+  color: #6b7280;
+  font-size: 0.85em;
+  margin-bottom: 12px;
+  font-style: italic;
+}
+@media (prefers-color-scheme: dark) {
+  .trace-badge {
+    background: rgba(255,255,255,0.1);
+  }
+  .trace {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  .trace .value {
+    background: rgba(34,197,94,0.12);
+  }
+  .trace small {
+    color: #9ca3af;
+  }
+}
 
 /* ===== diagram primitives ===== */
 .fig{margin:1.1rem 0;padding:.9rem;background:var(--panel-2);border:1px solid var(--line);
@@ -384,7 +443,25 @@ class RAGFlow(Workflow):
     async def synthesize(self, ev: Retrieved) -&gt; StopEvent:
         return StopEvent(result=str(Settings.llm.complete(f'据此作答：{ev.nodes}')))
 
-# result = await RAGFlow().run(query='退款多久到账？')</pre></div><div class="card keypts"><div class="tag"><span data-lang="zh">✅ 本课要点</span><span data-lang="en">✅ Key points</span></div><ul><li><span data-lang="zh">固定管道每问<strong>同样地检索</strong>；agent 先看问题再<strong>决定</strong>用哪个工具、检索几次、要不要反思重检索。</span><span data-lang="en">A fixed pipeline <strong>retrieves the same way</strong> every time; an agent reads the question first, then <strong>decides</strong> which tool, how many retrievals, and whether to reflect and re-retrieve.</span></li><li><span data-lang="zh">把 <code>QueryEngine</code> 用 <strong>QueryEngineTool</strong> 包成工具交给 <strong>FunctionAgent</strong>，<code>description</code> 决定 agent 何时调用它。</span><span data-lang="en">Wrap a <code>QueryEngine</code> as a tool via <strong>QueryEngineTool</strong> and give it to a <strong>FunctionAgent</strong>; the <code>description</code> tells the agent when to call it.</span></li><li><span data-lang="zh"><strong>Workflow</strong> 是<strong>事件驱动</strong>的底层框架：每个 <code>@step</code> 收一种事件、发出下一种，<code>StartEvent</code> 进、<code>StopEvent</code> 出。</span><span data-lang="en"><strong>Workflow</strong> is the <strong>event-driven</strong> base framework: each <code>@step</code> consumes one event and emits the next; <code>StartEvent</code> in, <code>StopEvent</code> out.</span></li><li><span data-lang="zh">升级到 agent 的信号是<strong>多源 / 多步 / 需自我纠错</strong>；代价是<strong>更慢、更贵、更难调</strong>（更依赖 L23 的可观测）。</span><span data-lang="en">Signals to upgrade to an agent are <strong>multi-source / multi-step / self-correction</strong>; the cost is <strong>slower, pricier, harder to debug</strong> (leaning harder on L23's observability).</span></li><li><span data-lang="zh">自主度<strong>有代价</strong>：能用<strong>固定管道</strong>就别上 Router，能 <strong>Router</strong> 就别上 Agent。</span><span data-lang="en">Autonomy has a <strong>cost</strong>: if a <strong>fixed pipeline</strong> works don't add a Router, if a <strong>Router</strong> works don't reach for an Agent.</span></li></ul></div><div class="card highlight"><div class="tag"><span data-lang="zh">💡 设计亮点</span><span data-lang="en">💡 Design insight</span></div><div data-lang="zh">Agent 与 Workflows 的精髓，是把 RAG 从<strong>“写死的链”升级成“会决策的循环”</strong>：<strong>Workflow</strong> 用 <code>@step</code> + 事件把多步流程<strong>显式化</strong>，<strong>FunctionAgent</strong> 在其上内置“调 LLM → 选工具 → 执行 → 回喂”的循环，让模型<strong>按问题自己规划</strong>检索几次、用什么工具、要不要重检索。</div><div data-lang="en">The essence of agents &amp; workflows is upgrading RAG from a <strong>“hard-wired chain” to a “deciding loop”</strong>: a <strong>Workflow</strong> makes multi-step flows <strong>explicit</strong> with <code>@step</code> + events, and a <strong>FunctionAgent</strong> builds a “call the LLM → pick a tool → run → feed back” loop on top, letting the model <strong>plan for itself</strong> how many retrievals, which tools, and whether to re-retrieve.</div><div data-lang="zh">这把能力上限抬高了——多源、多步、自我纠错都能做——但每多一轮自主就多一次 LLM 调用，<strong>更慢、更贵、执行路径不再确定、更难调</strong>，因此越 agentic 越<strong>离不开 L23 的 trace 与 L22 的评测</strong>。所以真正的工程判断不是“能不能上 agent”，而是<strong>“这个问题配不配得上 agent 的代价”</strong>——能用固定管道解决的，就别上 agent。</div><div data-lang="en">That raises the ceiling — multi-source, multi-step, self-correction all become possible — but each extra turn of autonomy is another LLM call: <strong>slower, pricier, with a no-longer-deterministic path that's harder to debug</strong>, so the more agentic you go, the more you <strong>depend on L23's tracing and L22's evaluation</strong>. The real engineering judgment isn't “can we use an agent” but <strong>“is this question worth an agent's cost”</strong> — if a fixed pipeline can solve it, don't reach for an agent.</div></div><div class="selftest">
+# result = await RAGFlow().run(query='退款多久到账？')</pre></div><div class="card keypts"><div class="tag"><span data-lang="zh">✅ 本课要点</span><span data-lang="en">✅ Key points</span></div><ul><li><span data-lang="zh">固定管道每问<strong>同样地检索</strong>；agent 先看问题再<strong>决定</strong>用哪个工具、检索几次、要不要反思重检索。</span><span data-lang="en">A fixed pipeline <strong>retrieves the same way</strong> every time; an agent reads the question first, then <strong>decides</strong> which tool, how many retrievals, and whether to reflect and re-retrieve.</span></li><li><span data-lang="zh">把 <code>QueryEngine</code> 用 <strong>QueryEngineTool</strong> 包成工具交给 <strong>FunctionAgent</strong>，<code>description</code> 决定 agent 何时调用它。</span><span data-lang="en">Wrap a <code>QueryEngine</code> as a tool via <strong>QueryEngineTool</strong> and give it to a <strong>FunctionAgent</strong>; the <code>description</code> tells the agent when to call it.</span></li><li><span data-lang="zh"><strong>Workflow</strong> 是<strong>事件驱动</strong>的底层框架：每个 <code>@step</code> 收一种事件、发出下一种，<code>StartEvent</code> 进、<code>StopEvent</code> 出。</span><span data-lang="en"><strong>Workflow</strong> is the <strong>event-driven</strong> base framework: each <code>@step</code> consumes one event and emits the next; <code>StartEvent</code> in, <code>StopEvent</code> out.</span></li><li><span data-lang="zh">升级到 agent 的信号是<strong>多源 / 多步 / 需自我纠错</strong>；代价是<strong>更慢、更贵、更难调</strong>（更依赖 L23 的可观测）。</span><span data-lang="en">Signals to upgrade to an agent are <strong>multi-source / multi-step / self-correction</strong>; the cost is <strong>slower, pricier, harder to debug</strong> (leaning harder on L23's observability).</span></li><li><span data-lang="zh">自主度<strong>有代价</strong>：能用<strong>固定管道</strong>就别上 Router，能 <strong>Router</strong> 就别上 Agent。</span><span data-lang="en">Autonomy has a <strong>cost</strong>: if a <strong>fixed pipeline</strong> works don't add a Router, if a <strong>Router</strong> works don't reach for an Agent.</span></li></ul></div><div class="card highlight"><div class="tag"><span data-lang="zh">💡 设计亮点</span><span data-lang="en">💡 Design insight</span></div><div data-lang="zh">Agent 与 Workflows 的精髓，是把 RAG 从<strong>“写死的链”升级成“会决策的循环”</strong>：<strong>Workflow</strong> 用 <code>@step</code> + 事件把多步流程<strong>显式化</strong>，<strong>FunctionAgent</strong> 在其上内置“调 LLM → 选工具 → 执行 → 回喂”的循环，让模型<strong>按问题自己规划</strong>检索几次、用什么工具、要不要重检索。</div><div data-lang="en">The essence of agents &amp; workflows is upgrading RAG from a <strong>“hard-wired chain” to a “deciding loop”</strong>: a <strong>Workflow</strong> makes multi-step flows <strong>explicit</strong> with <code>@step</code> + events, and a <strong>FunctionAgent</strong> builds a “call the LLM → pick a tool → run → feed back” loop on top, letting the model <strong>plan for itself</strong> how many retrievals, which tools, and whether to re-retrieve.</div><div data-lang="zh">这把能力上限抬高了——多源、多步、自我纠错都能做——但每多一轮自主就多一次 LLM 调用，<strong>更慢、更贵、执行路径不再确定、更难调</strong>，因此越 agentic 越<strong>离不开 L23 的 trace 与 L22 的评测</strong>。所以真正的工程判断不是“能不能上 agent”，而是<strong>“这个问题配不配得上 agent 的代价”</strong>——能用固定管道解决的，就别上 agent。</div><div data-lang="en">That raises the ceiling — multi-source, multi-step, self-correction all become possible — but each extra turn of autonomy is another LLM call: <strong>slower, pricier, with a no-longer-deterministic path that's harder to debug</strong>, so the more agentic you go, the more you <strong>depend on L23's tracing and L22's evaluation</strong>. The real engineering judgment isn't “can we use an agent” but <strong>“is this question worth an agent's cost”</strong> — if a fixed pipeline can solve it, don't reach for an agent.</div></div><div class="fig"><div class="trace-badge">🔍 示例 worked example</div>
+<div class="trace">
+  <h4>① Thought 思考 / Reasoning</h4>
+  <div class="value">Thought: "用户想知道Python 3.11的新特性，我需要搜索官方文档。"
+Thought: "User wants Python 3.11 new features, I need to search official docs."</div>
+  <h4>② Action 执行工具 / Execute Tool</h4>
+  <div class="value">Action: search_tool
+Action Input: {"query": "Python 3.11 new features"}
+→ 调用搜索工具 / Call search tool</div>
+  <small>ReActAgent 选择合适的工具 / Selects appropriate tool</small>
+  <h4>③ Observation 观察结果 / Observe Result</h4>
+  <div class="value">Observation: "Python 3.11带来了性能提升、更好的错误信息、新的tomllib模块..."
+Observation: "Python 3.11 brings performance improvements, better error messages, new tomllib..."</div>
+  <h4>④ Next Thought 下一轮 / Next Round</h4>
+  <div class="value">Thought: "我已获得足够信息，可以回答用户。"
+Answer: "Python 3.11的主要新特性包括..."</div>
+  <small>Agent 决定停止循环并回答 / Decides to stop loop and answer</small>
+</div>
+<div class="figcap">Agent 推理循环：Thought → Action → Observation / Agent Loop: Think → Act → Observe</div></div><div class="selftest">
 <h2><span data-lang="zh">🧪 自测 · 想一想为什么这么设计</span><span data-lang="en">🧪 Self-check · think about the design</span></h2>
 <div class="quiz">
   <div class="qn">1. <span data-lang="zh">下面哪种情况<strong>最该</strong>从固定管道升级成 agent（而不是继续用一次性检索）？</span><span data-lang="en">Which situation <strong>most warrants</strong> upgrading from a fixed pipeline to an agent (rather than sticking with one-shot retrieval)?</span></div>
