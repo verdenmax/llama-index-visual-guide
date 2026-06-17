@@ -521,6 +521,19 @@ LESSON_28 = (
             "</strong>.",
         ))
     )
+    + d.trace([
+        ('① 用户问题 / User Question',
+         '"华东区2023年销售额是多少？"\n"What was the sales revenue in East China region for 2023?"'),
+        ('② LLM 生成 SQL / Generates SQL',
+         'SELECT SUM(amount) AS total\nFROM sales\nWHERE region = \'华东\'\n  AND year = 2023;',
+         'NLStructStoreQueryEngine 将自然语言转为 SQL / Converts natural language to SQL query'),
+        ('③ 执行查询 / Execute Query',
+         'total\n---------\n1240000',
+         '数据库返回聚合结果 / Database returns aggregated result'),
+        ('④ 合成答案 / Synthesize Answer',
+         '"华东区2023年销售额约124万元。"\n"The sales revenue in East China for 2023 was approximately 1.24 million."',
+         'LLM 将数字转为自然语言 / LLM converts number to natural language')
+    ], caption='Text-to-SQL 完整流程 / Full Text-to-SQL Pipeline')
 )
 LESSON_29 = (
     c.pipeline("embed")
