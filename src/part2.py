@@ -510,6 +510,20 @@ LESSON_06 = (
         "Every splitter implements the same <code>get_nodes_from_documents</code> interface, so swapping strategies "
         "is <strong>free</strong> — the payoff of “standardize the interface first, then vary the strategy”.",
     ))
+    + d.trace([
+        ('① 原始文本 / Original Text',
+         'RAG系统将文档切成小块。每块通常512 token。\n相邻块会有20%重叠，避免语义断裂。\n\nRAG systems split documents into chunks. Each chunk is typically 512 tokens.\nAdjacent chunks have 20% overlap to avoid breaking semantics.'),
+        ('② SentenceSplitter 切分 / Splits',
+         '<strong>Chunk 1:</strong> "RAG系统将文档切成小块。每块通常512 token。"\n'
+         '<strong>Chunk 2:</strong> "每块通常512 token。相邻块会有20%重叠，避免语义断裂。"\n\n'
+         '<span style="background:rgba(251,191,36,0.3); padding:2px 4px; border-radius:3px;">'
+         '重叠部分 Overlap: "每块通常512 token。"</span>',
+         '重叠部分在两个 chunk 中都出现 / Overlapping text appears in both chunks'),
+        ('③ 添加元数据 / Add Metadata',
+         'node_1: {text: "RAG系统...", start_char: 0, end_char: 28}\n'
+         'node_2: {text: "每块通常...", start_char: 18, end_char: 68}',
+         '记录原文位置便于溯源 / Record position for source tracking'),
+    ], caption='切块举例：重叠保留上下文 / Chunking Example: Overlap Preserves Context')
 )
 LESSON_07 = (
     c.pipeline("split")
