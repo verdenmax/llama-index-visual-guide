@@ -1369,4 +1369,15 @@ LESSON_11 = (
         "Making ingestion an <strong>idempotent, cacheable</strong> pipeline is the step that takes RAG from “demo "
         "works” to “maintainable in production” — data changes daily, but only the deltas are recomputed.",
     ))
+    + d.trace([
+        ('① 第一次摄取 doc_123 / First Ingestion',
+         'doc_id: "doc_123"\nhash: "a7f3c9..."\n→ 计算 embedding → 存入 cache',
+         'Embedding 计算耗时 ~200ms / Embedding takes ~200ms'),
+        ('② 第二次摄取相同文档 / Second Ingestion (same doc)',
+         'doc_id: "doc_123"\nhash: "a7f3c9..."\n→ cache_collection.get(hash) → 命中！ Hit!',
+         '跳过 embedding，直接复用 / Skip embedding, reuse cached'),
+        ('③ 性能对比 / Performance Comparison',
+         '无缓存 No cache: 200ms\n有缓存 With cache: 2ms (100× faster)',
+         'IngestionCache 用 doc_id + hash 去重 / Deduplicates by doc_id + hash')
+    ], caption='摄取缓存：避免重复计算 / Ingestion Cache: Avoid Redundant Computation')
 )

@@ -284,6 +284,65 @@ table.t td.mono, table.t td .mono { font-family: ui-monospace, monospace; font-s
 .alert.warn{border-left-color:var(--amber);background:var(--amber-soft);}
 .alert.note{border-left-color:var(--blue);background:var(--blue-soft);}
 .alert.key{border-left-color:var(--purple);background:var(--purple-soft);}
+/* Trace diagrams - worked examples with real data */
+.trace-badge {
+  display: inline-block;
+  background: rgba(0,0,0,0.05);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85em;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+.trace {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+}
+.trace h4 {
+  color: var(--accent);
+  font-size: 1em;
+  margin: 16px 0 8px 0;
+  font-weight: 600;
+}
+.trace h4:first-child {
+  margin-top: 0;
+}
+.trace .value {
+  background: rgba(34,197,94,0.08);
+  border-left: 3px solid rgb(34,197,94);
+  padding: 12px;
+  border-radius: 4px;
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 0.9em;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 8px;
+}
+.trace small {
+  display: block;
+  color: #6b7280;
+  font-size: 0.85em;
+  margin-bottom: 12px;
+  font-style: italic;
+}
+@media (prefers-color-scheme: dark) {
+  .trace-badge {
+    background: rgba(255,255,255,0.1);
+  }
+  .trace {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  .trace .value {
+    background: rgba(34,197,94,0.12);
+  }
+  .trace small {
+    color: #9ca3af;
+  }
+}
 
 /* ===== diagram primitives ===== */
 .fig{margin:1.1rem 0;padding:.9rem;background:var(--panel-2);border:1px solid var(--line);
@@ -389,7 +448,24 @@ docs = [Document(text='退款政策……', doc_id='faq-1')]
 print(len(pipeline.run(documents=docs)))   # 首次：完整处理
 
 docs = [Document(text='退款政策（已更新）……', doc_id='faq-1')]   # 同一 doc_id、内容已更新
-print(len(pipeline.run(documents=docs)))   # 再跑：仅这篇重算，其余命中缓存</pre></div><div class="card keypts"><div class="tag"><span data-lang="zh">✅ 本课要点</span><span data-lang="en">✅ Key points</span></div><ul><li><span data-lang="zh">IngestionPipeline 让“建索引”变成<strong>幂等、可缓存</strong>的管道。</span><span data-lang="en">IngestionPipeline makes “building the index” an <strong>idempotent, cacheable</strong> process.</span></li><li><span data-lang="zh">docstore 去重支持<strong>增量更新</strong>：只处理变化的文档。</span><span data-lang="en">docstore dedup enables <strong>incremental updates</strong>: only changed docs are processed.</span></li><li><span data-lang="zh"><code>persist</code> / <code>load_index_from_storage</code> 避免每次启动都重建。</span><span data-lang="en"><code>persist</code> / <code>load_index_from_storage</code> avoid rebuilding on every startup.</span></li></ul></div><div class="card highlight"><div class="tag"><span data-lang="zh">💡 设计亮点</span><span data-lang="en">💡 Design insight</span></div><div data-lang="zh">把摄取做成<strong>幂等可缓存</strong>的管道，是 RAG 从“demo 跑通”走向“生产可维护”的关键一步——数据天天变，但只重算变化的部分。</div><div data-lang="en">Making ingestion an <strong>idempotent, cacheable</strong> pipeline is the step that takes RAG from “demo works” to “maintainable in production” — data changes daily, but only the deltas are recomputed.</div></div><div class="selftest">
+print(len(pipeline.run(documents=docs)))   # 再跑：仅这篇重算，其余命中缓存</pre></div><div class="card keypts"><div class="tag"><span data-lang="zh">✅ 本课要点</span><span data-lang="en">✅ Key points</span></div><ul><li><span data-lang="zh">IngestionPipeline 让“建索引”变成<strong>幂等、可缓存</strong>的管道。</span><span data-lang="en">IngestionPipeline makes “building the index” an <strong>idempotent, cacheable</strong> process.</span></li><li><span data-lang="zh">docstore 去重支持<strong>增量更新</strong>：只处理变化的文档。</span><span data-lang="en">docstore dedup enables <strong>incremental updates</strong>: only changed docs are processed.</span></li><li><span data-lang="zh"><code>persist</code> / <code>load_index_from_storage</code> 避免每次启动都重建。</span><span data-lang="en"><code>persist</code> / <code>load_index_from_storage</code> avoid rebuilding on every startup.</span></li></ul></div><div class="card highlight"><div class="tag"><span data-lang="zh">💡 设计亮点</span><span data-lang="en">💡 Design insight</span></div><div data-lang="zh">把摄取做成<strong>幂等可缓存</strong>的管道，是 RAG 从“demo 跑通”走向“生产可维护”的关键一步——数据天天变，但只重算变化的部分。</div><div data-lang="en">Making ingestion an <strong>idempotent, cacheable</strong> pipeline is the step that takes RAG from “demo works” to “maintainable in production” — data changes daily, but only the deltas are recomputed.</div></div><div class="fig"><div class="trace-badge">🔍 示例 worked example</div>
+<div class="trace">
+  <h4>① 第一次摄取 doc_123 / First Ingestion</h4>
+  <div class="value">doc_id: "doc_123"
+hash: "a7f3c9..."
+→ 计算 embedding → 存入 cache</div>
+  <small>Embedding 计算耗时 ~200ms / Embedding takes ~200ms</small>
+  <h4>② 第二次摄取相同文档 / Second Ingestion (same doc)</h4>
+  <div class="value">doc_id: "doc_123"
+hash: "a7f3c9..."
+→ cache_collection.get(hash) → 命中！ Hit!</div>
+  <small>跳过 embedding，直接复用 / Skip embedding, reuse cached</small>
+  <h4>③ 性能对比 / Performance Comparison</h4>
+  <div class="value">无缓存 No cache: 200ms
+有缓存 With cache: 2ms (100× faster)</div>
+  <small>IngestionCache 用 doc_id + hash 去重 / Deduplicates by doc_id + hash</small>
+</div>
+<div class="figcap">摄取缓存：避免重复计算 / Ingestion Cache: Avoid Redundant Computation</div></div><div class="selftest">
 <h2><span data-lang="zh">🧪 自测 · 想一想为什么这么设计</span><span data-lang="en">🧪 Self-check · think about the design</span></h2>
 <div class="quiz">
   <div class="qn">1. <span data-lang="zh">文档每天小幅更新，如何避免每次全量重建索引？</span><span data-lang="en">Documents change a little every day — how do you avoid fully rebuilding the index each time?</span></div>
