@@ -314,6 +314,20 @@ LESSON_13 = (
         "Modeling “after retrieval, before generation” as pluggable postprocessors lets you raise answer quality at the "
         "lowest cost — <strong>no retraining, no model swap</strong>. The best bang-for-buck in RAG tuning.",
     ))
+    + d.trace([
+        ('① 检索结果 (top-5) / Retrieval Results',
+         'node_a: 0.89  |  node_b: 0.76  |  node_c: 0.71\n'
+         'node_d: 0.68  |  node_e: 0.52'),
+        ('② SimilarityPostprocessor (cutoff=0.7)',
+         '✓ 保留 Keep: node_a (0.89), node_b (0.76), node_c (0.71)\n'
+         '✗ 丢弃 Drop: node_d (0.68), node_e (0.52)',
+         '低于阈值的节点被过滤 / Nodes below threshold filtered out'),
+        ('③ LLM Rerank 重排 / Re-rank',
+         'node_b: 0.91 ⬆️  |  node_a: 0.88  |  node_c: 0.73\n\n'
+         '<small>CrossEncoder 用问题与节点重算相关性 / '
+         'CrossEncoder recalculates relevance with query</small>',
+         'node_b 从第2升到第1 / node_b promoted from #2 to #1'),
+    ], caption='后处理流程：过滤 + 重排 / Postprocessing: Filter + Rerank')
 )
 LESSON_14 = (
     c.pipeline("synthesize")
